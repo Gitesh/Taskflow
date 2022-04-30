@@ -1,0 +1,127 @@
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="taskflow.css">
+    
+    <script>
+        function allowDrop(ev) {
+          ev.preventDefault();
+        }
+        
+        function drag(ev) {
+          ev.dataTransfer.setData("Text", ev.target.id);
+        }
+        
+        function drop(ev) {
+          var data = ev.dataTransfer.getData("Text");
+          ev.target.appendChild(document.getElementById(data));
+          ev.preventDefault();
+        }
+    </script>
+
+
+
+</head>
+
+<body>
+    <h1>Taskflow2</h1>
+
+    <div class="container">
+
+        <!--Left-->
+        <div class="left">   
+
+            <!--Entry form-->
+            <form id = "form">
+                <label for="post"> Write your note here </label>
+                <br><br>
+
+                <textarea name="post" id="input" cols="30"  rows="10"></textarea>
+
+                <br><br>
+
+                <div id="msg"></div>
+
+                <button type="submit">Post</button>
+                
+            </form>
+
+
+        </div> <!--End div Left-->
+
+        <!--Right-->
+        <div class="right">
+            <!--List of Entered posts-->
+            <h3>Entered posts</h3>
+
+            <div id="posts">
+        
+            </div> <!--End div for posts-->
+
+        </div><!--End div for Right column-->
+
+
+
+       
+    </div> <!--End div right-->
+
+
+    </div> <!--end div for container-->
+
+<!--- drop boxes --->
+<div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <i onclick="clkBoxAdd('box1')" class="btnAdd">+add</i> 
+</div>
+
+<br>
+
+<div id="div2" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <i onclick="clkBoxAdd('box2')" class="btnAdd">+add</i> 
+</div>
+
+<br>
+
+<div id="div3" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <i onclick="clkBoxAdd('box3')" class="btnAdd">+add</i> 
+</div>
+
+<br>
+
+<div id="div4" ondrop="drop(event)" ondragover="allowDrop(event)">
+    <i onclick="clkBoxAdd('box4')" class="btnAdd">+add</i> 
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+    <script src="taskflow.js"> </script>
+
+</body>
+
+
+
+<!-- 
+[functions]
+tsk - task
+btn - button
+
+[class]
+container - main container
+left - request new text
+right - display entered posts
+
+
+[id]
+form - entry form
+input - input form
+msg - entered text
+posts - section for posts
+posts - dummy posts in a div
+-->

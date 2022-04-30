@@ -1,0 +1,120 @@
+/* the Divs */
+
+body {
+    font-family: 'Lucida Sans';
+    margin: 0 50px;
+}
+
+.container {
+    display: flex;
+    gap: 50px;
+   
+}
+
+#posts {
+    width: 400px;
+}
+
+i {
+    cursor: pointer;
+}
+
+/* hide the icons */
+
+i.fas {
+    display: none;
+}
+
+/* display the icons on hover */
+
+.options:hover .fas {
+    display: block;
+    color: grey;
+}
+
+.fas:hover:before {
+    /* content: "\f02c" */
+    font-size: larger;
+    color: black;
+}
+
+
+/* icons */
+
+#posts div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.options {
+    display: flex;
+    gap: 25px;
+    background-color: bisque;
+    border-style:solid;
+    border-width: 1 1 1 1;
+    border-radius: 5px;
+}
+
+/* if the note is hovered, change shape */
+.options:hover {
+    display: flex;
+    gap: 25px;
+    background-color: rgb(238, 143, 26);
+    border-style:dotted;
+    border-radius: 20px;
+}
+
+#msg{
+    color: red;
+}
+
+
+
+
+
+
+/* x4 draggable containers */
+
+#div1 {
+    width: 350px;
+    height: auto;
+    padding: 10px;
+    border: 1px solid #aaaaaa;
+  }
+  
+  #div2 {
+    width: 350px;
+    height: auto;
+    padding: 10px;
+    border: 1px solid #aaaaaa;
+  }
+  
+  #div3 {
+    width: 350px;
+    height: auto;
+    padding: 10px;
+    border: 1px solid #aaaaaa;
+  }
+
+  #div4 {
+    width: 350px;
+    height: auto;
+    padding: 10px;
+    border: 1px solid #aaaaaa;
+  }
+
+
+/* +Add new card clickable in each box */
+
+.btnAdd {
+    color:#aaaaaa;
+    /* border: 1px solid #000000 */
+        
+}
+
+.btnAdd:hover {
+    color: #000000;
+    cursor:pointer;
+        
+}
