@@ -80,14 +80,14 @@ let acceptData = () => {
 //------
 
 //create a div element and append it to the 'posts' div on the right
-//we need 1. Parent div, 2. the input, 3. options div with the icons
+//we need 1. Parent div, 2. the input, 3. clsTaskCard div with the icons
 // editPost(this) where this is the element that fired the event, eg edit icon
 
 let createPost = () => {
     posts.innerHTML += `
     <div id="${data.text}" draggable="true" ondragstart="drag(event)">
         
-        <span class="options">
+        <span class="clsTaskCard">
             <p>${data.text}</p>
             <i onclick="clkCardEditPost(this)" class="fas fa-edit"> </i> 
             <i onclick="clkCardDeletePost(this)" class="fas fa-trash-alt"> </i>
@@ -107,7 +107,7 @@ let createPost = () => {
 //delete a post function
 //------
 
-//see createPost function, where parent of the delete button is the span with the classnane 'options' which shows the icons.
+//see createPost function, where parent of the delete button is the span with the classnane 'clsTaskCard' which shows the icons.
 
 // let deletePost = (e) => {
 //     e.parentElement.parentElement.remove();
