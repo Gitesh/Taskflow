@@ -133,6 +133,24 @@ function clkCardEditPost(e){
 // add a new card
 //------
 
-function clkBoxAdd(box){
-     window.alert(box);
+// function clkBoxAdd(box){
+//      window.alert(box);
+// };
+
+function clkBoxAdd(value, box){
+
+    var strTextEntered = value + " " + box;
+    // window.alert(strTextEntered);
+
+    createPost(strTextEntered);
 };
+
+
+
+var inputBox = document.getElementById("inputBox2");
+inputBox.addEventListener("keypress", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    document.getElementById("myBtn").click();
+  }
+});

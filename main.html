@@ -76,18 +76,41 @@
 
 <div id="div2" ondrop="drop(event)" ondragover="allowDrop(event)">
     <i onclick="clkBoxAdd('box2')" class="btnAdd">+add</i> 
+    
+    <!-- <input id="inputBox2" type="text" value="+add" onclick="this.select()" onKeyDown="if(event.keyCode==13) clkBoxAdd('box2','test')"> -->
+
+    <input id="inputBox2" value="+add" onclick="this.select()">
+    <button id="myBtn" onclick="javascript:clkBoxAdd('box2', String(inputBox2.value))">Button</button>
+
+
+    
+    
 </div>
 
 <br>
 
 <div id="div3" ondrop="drop(event)" ondragover="allowDrop(event)">
     <i onclick="clkBoxAdd('box3')" class="btnAdd">+add</i> 
+
+    
+    
+    <!-- <input type="text" value="+add" onclick="this.select()" onblur="window.alert(this.value); clkBoxAdd('box3')"> -->
+ 
+    <!-- <input type="text" value="+add" onclick="this.select()" onKeyDown="if(event.keyCode==13) clkBoxAdd('box3','test')"> -->
+
+
+
+
 </div>
 
 <br>
 
 <div id="div4" ondrop="drop(event)" ondragover="allowDrop(event)">
     <i onclick="clkBoxAdd('box4')" class="btnAdd">+add</i> 
+
+    <!-- <input type="text" value="+add" onclick="this.select()" onblur="window.alert(this.value); clkBoxAdd(this.value(),'box4')"> -->
+
+    
 </div>
 
 
