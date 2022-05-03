@@ -31,11 +31,11 @@
         <div class="left">   
 
             <!--Entry form-->
-            <form id = "form">
+            <!-- <form id = "form">
                 <label for="post"> Write your note here </label>
                 <br><br>
 
-                <textarea name="post" id="input" cols="30"  rows="10"></textarea>
+                <input name="post" id="input" cols="30"  rows="10"></textarea>
 
                 <br><br>
 
@@ -43,7 +43,7 @@
 
                 <button type="submit">Post</button>
                 
-            </form>
+            </form> -->
 
 
         </div> <!--End div Left-->
@@ -70,50 +70,43 @@
 <!--- drop boxes --->
 <div id="div1" ondrop="drop(event)" ondragover="allowDrop(event)">
     <i onclick="clkBoxAdd('box1')" class="btnAdd">+add</i> 
-</div>
+</div><!--end div1-->
 
 <br>
 
 <div id="div2" ondrop="drop(event)" ondragover="allowDrop(event)">
-    <i onclick="clkBoxAdd('box2')" class="btnAdd">+add</i> 
     
-    <!-- <input id="inputBox2" type="text" value="+add" onclick="this.select()" onKeyDown="if(event.keyCode==13) clkBoxAdd('box2','test')"> -->
+    <input type="text" id="inputBox2" value="+add" onclick="this.select()">
+    <button id="myBtn" onclick="javascript:clkBoxAdd('box2', String(inputBox2.value))" hidden></button>
 
-    <input id="inputBox2" value="+add" onclick="this.select()">
-    <button id="myBtn" onclick="javascript:clkBoxAdd('box2', String(inputBox2.value))">Button</button>
-
-
-    
-    
-</div>
+</div><!--end div2-->
 
 <br>
 
 <div id="div3" ondrop="drop(event)" ondragover="allowDrop(event)">
     <i onclick="clkBoxAdd('box3')" class="btnAdd">+add</i> 
-
-    
-    
-    <!-- <input type="text" value="+add" onclick="this.select()" onblur="window.alert(this.value); clkBoxAdd('box3')"> -->
- 
-    <!-- <input type="text" value="+add" onclick="this.select()" onKeyDown="if(event.keyCode==13) clkBoxAdd('box3','test')"> -->
-
-
-
-
-</div>
+</div> <!--end div3-->
 
 <br>
 
-<div id="div4" ondrop="drop(event)" ondragover="allowDrop(event)">
-    <i onclick="clkBoxAdd('box4')" class="btnAdd">+add</i> 
 
-    <!-- <input type="text" value="+add" onclick="this.select()" onblur="window.alert(this.value); clkBoxAdd(this.value(),'box4')"> -->
+<div id="div4" ondrop="drop(event)" ondragover="allowDrop(event)"> 
+    <!-- <i onclick="clkBoxAdd('box4')" class="btnAdd">+add</i>  -->
 
-    
-</div>
+    <!--Entry form-->
+    <form id = "form">
+        
+        <br><br>
+
+        <input name="post" id="input" value="+add" onclick="this.select()">
+        <div id="msg"></div>
+        <div id="dropbox4"></div>
+        <!-- <button type="submit">Post</button> -->
+        
+    </form>
 
 
+</div> <!-- end div4-->
 
 
 
