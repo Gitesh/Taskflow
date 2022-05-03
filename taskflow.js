@@ -83,8 +83,11 @@ let acceptData = () => {
 //we need 1. Parent div, 2. the input, 3. clsTaskCard div with the icons
 // editPost(this) where this is the element that fired the event, eg edit icon
 
-let createPost = () => {
-    posts.innerHTML += `
+function createPost(strCardTitle, strCardText) {
+
+alert(strCardTitle);
+alert(strCardText);
+    dropbox4.innerHTML += `
     <div id="${data.text}" draggable="true" ondragstart="drag(event)">
         
         <span class="clsTaskCard">
@@ -94,8 +97,8 @@ let createPost = () => {
         </span>
     <div> <!--END DIV NOTE-->     
 
-    `;  //backticks are template literals, so this will act as a template.
-};
+    `; //backticks are template literals, so this will act as a template.
+}
 
 
 
@@ -137,12 +140,14 @@ function clkCardEditPost(e){
 //      window.alert(box);
 // };
 
-function clkBoxAdd(value, box){
+function clkBoxAdd(strCardTitle, strCardText){
 
     var strTextEntered = value + " " + box;
-    // window.alert(strTextEntered);
+    window.alert(strTextEntered);
 
-    createPost(strTextEntered);
+    // createPost(strTextEntered);
+
+    createPost(strCardTitle, strCardText);
 };
 
 
@@ -152,5 +157,9 @@ inputBox.addEventListener("keypress", function(event) {
   if (event.key === "Enter") {
     event.preventDefault();
     document.getElementById("myBtn").click();
+    inputBox2.value="+add";
+    event.target.blur();
+
   }
 });
+
