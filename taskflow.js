@@ -3,7 +3,7 @@
 
 let form = document.getElementById("form");
 let input = document.getElementById("input");
-let msg = document.getElementById("msg");
+let msg = document.getElementById("idErrorMessage");
 let posts = document.getElementById("posts");
 
 console.log("TASKFLOW:js loaded")
@@ -11,22 +11,19 @@ console.log("TASKFLOW:js loaded")
 //add event listener to the form
 
 form.addEventListener("submit", (e) => {
-    
     e.preventDefault();
-    
     console.log("TASKFLOW: submit button clicked");
 
     //create formValidation function 
     formValidation();
-
 });
 
 
 //create formValidation function - if text box is empty show error
 
 function formValidation() {
-    if (input.value === "") {
-        msg.innerHTML = "You didn't enter any text...";
+    if (input.value === "+add") {
+        msg.innerHTML = "no text entered...";
 
         console.log("ERROR: no text was entered");
 
@@ -38,39 +35,31 @@ function formValidation() {
 
         acceptData(); // call the acceptData function
 
-        input.value = ""; //clear the input textbox
+        input.blur(input.value= "+add"); //clear the input textbox
     }
 }
-
-// REPLACED BY FUNCTION
-// let formValidation = () => {
-//     if (input.value ==="") {
-//         msg.innerHTML = "You didn't enter any text..."
-
-//         console.log("ERROR: no text was entered")
-
-//     }
-//     else {
-//         console.log("OK: text was entered")
-
-//         msg.innerHTML = "";
-//     }
-// };
 
 
 //------
 //store input field into a new object called data
 //------
 
-
 //create empty data object
 let data = {};
 
 //create a function called accept data to store the input in the object named data
 let acceptData = () => {
-    data["text"] = input.value;
+    data["title"] = input.value;
 
     console.log("TASKFLOW: ",data)
+
+    data["task_detail"]="this is the task";
+    data["date_due"]="17/07/2022";
+    data["date_captured"]="16/07/2022"; 
+    data["tag_project"]="career";
+
+    console.log("TASKFLOW: ",data)
+
 
     createPost();
 };
@@ -83,15 +72,13 @@ let acceptData = () => {
 //we need 1. Parent div, 2. the input, 3. clsTaskCard div with the icons
 // editPost(this) where this is the element that fired the event, eg edit icon
 
-function createPost(strCardTitle, strCardText) {
+function createPost() {
 
-alert(strCardTitle);
-alert(strCardText);
     dropbox4.innerHTML += `
-    <div id="${data.text}" draggable="true" ondragstart="drag(event)">
-        
+    <div id="${data.title}" draggable="true" ondragstart="drag(event)">       
         <span class="clsTaskCard">
-            <p>${data.text}</p>
+            <b>${data.title}</b>&nbsp - &nbsp
+            ${data.task_detail}
             <i onclick="clkCardEditPost(this)" class="fas fa-edit"> </i> 
             <i onclick="clkCardDeletePost(this)" class="fas fa-trash-alt"> </i>
         </span>
@@ -125,9 +112,10 @@ function clkCardDeletePost(e){
 //edit a post function
 //------
 
-
 function clkCardEditPost(e){
     input.value = e.previousElementSibling.innerHTML;
+    // input.value = e.ElementSibling.innerHTML;
+    // input.value = "this is the edit text";
     e.parentElement.parentElement.remove();
 };  
 
@@ -136,30 +124,39 @@ function clkCardEditPost(e){
 // add a new card
 //------
 
-// function clkBoxAdd(box){
-//      window.alert(box);
+// function clkBoxAdd(strCardTitle, strCardText){
+
+//     var strTextEntered = value + " " + box;
+//     window.alert(strTextEntered);
+
+//     // createPost(strTextEntered);
+
+//     createPost(strCardTitle, strCardText);
 // };
 
-function clkBoxAdd(strCardTitle, strCardText){
-
-    var strTextEntered = value + " " + box;
-    window.alert(strTextEntered);
-
-    // createPost(strTextEntered);
-
-    createPost(strCardTitle, strCardText);
-};
 
 
+// var inputBox = document.getElementById("inputBox2");
+// inputBox.addEventListener("keypress", function(event) {
+//   if (event.key === "Enter") {
+//     event.preventDefault();
+//     document.getElementById("myBtn").click();
+//     inputBox2.value="+add";
+//     event.target.blur();
 
-var inputBox = document.getElementById("inputBox2");
-inputBox.addEventListener("keypress", function(event) {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    document.getElementById("myBtn").click();
-    inputBox2.value="+add";
-    event.target.blur();
+//   }
+// });
 
-  }
-});
+function allowDrop(e) {
+  e.preventDefault();
+}
 
+function drag(e) {
+  e.dataTransfer.setData("Text", e.target.id);
+}
+
+function drop(e) {
+  var data = e.dataTransfer.getData("Text");
+  e.target.appendChild(document.getElementById(data));
+  e.preventDefault();
+}
