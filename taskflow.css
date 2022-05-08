@@ -94,10 +94,12 @@ i.fas {
 .clsDropArea{
     width:auto;
     height: auto;
-    padding:10; 
+    padding:10px; 
     background-color: #fefefe;
-    border: 1px solid #550055;
+    /* border: 1px solid #550055; */
     margin: 25px;
+    box-shadow: 1px 10px 20px -20px #514;
+
 }
 
 
