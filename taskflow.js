@@ -22,7 +22,7 @@ form.addEventListener("submit", (e) => {
 //create formValidation function - if text box is empty show error
 
 function formValidation() {
-    if (input.value === "+add") {
+    if (input.value == "+add") {
         msg.innerHTML = "no text entered...";
 
         console.log("ERROR: no text was entered");
@@ -35,7 +35,7 @@ function formValidation() {
 
         acceptData(); // call the acceptData function
 
-        input.blur(input.value= "+add"); //clear the input textbox
+        input.blur(input.value ="+add"); //clear the input textbox
     }
 }
 
