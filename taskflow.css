@@ -22,14 +22,104 @@ body {
     max-width: 500px;
     min-width: 250px;
     background: #f1f5f8;
-    /* background-image: radial-gradient(#bfc0c1 7.2%, transparent 0); */
     background-size: 25px 25px;
     border-radius: 20px;
     box-shadow: 4px 3px 7px 2px #00000040;
     padding: 1rem;
     box-sizing: border-box;
+
 }
 
+
+/* x4 drop areas */
+
+.clsDropArea{
+    width:auto;
+    height: auto;
+    padding:5px; 
+    border-radius: 5px;
+    background-color: #fefefe;
+    margin: 25px;
+    box-shadow: 1px 10px 20px -20px #514;
+
+}
+
+#idErrorMessage{
+    color: red;
+}
+
+
+/* +Add new card clickable in each box */
+
+.btnAdd {
+    color:#aaaaaa;
+    /* border: 1px solid #000000 */       
+}
+
+.btnAdd:hover {
+    color: #000000;
+    cursor:pointer;
+        
+}
+
+/*------------------*/
+/* Taskcard styling */
+/*------------------*/
+.clsTaskCard {
+    padding: 1em;
+    border-top: 1px solid #DFE2E8;
+    font-size: 14px;
+    display: flex;
+}
+
+
+/* if the card is hovered, change shape */
+.clsTaskCard:hover {
+    padding: 1em;
+    border-top: 1px solid #DFE2E8;
+    font-size: 14px;
+    display: flex;
+    box-shadow: 1px 10px 20px 0px rgba(218, 215, 206,0.8);
+    background-color: #efefef;
+
+}
+
+
+.clsTaskCardTitle{
+    color:black;
+    font-weight: bold;
+    
+}
+
+.clsTaskCardDetail{
+    color: black;
+}
+
+
+/*span for the icons */
+
+.clsTaskCardHoverIcons {
+    /* border: 1px solid #110088; */
+    padding-left: 5%;
+    /* align-content: stretch; */
+/* justify-self: center; */
+display: block;
+}
+
+/* display the icons on hover */
+.clsTaskCard:hover .fas {
+    display:contents;
+    color: grey;
+}
+
+.fas:hover:before {
+    /* content: "\f02c" */
+    font-size: larger;
+    color: black;
+}
+
+
+/* icon pointer */
 i {
     cursor: pointer;
 }
@@ -41,79 +131,10 @@ i.fas {
     display: none;
 }
 
-/* display the icons on hover */
-
-.clsTaskCard:hover .fas {
-    display: block;
-    color: grey;
-}
-
-.fas:hover:before {
-    /* content: "\f02c" */
-    font-size: larger;
-    color: black;
-}
-
-
-/* icons */
-
-
-.clsTaskCard {
-    padding: 1em;
-    border-top: 1px solid #DFE2E8;
-    font-size: 14px;
-    display: flex;
-}
 
 
 
 
-
-/* if the note is hovered, change shape */
-.clsTaskCard:hover {
-    padding: 1em;
-    border-top: 1px solid #DFE2E8;
-    font-size: 14px;
-    display: flex;
-    box-shadow: 1px 10px 20px 0px rgba(218, 215, 206,0.8);
-    background-color: #efefef;
-
-}
-
-#idErrorMessage{
-    color: red;
-}
-
-
-
-/* x4 drop areas */
-
-.clsDropArea{
-    width:auto;
-    height: auto;
-    padding:5px; 
-    border-radius: 5px;
-    background-color: #fefefe;
-    /* border: 1px solid #550055; */
-    margin: 25px;
-    box-shadow: 1px 10px 20px -20px #514;
-
-}
-
-
-/* +Add new card clickable in each box */
-
-.btnAdd {
-    color:#aaaaaa;
-    /* border: 1px solid #000000 */
-        
-}
-
-.btnAdd:hover {
-    color: #000000;
-    cursor:pointer;
-        
-}
 
 
 /* form styles */
@@ -149,73 +170,110 @@ input:focus{
 
 
 
- /* uuuuuuuuuuuuuuuuuuuuuuuu */
+ /* https://codepen.io/Rowno/pen/EVEgJb */
 
  body {
-    animation: theme 21s linear infinite;
-    
-    &:after,
-    &:before {
-        content: '';
-        display: block;
-        position: fixed;
-        z-index: -1;
-        top: 0;
-        width: 100vw;  // IE/Edge
-        height: 100vh; // fallback
-        width: 100vmax;
-        height: 100vmax;
-        background: rgba(0,0,0,0.05);
-        animation: background 90s linear infinite;
-    }
-
-    &:after {
-        left: 15vw;
-    }
-
-    &:before {
-        right: 15vw;
-        animation-delay: -30s;
-        animation-direction: reverse;
-    }
-}
-
-@keyframes theme {
+    -webkit-animation: theme 21s linear infinite;
+            animation: theme 21s linear infinite;
+  }
+  body:after, body:before {
+    content: "";
+    display: block;
+    position: fixed;
+    z-index: -1;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    width: 100vmax;
+    height: 100vmax;
+    background: rgba(0, 0, 0, 0.05);
+    -webkit-animation: background 90s linear infinite;
+            animation: background 90s linear infinite;
+  }
+  body:after {
+    left: 15vw;
+  }
+  body:before {
+    right: 15vw;
+    -webkit-animation-delay: -30s;
+            animation-delay: -30s;
+    animation-direction: reverse;
+  }
+  
+  @-webkit-keyframes theme {
     0% {
-        background: #74C390;
+      background: #74C390;
     }
-    
     16% {
-        background: #5DBDB6;
+      background: #5DBDB6;
     }
-    
     33% {
-        background: #59D4E1;
+      background: #59D4E1;
     }
-    
     50% {
-        background: #51BCE8;
+      background: #51BCE8;
     }
-    
     66% {
-        background: #FA5374;
-    }    
-    
+      background: #FA5374;
+    }
     83% {
-        background: #E46653;
+      background: #E46653;
     }
-
     100% {
-        background: #74C390;
+      background: #74C390;
     }
-}
-
-@keyframes background {
+  }
+  
+  @keyframes theme {
     0% {
-        transform: rotate(0deg);
+      background: #74C390;
     }
-    
+    16% {
+      background: #5DBDB6;
+    }
+    33% {
+      background: #59D4E1;
+    }
+    50% {
+      background: #51BCE8;
+    }
+    66% {
+      background: #FA5374;
+    }
+    83% {
+      background: #E46653;
+    }
     100% {
-        transform: rotate(360deg);
+      background: #74C390;
     }
-}
+  }
+  @-webkit-keyframes background {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes background {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+
+
+  /* iuiuuiii */
+
+  /* body {
+    background-color: #403060;
+    background-image: radial-gradient( circle, rgba(  0, 0, 0, 0 ) 0%, rgba( 0, 0, 0, 0.8 ) 100% );
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+ } */
+ 
