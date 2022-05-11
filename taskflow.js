@@ -122,9 +122,9 @@ let createPost = () =>
              <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
              <span class="clsTaskCardDetail">${x.task_detail}</span>
              <span class="clsTaskCardHoverIcons">
-                 <i onclick="clkCardEditPost(this)" class="fas fa-edit"> </i> 
+                 <i onclick="clkCardEditTitleOrDetail(this)" class="fas fa-edit"> </i> 
                  <i onclick="clkCardDeleteTask(this)" class="fas fa-trash-alt"> </i>
-                 <i class="fas fa-bomb"></i>
+                 <i onclick="clkCardEditPost(this)" class="fas fa-bomb"></i>
              </span>
          </span>
      <div>
@@ -134,7 +134,7 @@ let createPost = () =>
 
 
 
-//immedinately invoked function expression
+//immedinately invoked function expression to reload tasks
 
 (() => {
   data = JSON.parse(localStorage.getItem("data")) || [];
@@ -156,9 +156,11 @@ let createPost = () =>
 // };  
 
 function clkCardDeleteTask(e){
-    e.parentElement.parentElement.remove();
+    //e.parentElement.parentElement.remove();
 
-    data.splice(e.parentElement.parentElement.id,1);
+    e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.remove(); //this is the parent of the title, left in previous sibling to toubleshoot changes
+
+    data.splice(e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.id,1);
 
     localStorage.setItem("data",JSON.stringify(data));
 };  
@@ -169,39 +171,20 @@ function clkCardDeleteTask(e){
 //------
 
 function clkCardEditPost(e){
-    input.value = e.previousElementSibling.innerHTML;
-    // input.value = e.ElementSibling.innerHTML;
-    // input.value = "this is the edit text";
-    e.parentElement.parentElement.remove();
+
+  //alert(e.parentElement.previousElementSibling.innerHTML); // this is the task detail
+  //alert(e.parentElement.previousElementSibling.previousElementSibling.innerHTML);// this is the title 
+
+  input.value = e.parentElement.previousElementSibling.previousElementSibling.innerHTML;// this is the title 
+  
+clkCardDeleteTask(e);
+
 };  
 
 
 //------
 // add a new card
 //------
-
-// function clkBoxAdd(strCardTitle, strCardText){
-
-//     var strTextEntered = value + " " + box;
-//     window.alert(strTextEntered);
-
-//     // createPost(strTextEntered);
-
-//     createPost(strCardTitle, strCardText);
-// };
-
-
-
-// var inputBox = document.getElementById("inputBox2");
-// inputBox.addEventListener("keypress", function(event) {
-//   if (event.key === "Enter") {
-//     event.preventDefault();
-//     document.getElementById("myBtn").click();
-//     inputBox2.value="+add";
-//     event.target.blur();
-
-//   }
-// });
 
 function allowDrop(e) {
   e.preventDefault();
@@ -217,6 +200,59 @@ function drop(e) {
   e.preventDefault();
 }
 
+//-------------------
+// Edit front of card
+//-------------------
+
+function clkCardEditTitleOrDetail(e) {
+
+  var keyCode="";
+  var editTitle = e.parentElement.previousElementSibling.previousElementSibling;
+  var editDetail = e.parentElement.previousElementSibling;
+
+//  alert(editTitle +" "+ editDetail);
+  
+  editTitle.setAttribute("contenteditable", "true");
+  editDetail.setAttribute("contenteditable", "true");
+
+
+  //document.body.setAttribute('contenteditable', 'true');
+  document.onkeydown = function (e) {
+    e = e || window.event;
+    if(e.keyCode==27)
+    {
+      //document.body.setAttribute('contenteditable', 'false');
+      editTitle.setAttribute("contenteditable", "false");
+      editDetail.setAttribute("contenteditable", "false");
+      
+      var cardID = editTitle.parentElement.parentElement.id; //get the index id from the parent div
+
+      data[cardID].title = editTitle.innerHTML;
+      data[cardID].task_detail = editDetail.innerHTML;
+
+       
+      // data.push({
+      //     //title: data["title"]=editTitle.innerHTML,
+      //     //task_detail:data["task_detail"]=editDetail.innerHTML,
+      //     title: data[cardID].title=editTitle.innerHTML,
+      //     task_detail:data[cardID].task_detail=editDetail.innerHTML,
+          
+      //     date_due: "17/07/2022",
+      //     date_captured: "16/07/2022", 
+      //     task_tag:"career",
+      //   });
+    
+        localStorage.setItem("data", JSON.stringify(data));
+    
+        console.log("TASKFLOW: ",data);
+
+     // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
+
+      //createPost(); //eventually want to replace the ID instead of adding/deleting
+
+    }
+  }
+}
 
 
 
@@ -227,8 +263,20 @@ function drop(e) {
 
 
 
-/*MOVE TO SEPARATE CSS FILE*/
 
+
+
+
+
+
+
+
+
+
+
+
+
+/*MOVE TO SEPARATE js FILE*/
 
 
 /**
