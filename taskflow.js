@@ -215,16 +215,25 @@ function clkCardEditTitleOrDetail(e) {
   editTitle.setAttribute("contenteditable", "true");
   editDetail.setAttribute("contenteditable", "true");
 
+  editTitle.setAttribute("class", "clsTaskCardTitleEdit");
+  editDetail.setAttribute("class", "clsTaskCardDetailEdit");
+
+//    editTitle.className = "clsTaskCardTitleEdit"
 
   //document.body.setAttribute('contenteditable', 'true');
   document.onkeydown = function (e) {
     e = e || window.event;
-    if(e.keyCode==27)
+    if(e.keyCode==27)  
+
     {
       //document.body.setAttribute('contenteditable', 'false');
       editTitle.setAttribute("contenteditable", "false");
       editDetail.setAttribute("contenteditable", "false");
-      
+
+      editTitle.setAttribute("class", "clsTaskCardTitle");
+      editDetail.setAttribute("class", "clsTaskCardDetail");
+
+
       var cardID = editTitle.parentElement.parentElement.id; //get the index id from the parent div
 
       data[cardID].title = editTitle.innerHTML;
@@ -245,6 +254,7 @@ function clkCardEditTitleOrDetail(e) {
         localStorage.setItem("data", JSON.stringify(data));
     
         console.log("TASKFLOW: ",data);
+
 
      // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
 

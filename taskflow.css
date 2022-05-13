@@ -103,6 +103,30 @@ h1{
   }
 
 
+  .clsTaskCardTitleEdit{
+    color:black;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: left;
+    max-width: 40%;
+
+    border-color: #51bce8;
+    border-style: dotted;   
+    border-width: 1px;
+    padding:5px;
+  }
+
+  .clsTaskCardDetailEdit{
+    color: black;
+    font-size: 12px;
+    text-align: left;
+
+    border-color: #51bce8;
+    border-style: dotted;   
+    border-width: 1px;
+    padding:5px;
+  }
+
 /*span for the icons */
 
 .clsTaskCardHoverIcons {
