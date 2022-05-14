@@ -78,15 +78,15 @@ h1{
 
 .clsTaskCardWrapper {  /* .scene */
   width: 100%;
-  height: 60px;
-  perspective: 600px;
+  height: 100px;
+  perspective: 200px;
 }
 
 .clsTaskCardAll {   /* clsTaskCardAll .card */
   width: 100%;
   height: 100%;
   /* position: relative; */
-  transition: transform 1s;
+  transition: transform 0.5s;
   perspective: 600px;
   transform-style: preserve-3d; /* inherit the parent element's perspective - without this the face would be flattend with the parent*/
   transform-origin: center right;
@@ -97,7 +97,16 @@ h1{
   height: 100%;
   width: 100%;
   backface-visibility: hidden; /* hide the face */
+  padding: 1em;
+  background-color: #aaaaaa;
+  font-size: 14px;
   transform: rotateY( 180deg );
+
+  bottom: 0px;right: 0px;top: 0px;
+  border-right-width: 1px;
+  width: 343px;
+  height: 70px;
+
 }
 
 .clsTaskCard  { /* Front of task card - task details ###rename to clsTaskCardFront */
@@ -105,14 +114,15 @@ h1{
   height: 100%;
   width: 100%;
   backface-visibility: hidden; /* hide the face */
-
   padding: 1em;
-
   border-top: 1px solid #DFE2E8;
-
   font-size: 14px;
-
   display: flex;
+
+  bottom: 0px;right: 0px;top: 0px;
+  border-right-width: 1px;
+  width: 343px;
+  height: 70px;
 
 
 }
@@ -126,9 +136,6 @@ h1{
     background-color: #efefef;
 
 }
-
-
-
 
 
 .clsTaskCardTitle{
@@ -171,40 +178,54 @@ h1{
     padding:5px;
   }
 
-/*span for the icons */
 
-.clsTaskCardHoverIcons {
-    /* border: 1px solid #110088; */
+
+  /*span for the icons */
+
+
+/*----------------*/
+/* Material Icons */
+/*----------------*/
+
+/* hide the icons - when prefixed by <i> tag */
+
+/* .clsTaskCardHoverIcons {
     padding-left: 5%;
-    /* align-content: stretch; */
-    /* justify-self: center; */
     display: block;
     height: 30px;
+    color: yellow;
+} */
+
+
+/* i.material-icons:hover{
+    color: black;
+    cursor: copy;
+} */
+
+/*hide the <i> icons only shown on hover> */
+i.material-icons {
+  display: none;
 }
+
 
 /* display the icons on hover */
-.clsTaskCard:hover .fas {
-    display:contents;
-    color: grey;
-}
-
-.fas:hover:before {
-    /* content: "\f02c" */
-    font-size: larger;
-    color: black;
+.clsTaskCard:hover .material-icons{
+  display:contents;
 }
 
 
-/* icon pointer */
-i {
-    cursor: pointer;
+
+
+.material-icons{
+  display:contents;
+  color:grey;
 }
 
+.material-icons:hover{
+  cursor: pointer;
+  /* font-size: 30px; */
+  color: black;
 
-/* hide the icons */
-
-i.fas {
-    display: none;
 }
 
 

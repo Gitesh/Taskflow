@@ -148,22 +148,24 @@ let createPost = () =>
                  <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
                  <span class="clsTaskCardDetail">${x.task_detail}</span>
                  <span class="clsTaskCardHoverIcons">
-                     <i onclick="clkCardEditTitleOrDetail(this)" class="fas fa-edit"> </i> 
-                     <i onclick="clkCardDeleteTask(this)" class="fas fa-trash-alt"> </i>
-                     <i onclick="clkFlipTaskCardToForm(this)" class="fas fa-bomb"></i>
+                     
+                    <i onclick="clkCardEditTitleOrDetail(this)" class="material-icons">edit</i> 
+                    <i onclick="clkFlipTaskCardToForm(this)" class="material-icons">edit_calendar</i>
+                    <i onclick="clkCardDeleteTask(this)" class="material-icons">delete</i>
+                 
                  </span>
           
           </div> <!-- front face   |||| clsTaskCard-->
           
-
-
-
-
+          
 
           <div class="clsTaskCardBack">
-              back <br><br>
-              <span onclick="clkFlipTaskCardToTask(this)"> [Click to Return] </span>
-              
+          <input type="date" value="">Due</input>
+          <br><br>
+
+          <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
+          
+
           </div> <!-- back face ||||   clsTaskCardBack -->
         </div>
     </div>
