@@ -109,27 +109,90 @@ let acceptData = () => {
 // }
 
 
-
 let createPost = () => 
 {
   dropbox4.innerHTML ="";
 
   data.map((x, y) =>
   {
+
+    // return (dropbox4.innerHTML += `
+    // <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">       
+    //     <span class="clsTaskCardAll">
+
+    //         <span class="clsTaskCard">
+    //             <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
+    //             <span class="clsTaskCardDetail">${x.task_detail}</span>
+    //             <span class="clsTaskCardHoverIcons">
+    //                 <i onclick="clkCardEditTitleOrDetail(this)" class="fas fa-edit"> </i> 
+    //                 <i onclick="clkCardDeleteTask(this)" class="fas fa-trash-alt"> </i>
+    //                 <i onclick="clkFlipTaskCardToForm(this)" class="fas fa-bomb"></i>
+    //             </span>
+    //         </span>
+
+    //         <span class="clsTaskCardBack">
+    //                 This is the back face              
+    //         </span>
+
+    //     </span>
+    // <div>
+    // `);
+
+
+
     return (dropbox4.innerHTML += `
-    <div id="${y}" draggable="true" ondragstart="drag(event)">       
-         <span class="clsTaskCard">
-             <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
-             <span class="clsTaskCardDetail">${x.task_detail}</span>
-             <span class="clsTaskCardHoverIcons">
-                 <i onclick="clkCardEditTitleOrDetail(this)" class="fas fa-edit"> </i> 
-                 <i onclick="clkCardDeleteTask(this)" class="fas fa-trash-alt"> </i>
-                 <i onclick="clkCardEditPost(this)" class="fas fa-bomb"></i>
-             </span>
-         </span>
-     <div>
+    <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">       
+        <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
+          <div class="clsTaskCard">
+          
+                 <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
+                 <span class="clsTaskCardDetail">${x.task_detail}</span>
+                 <span class="clsTaskCardHoverIcons">
+                     <i onclick="clkCardEditTitleOrDetail(this)" class="fas fa-edit"> </i> 
+                     <i onclick="clkCardDeleteTask(this)" class="fas fa-trash-alt"> </i>
+                     <i onclick="clkFlipTaskCardToForm(this)" class="fas fa-bomb"></i>
+                 </span>
+          
+          </div> <!-- front face   |||| clsTaskCard-->
+          
+
+
+
+
+
+          <div class="clsTaskCardBack">
+              back <br><br>
+              <span onclick="clkFlipTaskCardToTask(this)"> [Click to Return] </span>
+              
+          </div> <!-- back face ||||   clsTaskCardBack -->
+        </div>
+    </div>
+
     `);
+
+
   });
+}
+
+
+
+function clkFlipTaskCardToForm(e){
+
+  //var cardID = e.parentElement.parentElement.parentElement.parentElement.id; //get the index id from the parent div
+  //console.log("TASKFLOW: ", cardID);
+  //  console.log(e.parentElement.parentElement.parentElement.classList);// this is the clsTasKCardAll span
+
+  var setClassToFlipped = e.parentElement.parentElement.parentElement
+
+  setClassToFlipped.classList.toggle("is-flipped");
+
+}
+
+
+function clkFlipTaskCardToTask(e){
+
+  var setClassToUnFlipped = e.parentElement.parentElement
+  setClassToUnFlipped.classList.toggle("is-flipped");
 }
 
 
@@ -234,7 +297,7 @@ function clkCardEditTitleOrDetail(e) {
       editDetail.setAttribute("class", "clsTaskCardDetail");
 
 
-      var cardID = editTitle.parentElement.parentElement.id; //get the index id from the parent div
+      var cardID = editTitle.parentElement.parentElement.parentElement.id; //get the index id from the parent div
 
       data[cardID].title = editTitle.innerHTML;
       data[cardID].task_detail = editDetail.innerHTML;
@@ -263,6 +326,11 @@ function clkCardEditTitleOrDetail(e) {
     }
   }
 }
+
+
+
+
+
 
 
 
@@ -733,4 +801,7 @@ function clkCardEditTitleOrDetail(e) {
     parallaxAmount: -0.2,
     animateSections: true
   })
+  
+
+
   

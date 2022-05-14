@@ -68,13 +68,54 @@ h1{
 /*------------------*/
 /* Taskcard styling */
 /*------------------*/
-.clsTaskCard {
-    padding: 1em;
-    border-top: 1px solid #DFE2E8;
-    font-size: 14px;
-    display: flex;
+
+/* FLIP CARD */
+
+.clsTaskCardAll.is-flipped {  /*style for .card when it is flipped */
+  transform: translateX(-100%) rotateY(-180deg);
+
 }
 
+.clsTaskCardWrapper {  /* .scene */
+  width: 100%;
+  height: 60px;
+  perspective: 600px;
+}
+
+.clsTaskCardAll {   /* clsTaskCardAll .card */
+  width: 100%;
+  height: 100%;
+  /* position: relative; */
+  transition: transform 1s;
+  perspective: 600px;
+  transform-style: preserve-3d; /* inherit the parent element's perspective - without this the face would be flattend with the parent*/
+  transform-origin: center right;
+}         
+
+.clsTaskCardBack { /* back of task card - entry form */
+  position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
+  height: 100%;
+  width: 100%;
+  backface-visibility: hidden; /* hide the face */
+  transform: rotateY( 180deg );
+}
+
+.clsTaskCard  { /* Front of task card - task details ###rename to clsTaskCardFront */
+  position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
+  height: 100%;
+  width: 100%;
+  backface-visibility: hidden; /* hide the face */
+
+  padding: 1em;
+
+  border-top: 1px solid #DFE2E8;
+
+  font-size: 14px;
+
+  display: flex;
+
+
+}
 
 /* if the card is hovered, change shape */
 .clsTaskCard:hover {
@@ -87,13 +128,16 @@ h1{
 }
 
 
+
+
+
 .clsTaskCardTitle{
     color:black;
     font-size: 14px;
     font-weight: bold;
     text-align: left;
     max-width: 40%;
-    
+        
 }
 
 .clsTaskCardDetail{
@@ -312,4 +356,5 @@ input:focus{
 
 
 
- /* FLIP CARD */
+ 
+ 
