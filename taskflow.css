@@ -121,19 +121,11 @@ h1{
 
 .clsTaskCard  { /* Front of task card - task details ###rename to clsTaskCardFront */
   position: relative; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
-  height: 100%;
-  width: 100%;
   backface-visibility: hidden; /* hide the face */
   padding: 1em;
   border-top: 1px solid #DFE2E8;
   font-size: 14px;
   display: flex;
-
-  bottom: 0px;right: 0px;top: 0px;
-  border-right-width: 1px;
-  width: auto;
-  height: auto;
-
 
 }
 
@@ -207,11 +199,6 @@ h1{
 } */
 
 
-/* i.material-icons:hover{
-    color: black;
-    cursor: copy;
-} */
-
 /*hide the <i> icons only shown on hover> */
 i.material-icons {
   display: none;
@@ -233,7 +220,7 @@ i.material-icons {
 
 .material-icons:hover{
   cursor: pointer;
-  /* font-size: 30px; */
+  font-size: 25px;
   color: black;
 
 }
