@@ -86,31 +86,44 @@ h1{
   width: 100%;
   height: 100%;
   /* position: relative; */
-  transition: transform 0.5s;
-  perspective: 600px;
+  transition: transform 0.3s;
+  perspective: 1000px;
   transform-style: preserve-3d; /* inherit the parent element's perspective - without this the face would be flattend with the parent*/
   transform-origin: center right;
 }         
 
 .clsTaskCardBack { /* back of task card - entry form */
   position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
-  height: 100%;
+  height: 99%;
   width: 100%;
-  backface-visibility: hidden; /* hide the face */
+  backface-visibility: hidden;
   padding: 1em;
-  background-color: #aaaaaa;
+  background-color: #AAAA02;
   font-size: 14px;
   transform: rotateY( 180deg );
+  bottom: 27px;
+  right: -4px;
+  left: -3px;
+  top: -4px;
+  border-right-width: 32px;
+  width: auto;
+  height: auto;
 
-  bottom: 0px;right: 0px;top: 0px;
-  border-right-width: 1px;
-  width: 343px;
-  height: 70px;
+
+
 
 }
 
+
+
+
+
+
+
+
+
 .clsTaskCard  { /* Front of task card - task details ###rename to clsTaskCardFront */
-  position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
+  position: relative; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
   height: 100%;
   width: 100%;
   backface-visibility: hidden; /* hide the face */
@@ -121,8 +134,8 @@ h1{
 
   bottom: 0px;right: 0px;top: 0px;
   border-right-width: 1px;
-  width: 343px;
-  height: 70px;
+  width: auto;
+  height: auto;
 
 
 }

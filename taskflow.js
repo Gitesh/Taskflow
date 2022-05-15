@@ -160,9 +160,8 @@ let createPost = () =>
           
 
           <div class="clsTaskCardBack">
-          <input type="date" value="">Due</input>
-          <br><br>
-
+          <label for="inDueDate">Due</label>
+          <input name="inDueDate" type="date" value="">
           <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
           
 
