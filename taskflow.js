@@ -84,30 +84,6 @@ let acceptData = () => {
 //publish the data as a new task
 //------
 
-//create a div element and append it to the 'posts' div on the right
-//we need 1. Parent div, 2. the input, 3. clsTaskCard div with the icons
-// editPost(this) where this is the element that fired the event, eg edit icon
-
-// function createPost() { alert('created');
-
-// let createPost = () => {
-
-//     dropbox4.innerHTML += `
-//     <div id="$[data.title]" draggable="true" ondragstart="drag(event)">       
-//         <span class="clsTaskCard">
-//             <span class="clsTaskCardTitle">${data.title}</span>&nbsp - &nbsp
-//             <span class="clsTaskCardDetail">${data.task_detail}</span>
-//             <span class="clsTaskCardHoverIcons">
-//                 <i onclick="clkCardEditPost(this)" class="fas fa-edit"> </i> 
-//                 <i onclick="clkCardDeletePost(this)" class="fas fa-trash-alt"> </i>
-//                 <i class="fas fa-bomb"></i>
-//             </span>
-//         </span>
-//     <div> <!--END DIV NOTE-->     
-
-//     `; //backticks are template literals, so this will act as a template.
-// }
-
 
 let createPost = () => 
 {
@@ -115,30 +91,6 @@ let createPost = () =>
 
   data.map((x, y) =>
   {
-
-    // return (dropbox4.innerHTML += `
-    // <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">       
-    //     <span class="clsTaskCardAll">
-
-    //         <span class="clsTaskCard">
-    //             <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
-    //             <span class="clsTaskCardDetail">${x.task_detail}</span>
-    //             <span class="clsTaskCardHoverIcons">
-    //                 <i onclick="clkCardEditTitleOrDetail(this)" class="fas fa-edit"> </i> 
-    //                 <i onclick="clkCardDeleteTask(this)" class="fas fa-trash-alt"> </i>
-    //                 <i onclick="clkFlipTaskCardToForm(this)" class="fas fa-bomb"></i>
-    //             </span>
-    //         </span>
-
-    //         <span class="clsTaskCardBack">
-    //                 This is the back face              
-    //         </span>
-
-    //     </span>
-    // <div>
-    // `);
-
-
 
     return (dropbox4.innerHTML += `
     <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">       
@@ -155,7 +107,7 @@ let createPost = () =>
                  
                  </span>
           
-          </div> <!-- front face   |||| clsTaskCard-->
+          </div> <!-- front face clsTaskCard-->
           
           
 
@@ -165,7 +117,7 @@ let createPost = () =>
           <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
           
 
-          </div> <!-- back face ||||   clsTaskCardBack -->
+          </div> <!-- back face clsTaskCardBack -->
         </div>
     </div>
 
@@ -332,7 +284,19 @@ function clkCardEditTitleOrDetail(e) {
 
 
 
+function clkToggleBackgroundAnimation(){
 
+  var setAnimatedBackgroundOnOff = document.getElementsByTagName("Canvas")[0];
+  
+  console.log(setAnimatedBackgroundOnOff);
+  
+  //setAnimatedBackgroundOnOff.classList.toggle("");
+
+  setAnimatedBackgroundOnOff.setAttribute("Style", "Visibility:hidden;");
+
+  console.log(setAnimatedBackgroundOnOff);
+  
+}
 
 
 
