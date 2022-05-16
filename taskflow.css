@@ -94,7 +94,7 @@ h1{
 
 .clsTaskCardBack { /* back of task card - entry form */
   position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
-  height: 100%%;
+  height: 100%;
   /* width: 100%; */
   backface-visibility: hidden;
   padding: 1em;

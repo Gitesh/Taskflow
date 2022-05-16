@@ -343,3 +343,32 @@ function clkSettings(){
 //    var variables can be updated and re-declared within its scope;
 //    let variables can be updated but not re-declared;
 //    const variables can neither be updated nor re-declared.
+//
+//
+//
+// 2. Iterate through tags
+
+// To add a new css file to a page just create a new <link> tag:
+
+// function addCss (url) {
+//     var s = document.createElement('link');
+//     s.rel = 'stylesheet';
+//     s.type = 'text/css';
+//     s.href = url;
+//     document.getElementsByTagName('head')[0].appendChild(s);
+// }
+
+// addCss('http://path/to/stylesheet.css');
+// To remove a css file from a page just remove the <link> to it:
+
+// function removeCss (search) {
+//     var css = document.getElementsByTagName('link');
+//     for (var i=0;i<css.length;i++) {
+//         var c = css[i];
+//         if (c.rel === 'stylesheet' || c.type === 'text/css') {
+//             if (c.href && c.href.match(search)) {
+//                 c.parentNode.removeChild(c);
+//             }
+//         }
+//     }
+// }
