@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <link rel="stylesheet" href="taskflow.css"> 
+    <link rel="stylesheet" href="animated_background/shapes.css" id="idAnimatedBackgroundCSSStylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
@@ -49,7 +50,7 @@ Ice Box <br><br>
 
 </div> <!-- end div4-->
 
-<span class="material-icons">
+<span class="material-icons" onclick="clkExportTasksToLocalFile()">
     save
     </span>
 
@@ -57,18 +58,14 @@ Ice Box <br><br>
         animation
         </span>
 
-<span class="material-icons">
+<span class="material-icons" onclick="clkCounDownTimer()">
     alarm
     </span>
 
 
-<span class="material-icons">
-    pending_actions
-    </span>
+<span class="material-icons" onclick="clkFilterPendingTasks()">pending_actions</span>
 
-<span class="material-icons">
-    settings
-    </span>        
+<span class="material-icons" onclick="clkSettings()">settings</span>        
 
 </section>
 
@@ -76,6 +73,6 @@ Ice Box <br><br>
 
 
 <script src="taskflow.js"> </script>
-
+<script src="animated_background/ribbons.js"></script>
 
 </body>
