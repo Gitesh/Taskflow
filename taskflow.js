@@ -101,9 +101,9 @@ let createPost = () =>
                  <span class="clsTaskCardDetail">${x.task_detail}</span>
                  <span class="clsTaskCardHoverIcons">
                      
-                    <i onclick="clkCardEditTitleOrDetail(this)" class="material-icons">edit</i> 
-                    <i onclick="clkFlipTaskCardToForm(this)" class="material-icons">edit_calendar</i>
-                    <i onclick="clkCardDeleteTask(this)" class="material-icons">delete</i>
+                    <i onclick="clkCardEditTitleOrDetail(this)" title="Edit task" class="material-icons">edit</i> 
+                    <i onclick="clkFlipTaskCardToForm(this)" title="Edit task attributes" class="material-icons">edit_calendar</i>
+                    <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
                  
                  </span>
           
@@ -315,7 +315,7 @@ function clkToggleBackgroundAnimation(){
 
 
 
-function clkCounDownTimer(){
+function clkCountDownTimer(){
   alert("stub for countdown timer");
 };
 
