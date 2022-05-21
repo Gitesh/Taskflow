@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
     <link rel="stylesheet" href="taskflow.css"> 
     <link rel="stylesheet" href="animated_background/shapes.css" id="idAnimatedBackgroundCSSStylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -12,12 +11,12 @@
 
 <section class="container" id="container">
   
- <h1>Taskflow</h1>
+ <h1 id="text3d">Taskflow</h1>
 
     
 <!--- drop boxes --->
 <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-High Impact <br><br>
+<span contenteditable="true">High Impact</span> <br><br>
     <!-- <i onclick="clkBoxAdd('box1')" class="btnAdd">+add</i>  -->
 </div><!--end div1-->
 
@@ -69,8 +68,6 @@ Ice Box <br><br>
 
 
 </section>
-
-
 
 
 <script src="taskflow.js"> </script>

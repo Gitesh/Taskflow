@@ -322,7 +322,29 @@ function clkCountDownTimer(){
 
 
 function clkExportTasksToLocalFile(){
-  alert("stub for saving tasks");
+  console.log("CLICKED stub for saving tasks");
+
+  // Use first element to choose the keys and the order
+  var keys = Object.keys(data[0]);
+
+  // Build header
+  var result = keys.join("\t") + "\n";
+
+  // Add the rows
+  data.forEach(function(obj){
+      result += keys.map(k => obj[k]).join(",") + "\n";
+  });
+
+  console.log(result);
+
+  var hiddenElement = document.createElement('a');  
+  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);  
+  hiddenElement.target = '_blank';  
+    
+  //provide the name for the CSV file to be downloaded  
+  hiddenElement.download = Date.now()+'Taskflow.csv';  
+  hiddenElement.click();  
+
 };
 
 
@@ -347,6 +369,7 @@ function clkSettings(){
 //
 //
 // 2. Iterate through tags
+// 3. Rename title to Task_Title, also use capitals for all headings
 
 // To add a new css file to a page just create a new <link> tag:
 
@@ -372,3 +395,6 @@ function clkSettings(){
 //         }
 //     }
 // }
+
+//
+  // var csvContent = 'title, task_detail, date_due, date_captured, task_tag\n';  
