@@ -35,6 +35,7 @@ function formValidation() {
         acceptData(); // call the acceptData function
 
         input.blur(input.value ="+add"); //clear the input textbox
+
     }
 }
 
@@ -112,11 +113,11 @@ let createPost = () =>
           
 
           <div class="clsTaskCardBack">
-            <label for="inDateDue">Due</label>
-            <input name="inDateDue" type="date" value="">
+            <label for="inpDateDue">Due</label>
+            <input name="inpDateDue" type="date" value="">
             
-            <label for="inDateAdded">Added</label>
-            <input name="inDateAdded" type="date" value="">
+            <label for="inpDateAdded">Added</label>
+            <input name="inpDateAdded" type="date" value="">
             
             <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
           
@@ -127,8 +128,10 @@ let createPost = () =>
 
     `);
 
-
+    
   });
+
+
 }
 
 
@@ -190,16 +193,17 @@ function clkCardDeleteTask(e){
 //edit a post function
 //------
 
-function clkCardEditPost(e){
+// function clkCardEditPost(e){
 
-  //alert(e.parentElement.previousElementSibling.innerHTML); // this is the task detail
-  //alert(e.parentElement.previousElementSibling.previousElementSibling.innerHTML);// this is the title 
+//   //alert(e.parentElement.previousElementSibling.innerHTML); // this is the task detail
+//   //alert(e.parentElement.previousElementSibling.previousElementSibling.innerHTML);// this is the title 
 
-  input.value = e.parentElement.previousElementSibling.previousElementSibling.innerHTML;// this is the title 
+//   input.value = e.parentElement.previousElementSibling.previousElementSibling.innerHTML;// this is the title 
   
-clkCardDeleteTask(e);
+// clkCardDeleteTask(e);
 
-};  
+
+// };  
 
 
 //------
@@ -334,7 +338,7 @@ function clkExportTasksToLocalFile(){
   var keys = Object.keys(data[0]);
 
   // Build header
-  var result = keys.join("\t") + "\n";
+  var result = keys.join(",") + "\n";
 
   // Add the rows
   data.forEach(function(obj){
