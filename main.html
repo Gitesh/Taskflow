@@ -11,12 +11,12 @@
 
 <section class="container" id="container">
   
- <h1 id="text3d">Taskflow</h1>
+ <h1>Taskflow</h1>
 
     
 <!--- drop boxes --->
 <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-<span contenteditable="true">High Impact</span> <br><br>
+<span contenteditable="true" ondragover="" ondrop="">High Impact</span> <br><br>
     <!-- <i onclick="clkBoxAdd('box1')" class="btnAdd">+add</i>  -->
 </div><!--end div1-->
 
@@ -54,11 +54,18 @@ Ice Box <br><br>
 
 <div id="divIconBar">
 
+    <span class="material-icons" title="Upload tasks from CSV" onclick="clkUploadTasksToLocalStorage()">
+        <label>
+            file_upload
+            <input id="uploadCSV" type="file" style="position: fixed; top: -100em" />
+        </label>
+    </span>
+
     <span class="material-icons" title="Download tasks" onclick="clkExportTasksToLocalFile()">save</span>
 
     <span class="material-icons" title="Toggle background animation" onclick="clkToggleBackgroundAnimation()"">animation</span>
 
-    <span class="material-icons" title="Start countdown timer" onclick="clkCountDownTimer()">alarm</span>
+    <span class="material-icons" title="Start countdown timer" onclick="clkCountDownTimer()">hourglass_top</span>
 
     <span class="material-icons" title="Show pending tasks" onclick="clkFilterPendingTasks()">pending_actions</span>
 
@@ -67,7 +74,13 @@ Ice Box <br><br>
 </div>
 
 
+<output id="uploadCSVOutput"></output>
+
+
 </section>
+
+    
+
 
 
 <script src="taskflow.js"> </script>

@@ -112,9 +112,13 @@ let createPost = () =>
           
 
           <div class="clsTaskCardBack">
-          <label for="inDueDate">Due</label>
-          <input name="inDueDate" type="date" value="">
-          <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
+            <label for="inDateDue">Due</label>
+            <input name="inDateDue" type="date" value="">
+            
+            <label for="inDateAdded">Added</label>
+            <input name="inDateAdded" type="date" value="Date()">
+            
+            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
           
 
           </div> <!-- back face clsTaskCardBack -->
@@ -217,7 +221,7 @@ function drop(e) {
 }
 
 //-------------------
-// Edit front of card
+// edit front of card
 //-------------------
 
 function clkCardEditTitleOrDetail(e) {
@@ -316,7 +320,9 @@ function clkToggleBackgroundAnimation(){
 
 
 function clkCountDownTimer(){
-  alert("stub for countdown timer");
+  console.log("CLICKED stub for countdown timer");
+
+  window.open("https://codepen.io/JoeCodesStuff/full/bLbbxK");
 };
 
 
@@ -337,6 +343,7 @@ function clkExportTasksToLocalFile(){
 
   console.log(result);
 
+  //Download the <timestamp>Taskflow.csv file
   var hiddenElement = document.createElement('a');  
   hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);  
   hiddenElement.target = '_blank';  
@@ -357,6 +364,25 @@ function clkFilterPendingTasks(){
 function clkSettings(){
   alert("stub for settings");
 };
+
+
+function clkUploadTasksToLocalStorage(){
+  console.log("CLICKED - stub for file upload")
+
+  var fileInput = document.getElementById("uploadCSV"),
+
+  readFile = function () {
+      var reader = new FileReader();
+      reader.onload = function () {
+          document.getElementById('uploadCSVOutput').innerHTML = reader.result;
+      };
+      // start reading the file. When it is done, calls the onload event defined above.
+      reader.readAsBinaryString(fileInput.files[0]);
+  };
+
+fileInput.addEventListener('change', readFile);
+
+}
 
 
 
@@ -397,4 +423,10 @@ function clkSettings(){
 // }
 
 //
-  // var csvContent = 'title, task_detail, date_due, date_captured, task_tag\n';  
+// var csvContent = 'title, task_detail, date_due, date_captured, task_tag\n';  
+
+//
+// save to local storage
+//
+//https://www.codegrepper.com/code-examples/javascript/save+to+local+storage+javascript
+
