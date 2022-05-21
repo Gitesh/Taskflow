@@ -50,7 +50,7 @@ let data =[];
 
 //create a function called accept data to store the input in the object named data
 let acceptData = () => {
-    data["title"] = input.value;
+    data["Task_Title"] = input.value;
 
     // console.log("TASKFLOW: ",data)
 
@@ -63,7 +63,7 @@ let acceptData = () => {
 
 
     data.push({
-      title: data["title"]=input.value,
+      Task_Title: data["Task_Title"]=input.value,
       task_detail:data["task_detail"]="this is the task",
       date_due: "17/07/2022",
       date_captured: "16/07/2022", 
@@ -97,7 +97,7 @@ let createPost = () =>
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
           <div class="clsTaskCard">
           
-                 <span class="clsTaskCardTitle">${x.title}</span>&nbsp - &nbsp
+                 <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp
                  <span class="clsTaskCardDetail">${x.task_detail}</span>
                  <span class="clsTaskCardHoverIcons">
                      
@@ -116,7 +116,7 @@ let createPost = () =>
             <input name="inDateDue" type="date" value="">
             
             <label for="inDateAdded">Added</label>
-            <input name="inDateAdded" type="date" value="Date()">
+            <input name="inDateAdded" type="date" value="">
             
             <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
           
@@ -256,14 +256,14 @@ function clkCardEditTitleOrDetail(e) {
 
       var cardID = editTitle.parentElement.parentElement.parentElement.id; //get the index id from the parent div
 
-      data[cardID].title = editTitle.innerHTML;
+      data[cardID].Task_Title = editTitle.innerHTML;
       data[cardID].task_detail = editDetail.innerHTML;
 
        
       // data.push({
-      //     //title: data["title"]=editTitle.innerHTML,
+      //     //title: data["Task_Title"]=editTitle.innerHTML,
       //     //task_detail:data["task_detail"]=editDetail.innerHTML,
-      //     title: data[cardID].title=editTitle.innerHTML,
+      //     title: data[cardID].Task_Title=editTitle.innerHTML,
       //     task_detail:data[cardID].task_detail=editDetail.innerHTML,
           
       //     date_due: "17/07/2022",
@@ -395,7 +395,8 @@ fileInput.addEventListener('change', readFile);
 //
 //
 // 2. Iterate through tags
-// 3. Rename title to Task_Title, also use capitals for all headings
+// [/] Rename title to Task_Title
+// [ ] Also use capitals for all headings
 
 // To add a new css file to a page just create a new <link> tag:
 
