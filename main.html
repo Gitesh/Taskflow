@@ -54,10 +54,10 @@ Ice Box <br><br>
 
 <div id="divIconBar">
 
-    <span class="material-icons" title="Upload tasks from CSV" onclick="clkUploadTasksToLocalStorage()">
-        <label>
-            file_upload
-            <input id="uploadCSV" type="file" style="position: fixed; top: -100em" />
+    <span class="material-icons" title="Upload tasks from CSV" >
+        <label for="uploadCSV" click="preventDefault()">
+            file_upload 
+            <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
         </label>
     </span>
 
