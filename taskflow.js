@@ -462,55 +462,37 @@ function convertCSVtoJSON(uploadedCSV) {
 
 
 
+//-------------------------------------------------------------------------
+// DOCUMENTATION
+//-------------------------------------------------------------------------
+
+// Fieldnames 
+//        - Task_Title = write the OUTCOME from completing a task
+//        - task_detail = write the NEXT realistic step in the task
+//        - date_due = when you need to DELETE it by
+//        - date_captured = auto populated, used for analytics
+//        - task_tag = this is the PROJECT used to filter all tasks by project
+
+
+// Variables and Constants
+
+// JS Functions
+
+
+// CSS
 
 
 
-
-
-
-// todo
-// 1. Refactor Vars with Let{} blocks https://www.freecodecamp.org/news/var-let-and-const-whats-the-difference/
-//    var variables can be updated and re-declared within its scope;
-//    let variables can be updated but not re-declared;
-//    const variables can neither be updated nor re-declared.
-//
-//
-//
-// 2. Iterate through tags
-// [/] Rename title to Task_Title
-// [ ] Also use capitals for all headings
-
-// To add a new css file to a page just create a new <link> tag:
-
-// function addCss (url) {
-//     var s = document.createElement('link');
-//     s.rel = 'stylesheet';
-//     s.type = 'text/css';
-//     s.href = url;
-//     document.getElementsByTagName('head')[0].appendChild(s);
-// }
-
-// addCss('http://path/to/stylesheet.css');
-// To remove a css file from a page just remove the <link> to it:
-
-// function removeCss (search) {
-//     var css = document.getElementsByTagName('link');
-//     for (var i=0;i<css.length;i++) {
-//         var c = css[i];
-//         if (c.rel === 'stylesheet' || c.type === 'text/css') {
-//             if (c.href && c.href.match(search)) {
-//                 c.parentNode.removeChild(c);
-//             }
-//         }
-//     }
-// }
-
-//
-// var csvContent = 'title, task_detail, date_due, date_captured, task_tag\n';  
-
-//
-// save to local storage
-//
-//https://www.codegrepper.com/code-examples/javascript/save+to+local+storage+javascript
+//-------------------------------------------------------------------------
+// TO DO - ironic because soon I'll be able to us the app when it's stable
+//-------------------------------------------------------------------------
 
 // [ ] Fix bug when spreadsheet is uploaded with " it adds quotes to the whole field.
+// [ ] Show age of tasks on card - to help reprioritise each day.
+// [x] Rename title to Task_Title
+// [ ] Also use capitals for all headings
+// [ ] Refactor Vars with Let{} blocks https://www.freecodecamp.org/news/var-let-and-const-whats-the-difference/
+//        - var variables can be updated and re-declared within its scope;
+//        - let variables can be updated but not re-declared;
+//        - const variables can neither be updated nor re-declared.
+
