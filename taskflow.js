@@ -3,7 +3,7 @@
 let form = document.getElementById("form");
 let input = document.getElementById("input");
 let msg = document.getElementById("idErrorMessage");
-let posts = document.getElementById("posts");
+//let posts = document.getElementById("posts");
 
 console.log("TASKFLOW:js loaded")
 
@@ -338,11 +338,11 @@ function clkExportTasksToLocalFile(){
   var keys = Object.keys(data[0]);
 
   // Build header
-  var result = keys.join(",") + "\n";
+  var result = keys.join(", ") + "\n";
 
   // Add the rows
   data.forEach(function(obj){
-      result += keys.map(k => obj[k]).join(",") + "\n";
+      result += keys.map(k => obj[k]).join(", ") + "\n";
   });
 
   console.log(result);
@@ -383,23 +383,73 @@ function clkUploadTasksToLocalStorage(){
   readFile = function () {
       var reader = new FileReader();
       reader.onload = function () {
+  
         
-        var uploadedData = convertCSVtoJSON(reader.result);
+//        convertCSVtoJSON(reader.result);
+
+      convertCSVtoJSON2 (reader.result);
+
         
-        //console.log(uploadedData);  
+
 
         // document.getElementById('uploadCSVOutput').innerHTML = reader.result;
       };
       // start reading the file. When it is done, calls the onload event defined above.
       reader.readAsBinaryString(fileInput.files[0]);
 
-
   };
 
 fileInput.addEventListener('change', readFile);
 
-
 }
+
+
+function convertCSVtoJSON2(csv) {
+
+  //lop off any trailing or starting whitespace
+  csv = csv.trim();
+
+  //prep
+  let lines = csv.split('\n'),
+      headers,
+      output = [];
+
+  console.log("TASKFLOW headers: ", headers);
+  console.log("TASKFLOW lines: ", lines);
+  console.log("TASKFLOW output: ", output[0]);
+
+
+  //iterate over lines...
+  lines.forEach((line, i) => {
+
+      //...break line into tab-separated parts
+      // let parts = line.split(/\t+/);
+      let parts = line.split(', ');
+
+      //...if not the headers line, push to output. By this time
+     //we have the headers logged, so just match the value to
+     //header of the same index
+      if (i) {
+          let obj = {};
+          parts.forEach((part, i) => obj[headers[i]] = part);
+          output.push(obj);
+
+      //...else if headers line, log headers
+      } else
+          headers = parts;
+  })
+
+  //done
+  console.log(output);
+  return output;
+}
+
+
+
+
+
+
+
 
 
 function convertCSVtoJSON(thisFile){
@@ -407,28 +457,36 @@ function convertCSVtoJSON(thisFile){
   csv = thisFile;
 
   console.log("TASKFLOW CSV: ",csv);
-  
-  // const fs = require("fs");
-  // csv = fs.readFileSync("fileInput");
-  
+   
   const array = csv.toString().split("\n");
+
+  console.log("TASKFLOW csv.toString().split('newline'): ",array);
+  
   
   /* Store the converted result into an array */
   const csvToJsonResult = [];
   
+  console.log("TASLKFLOW csvToJsonResult [initialised]: ", csvToJsonResult);
+  
   /* Store the CSV column headers into seprate variable */
   const headers = array[0].split(", ")
   
+  console.log("TASKFLOW headers :",headers);
+
   /* Iterate over the remaning data rows */
   for (let i = 1; i < array.length - 1; i++) {
   /* Empty object to store result in key value pair */
-  const jsonObject = {}
+  const jsonObject = {};
+  console.log("TASLKFLOW jsonObject {initialised}: ", jsonObject);
   /* Store the current array element */
   const currentArrayString = array[i]
   let string = ''
+  console.log("TASKFLOW currentArrayString :",currentArrayString);
+
   
   let quoteFlag = 0
   for (let character of currentArrayString) {
+    console.log("TASKFLOW character: ", character);
     if (character === '"' && quoteFlag === 0) {
         quoteFlag = 1
     }
@@ -437,9 +495,29 @@ function convertCSVtoJSON(thisFile){
     if (character !== '"') string += character
   }
   
+
+
+  console.log("TASKFLOW string: ", string);
+
   let jsonProperties = string.split("|")
-  
+
+  console.log("TASKFLOW jsonProperties: ",jsonProperties);
+  console.log("TASKFLOW jsonProperties type: ", typeof(jsonProperties));
+  console.log("TASKFLOW: jsonProperties[0] ", jsonProperties[0]);
+  console.log("TASKFLOW: jsonProperties[1] ", jsonProperties[1]);
+  console.log("TASKFLOW: jsonProperties[2] ", jsonProperties[2]);
+  console.log("TASKFLOW: jsonProperties[3] ", jsonProperties[3]);
+
+  jsonProperties[1] = "test 2, this is the task, 17/07/2022, 16/07/2022, career";
+  jsonProperties[2] = "test 3, this is the task, 17/07/2022, 16/07/2022, career";
+  jsonProperties[3] = "test 2, this is the task, 17/07/2022, 16/07/2022, career";
+  jsonProperties[4] = "test 2, this is the task, 17/07/2022, 16/07/2022, career";
+
+
   for (let j in headers) {
+    console.log("TASKFLOW for j in headers: ",j);
+    console.log(typeof(j));
+    console.log("TASKFLOW in headers loop jsonProperties[j]",jsonProperties[j])
     if (jsonProperties[j].includes(", ")) {
     jsonObject[headers[j]] = jsonProperties[j]
       .split(", ").map(item => item.trim())
@@ -450,9 +528,10 @@ function convertCSVtoJSON(thisFile){
   csvToJsonResult.push(jsonObject)
   }
   /* Convert the final array to JSON */
-  const json = JSON.stringify(csvToJsonResult);
+  const nowItsJson = JSON.stringify(csvToJsonResult);
 
-  console.log("TASKFLOW JSON ::::::::::", json)
+  console.log("TASKFLOW nitItsJsaon: ", nowItsJson);
+
     
 }
 
