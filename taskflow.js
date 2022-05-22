@@ -5,7 +5,11 @@ let input = document.getElementById("input");
 let msg = document.getElementById("idErrorMessage");
 //let posts = document.getElementById("posts");
 
-console.log("TASKFLOW:js loaded")
+
+strDate = new Date();
+strDate = strDate.toISOString();
+
+console.log("TASKFLOW STARTED:js loaded", strDate)
 
 //add event listener to the form
 
@@ -51,30 +55,19 @@ let data =[];
 
 //create a function called accept data to store the input in the object named data
 let acceptData = () => {
-    data["Task_Title"] = input.value;
-
-    // console.log("TASKFLOW: ",data)
-
-    // data["task_detail"]="this is the task";
-    // data["date_due"]="17/07/2022";
-    // data["date_captured"]="16/07/2022"; 
-    // data["tag_project"]="career";
-
-    // console.log("TASKFLOW: ",data)
-
-
+    
     data.push({
       Task_Title: data["Task_Title"]=input.value,
-      task_detail:data["task_detail"]="this is the task",
-      date_due: "17/07/2022",
-      date_captured: "16/07/2022", 
+      task_detail: data["task_detail"]="this is the task",
+      date_due: "",
+      date_captured: strDate, 
       task_tag:"career",
     })
 
     localStorage.setItem("data", JSON.stringify(data));
 
 
-    console.log("TASKFLOW: ",data)
+    console.log("TASKFLOW acceptData +add: ",data)
     
     createPost();
 
@@ -116,8 +109,9 @@ let createPost = () =>
             <label for="inpDateDue">Due</label>
             <input name="inpDateDue" type="date" value="">
             
-            <label for="inpDateAdded">Added</label>
-            <input name="inpDateAdded" type="date" value="">
+            <label for="inpDateCaptured">Added</label>
+            <input name="inpDateCaptured" type="date" value="">
+            Added on (${x.date_captured})
             
             <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
           
@@ -338,11 +332,11 @@ function clkExportTasksToLocalFile(){
   var keys = Object.keys(data[0]);
 
   // Build header
-  var result = keys.join(", ") + "\n";
+  var result = keys.join(",") + "\n";
 
   // Add the rows
   data.forEach(function(obj){
-      result += keys.map(k => obj[k]).join(", ") + "\n";
+      result += keys.map(k => obj[k]).join(",") + "\n";
   });
 
   console.log(result);
@@ -387,7 +381,7 @@ function clkUploadTasksToLocalStorage(){
         
 //        convertCSVtoJSON(reader.result);
 
-      convertCSVtoJSON2 (reader.result);
+      convertCSVtoJSON (reader.result);
 
         
 
@@ -403,28 +397,40 @@ fileInput.addEventListener('change', readFile);
 
 }
 
-
-function convertCSVtoJSON2(csv) {
+//Convert CSV to OBJECT 
+function convertCSVtoJSON(uploadedCSV) {
 
   //lop off any trailing or starting whitespace
-  csv = csv.trim();
+  csv = uploadedCSV.trim();
+ 
+  //check for special characters
+  let string = ''
+  let quoteFlag = 0
+  for (let character of csv) {
+    //console.log("TASKFLOW character: ", character);
+    if (character === '"' && quoteFlag === 0) {
+        quoteFlag = 1
+    }
+    else if (character === '"' && quoteFlag == 1) quoteFlag = 0
+    if (character === ',' && quoteFlag === 0) character = '|'
+    if (character !== '"') string += character
+  }
+
 
   //prep
   let lines = csv.split('\n'),
       headers,
       output = [];
 
-  console.log("TASKFLOW headers: ", headers);
-  console.log("TASKFLOW lines: ", lines);
-  console.log("TASKFLOW output: ", output[0]);
-
-
+  //console.log("TASKFLOW headers: ", headers);
+  //console.log("TASKFLOW lines: ", lines);
+  
   //iterate over lines...
   lines.forEach((line, i) => {
 
       //...break line into tab-separated parts
       // let parts = line.split(/\t+/);
-      let parts = line.split(', ');
+      let parts = line.split(',');
 
       //...if not the headers line, push to output. By this time
      //we have the headers logged, so just match the value to
@@ -440,8 +446,16 @@ function convertCSVtoJSON2(csv) {
   })
 
   //done
-  console.log(output);
+  //console.log("TASKFLOW convert CSV to Object: ",output);
+
+  // Store the uploaded data into local storage replacing data object
+  localStorage.setItem("data",JSON.stringify(output));
+  console.log("TASKFLOW convert data: ",data);
+  document. location. reload()
+
   return output;
+
+  
 }
 
 
@@ -450,90 +464,6 @@ function convertCSVtoJSON2(csv) {
 
 
 
-
-
-function convertCSVtoJSON(thisFile){
-
-  csv = thisFile;
-
-  console.log("TASKFLOW CSV: ",csv);
-   
-  const array = csv.toString().split("\n");
-
-  console.log("TASKFLOW csv.toString().split('newline'): ",array);
-  
-  
-  /* Store the converted result into an array */
-  const csvToJsonResult = [];
-  
-  console.log("TASLKFLOW csvToJsonResult [initialised]: ", csvToJsonResult);
-  
-  /* Store the CSV column headers into seprate variable */
-  const headers = array[0].split(", ")
-  
-  console.log("TASKFLOW headers :",headers);
-
-  /* Iterate over the remaning data rows */
-  for (let i = 1; i < array.length - 1; i++) {
-  /* Empty object to store result in key value pair */
-  const jsonObject = {};
-  console.log("TASLKFLOW jsonObject {initialised}: ", jsonObject);
-  /* Store the current array element */
-  const currentArrayString = array[i]
-  let string = ''
-  console.log("TASKFLOW currentArrayString :",currentArrayString);
-
-  
-  let quoteFlag = 0
-  for (let character of currentArrayString) {
-    console.log("TASKFLOW character: ", character);
-    if (character === '"' && quoteFlag === 0) {
-        quoteFlag = 1
-    }
-    else if (character === '"' && quoteFlag == 1) quoteFlag = 0
-    if (character === ', ' && quoteFlag === 0) character = '|'
-    if (character !== '"') string += character
-  }
-  
-
-
-  console.log("TASKFLOW string: ", string);
-
-  let jsonProperties = string.split("|")
-
-  console.log("TASKFLOW jsonProperties: ",jsonProperties);
-  console.log("TASKFLOW jsonProperties type: ", typeof(jsonProperties));
-  console.log("TASKFLOW: jsonProperties[0] ", jsonProperties[0]);
-  console.log("TASKFLOW: jsonProperties[1] ", jsonProperties[1]);
-  console.log("TASKFLOW: jsonProperties[2] ", jsonProperties[2]);
-  console.log("TASKFLOW: jsonProperties[3] ", jsonProperties[3]);
-
-  jsonProperties[1] = "test 2, this is the task, 17/07/2022, 16/07/2022, career";
-  jsonProperties[2] = "test 3, this is the task, 17/07/2022, 16/07/2022, career";
-  jsonProperties[3] = "test 2, this is the task, 17/07/2022, 16/07/2022, career";
-  jsonProperties[4] = "test 2, this is the task, 17/07/2022, 16/07/2022, career";
-
-
-  for (let j in headers) {
-    console.log("TASKFLOW for j in headers: ",j);
-    console.log(typeof(j));
-    console.log("TASKFLOW in headers loop jsonProperties[j]",jsonProperties[j])
-    if (jsonProperties[j].includes(", ")) {
-    jsonObject[headers[j]] = jsonProperties[j]
-      .split(", ").map(item => item.trim())
-    }
-    else jsonObject[headers[j]] = jsonProperties[j]
-  }
-  /* Push the genearted JSON object to resultant array */
-  csvToJsonResult.push(jsonObject)
-  }
-  /* Convert the final array to JSON */
-  const nowItsJson = JSON.stringify(csvToJsonResult);
-
-  console.log("TASKFLOW nitItsJsaon: ", nowItsJson);
-
-    
-}
 
 
 
@@ -583,3 +513,4 @@ function convertCSVtoJSON(thisFile){
 //
 //https://www.codegrepper.com/code-examples/javascript/save+to+local+storage+javascript
 
+// [ ] Fix bug when spreadsheet is uploaded with " it adds quotes to the whole field.
