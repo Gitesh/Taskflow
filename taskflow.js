@@ -150,8 +150,42 @@ function clkFlipTaskCardToTask(e){
 }
 
 
+////////
+//
+// Flip container
+//
+////////
 
-//immedinately invoked function expression to reload tasks
+
+function clkFlipToCountDownTimer(){
+
+  //console.log("TASKFLOW e: click flip",e);
+  console.log("TASKFLOW: clkFlipToCountDownTimer");
+
+  //var cardID = e.parentElement.parentElement.parentElement.parentElement.id; //get the index id from the parent div
+  //console.log("TASKFLOW: ", cardID);
+  //  console.log(e.parentElement.parentElement.parentElement.classList);// this is the clsTasKCardAll span
+
+  // var setClassToFlipped = e.parentElement.parentElement.parentElement
+
+//  const setClassToFlipped = document.getElementsByClassName("clsContainerFront");
+//  console.log("TASKFLOW : setClassToFlipped:", setClassToFlipped);
+//  setClassToFlipped.classList.toggle("clsContainerBack");
+
+//document.getElementsByClassName("clsContainerFront").classList.toggle("is-flipped");
+
+
+document.getElementById("idContainerAll").classList.toggle("is-flipped");
+
+}
+
+
+
+
+
+
+
+//immediately invoked function expression to reload tasks
 
 (() => {
   data = JSON.parse(localStorage.getItem("data")) || [];
@@ -317,11 +351,11 @@ function clkToggleBackgroundAnimation(){
 
 
 
-function clkCountDownTimer(){
-  console.log("CLICKED stub for countdown timer");
+// function clkCountDownTimer(){
+//   console.log("CLICKED stub for countdown timer");
 
-  window.open("https://codepen.io/JoeCodesStuff/full/bLbbxK");
-};
+//   window.open("https://codepen.io/JoeCodesStuff/full/bLbbxK");
+// };
 
 
 
