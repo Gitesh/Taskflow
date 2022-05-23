@@ -113,7 +113,7 @@ let createPost = () =>
             <input name="inpDateCaptured" type="date" value="">
             Added on (${x.date_captured})
             
-            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)">keyboard_double_arrow_right</span>
+            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
           
 
           </div> <!-- back face clsTaskCardBack -->
@@ -159,23 +159,10 @@ function clkFlipTaskCardToTask(e){
 
 function clkFlipToCountDownTimer(){
 
-  //console.log("TASKFLOW e: click flip",e);
   console.log("TASKFLOW: clkFlipToCountDownTimer");
+  
+  document.getElementById("idContainerAll").classList.toggle("is-flipped");
 
-  //var cardID = e.parentElement.parentElement.parentElement.parentElement.id; //get the index id from the parent div
-  //console.log("TASKFLOW: ", cardID);
-  //  console.log(e.parentElement.parentElement.parentElement.classList);// this is the clsTasKCardAll span
-
-  // var setClassToFlipped = e.parentElement.parentElement.parentElement
-
-//  const setClassToFlipped = document.getElementsByClassName("clsContainerFront");
-//  console.log("TASKFLOW : setClassToFlipped:", setClassToFlipped);
-//  setClassToFlipped.classList.toggle("clsContainerBack");
-
-//document.getElementsByClassName("clsContainerFront").classList.toggle("is-flipped");
-
-
-document.getElementById("idContainerAll").classList.toggle("is-flipped");
 
 }
 
@@ -217,22 +204,6 @@ function clkCardDeleteTask(e){
 };  
 
 
-//------
-//edit a post function
-//------
-
-// function clkCardEditPost(e){
-
-//   //alert(e.parentElement.previousElementSibling.innerHTML); // this is the task detail
-//   //alert(e.parentElement.previousElementSibling.previousElementSibling.innerHTML);// this is the title 
-
-//   input.value = e.parentElement.previousElementSibling.previousElementSibling.innerHTML;// this is the title 
-  
-// clkCardDeleteTask(e);
-
-
-// };  
-
 
 //------
 // add a new card
@@ -270,7 +241,6 @@ function clkCardEditTitleOrDetail(e) {
   editTitle.setAttribute("class", "clsTaskCardTitleEdit");
   editDetail.setAttribute("class", "clsTaskCardDetailEdit");
 
-//    editTitle.className = "clsTaskCardTitleEdit"
 
   //document.body.setAttribute('contenteditable', 'true');
   document.onkeydown = function (e) {
@@ -349,13 +319,6 @@ function clkToggleBackgroundAnimation(){
   
 };
 
-
-
-// function clkCountDownTimer(){
-//   console.log("CLICKED stub for countdown timer");
-
-//   window.open("https://codepen.io/JoeCodesStuff/full/bLbbxK");
-// };
 
 
 

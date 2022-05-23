@@ -148,13 +148,15 @@ h1{
   /* width: 100%; */
   backface-visibility: hidden;
   padding: 1em;
-  background-color: #AAAA02;
+  background-color: #f1ea1b;
+  border-radius: 20px;
+  box-shadow: 4px 3px 7px 2px #00000040;
   font-size: 14px;
   transform: rotateY( 180deg );
   bottom: 0px;
-  right: -4px;
-  left: -4px;
-  top: -4px;
+  right: 0px;
+  left: 0px;
+  top: 0px;
   width: auto;
   height: auto;
 }
