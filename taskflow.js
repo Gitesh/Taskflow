@@ -468,22 +468,24 @@ function convertCSVtoJSON(uploadedCSV) {
 
 
 function clkPlayAudio(sound){
- console.log("TASKFLOW: playaduio",sound); 
+ console.log("TASKFLOW: playaudio",sound); 
 //  alert(sound);
+ 
+ var audioElement= document.getElementById(sound);
 
- var snd = document.getElementById(sound);
+ console.log("TASKFLOW audioelement: ",audioElement);
+     if (audioElement.paused) {
+         audioElement.play();
+         console.log("TASKFLOW audio element play: ",audioElement);
 
- console.log(snd);
- snd.play();
+     }
+     else {
+         audioElement.pause();
 
+         console.log("TASKFLOW audio element pause: ",audioElement);
 
-//  switch(sound){
-//     case "forest": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/forest.mp3"); break;
-//     case "ocean": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/ocean.mp3"); break;
-//     case "thunderstorms": snd.play("https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/rain.mp3"); break;
-//     case "peace": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/peace.mp3"); break;
-//     case "cafe": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/cafe.mp3"); break;
-//   };
+     } 
+
 };
 
 
@@ -501,6 +503,10 @@ function clkPlayAudio(sound){
 //        - date_due = when you need to DELETE it by
 //        - date_captured = auto populated, used for analytics
 //        - task_tag = this is the PROJECT used to filter all tasks by project
+
+
+// Source credits
+// [audio loops] https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/
 
 
 // Variables and Constants
