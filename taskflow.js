@@ -530,4 +530,7 @@ function clkPlayAudio(sound){
 //        - var variables can be updated and re-declared within its scope;
 //        - let variables can be updated but not re-declared;
 //        - const variables can neither be updated nor re-declared.
-// [ ] Add last edited date
+// [ ] Field - Add last edited date
+// [ ] Toggle edit icon when in edit task mode
+// [ ] Activate sound icons to show which are playing
+// [ ] Workflow - should activate enter task detail after entering new task heading
