@@ -8,6 +8,16 @@ let msg = document.getElementById("idErrorMessage");
 
 strDate = new Date();
 strDate = strDate.toISOString();
+strDay = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+strToday = new Date();
+
+// alert(strToday.getDay());
+
+strToday = strDay[strToday.getDay()];
+
+// alert(strToday);
+
+document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 
 console.log("TASKFLOW STARTED:js loaded", strDate)
 
