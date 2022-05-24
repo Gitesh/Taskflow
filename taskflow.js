@@ -457,6 +457,28 @@ function convertCSVtoJSON(uploadedCSV) {
 
 
 
+function clkPlayAudio(sound){
+ console.log("TASKFLOW: playaduio",sound); 
+//  alert(sound);
+
+ var snd = document.getElementById(sound);
+
+ console.log(snd);
+ snd.play();
+
+
+//  switch(sound){
+//     case "forest": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/forest.mp3"); break;
+//     case "ocean": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/ocean.mp3"); break;
+//     case "thunderstorms": snd.play("https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/rain.mp3"); break;
+//     case "peace": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/peace.mp3"); break;
+//     case "cafe": $audio.attr("src", "https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/cafe.mp3"); break;
+//   };
+};
+
+
+
+
 
 
 //-------------------------------------------------------------------------
