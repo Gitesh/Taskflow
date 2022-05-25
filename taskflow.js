@@ -3,8 +3,6 @@
 let form = document.getElementById("form");
 let input = document.getElementById("input");
 let msg = document.getElementById("idErrorMessage");
-//let posts = document.getElementById("posts");
-
 
 strDate = new Date();
 strDate = strDate.toISOString();
@@ -22,7 +20,6 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 console.log("TASKFLOW STARTED:js loaded", strDate)
 
 //add event listener to the form
-
 form.addEventListener("submit", (e) => {
     e.preventDefault();
     console.log("TASKFLOW: submit button clicked");
@@ -58,9 +55,7 @@ function formValidation() {
 //store input field into a new object called data
 //------
 
-//create empty data object
-// let data = {};
-
+//create empty data object to store tasks
 let data =[];
 
 //create a function called accept data to store the input in the object named data
@@ -76,7 +71,6 @@ let acceptData = () => {
 
     localStorage.setItem("data", JSON.stringify(data));
 
-
     console.log("TASKFLOW acceptData +add: ",data)
     
     createPost();
@@ -87,8 +81,6 @@ let acceptData = () => {
 //------
 //publish the data as a new task
 //------
-
-
 let createPost = () => 
 {
   dropbox4.innerHTML ="";
@@ -141,7 +133,6 @@ let createPost = () =>
 
 
 function clkFlipTaskCardToForm(e){
-
   //var cardID = e.parentElement.parentElement.parentElement.parentElement.id; //get the index id from the parent div
   //console.log("TASKFLOW: ", cardID);
   //  console.log(e.parentElement.parentElement.parentElement.classList);// this is the clsTasKCardAll span
@@ -149,6 +140,9 @@ function clkFlipTaskCardToForm(e){
   var setClassToFlipped = e.parentElement.parentElement.parentElement
 
   setClassToFlipped.classList.toggle("is-flipped");
+  
+
+
 
 }
 
@@ -156,7 +150,19 @@ function clkFlipTaskCardToForm(e){
 function clkFlipTaskCardToTask(e){
 
   var setClassToUnFlipped = e.parentElement.parentElement
+  
   setClassToUnFlipped.classList.toggle("is-flipped");
+
+  
+  // const setFrontToInvisible = document.getElementsByClass("clsContainerFront");
+  // setFrontToInvisible.style.visibility = 'hidden';
+
+  // const setBackToVisible = document.getElementsByClass("clsContainerBack");
+  // setBackVisible.style.visibility = 'visible';
+
+  // console.log("TASKFLOW setFrontToInvisible: ",setFrontToInvisible);
+  // console.log("TASKFLOW setBackToVisible: ",setBackToVisible);
+
 }
 
 
@@ -466,23 +472,46 @@ function convertCSVtoJSON(uploadedCSV) {
 }
 
 
-
+////////
+//  play the audio loop which is selected by passing the div
+////////
 function clkPlayAudio(sound){
- console.log("TASKFLOW: playaudio",sound); 
-//  alert(sound);
+ 
+ // console.log("TASKFLOW: playaudio",sound); 
  
  var audioElement= document.getElementById(sound);
 
  console.log("TASKFLOW audioelement: ",audioElement);
      if (audioElement.paused) {
          audioElement.play();
-         console.log("TASKFLOW audio element play: ",audioElement);
+   //      console.log("TASKFLOW audio element play: ",audioElement);
+
+
+        //--change the icon colour, selected as the sibling element of the audio
+         var strChildElement = document.getElementById(sound).nextElementSibling;
+
+         strChildElement.style.color = "black";
+         
+   //      console.log("Taskflow child:", strChildElement);
+
 
      }
      else {
-         audioElement.pause();
+         audioElement.pause();  //pause the audio loop
 
-         console.log("TASKFLOW audio element pause: ",audioElement);
+        //  console.log("TASKFLOW audio element pause: ",audioElement);
+
+        //--change the icon colour--
+         var strChildElement = document.getElementById(sound).nextElementSibling;
+
+         strChildElement.style.color = "grey";
+         
+        //  console.log("Taskflow child:", strChildElement);
+
+
+
+
+
 
      } 
 
@@ -534,3 +563,4 @@ function clkPlayAudio(sound){
 // [ ] Toggle edit icon when in edit task mode
 // [ ] Activate sound icons to show which are playing
 // [ ] Workflow - should activate enter task detail after entering new task heading
+// [x] css card flip elements on back face clicks still active. FIX add z plane to back
