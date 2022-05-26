@@ -12,7 +12,7 @@ body {
     align-items: center;
     color: #0f0f0f;
     text-align: center;
-    font-size: 130%;
+    /* font-size: 130%; */
 }
 
 .container {
@@ -32,6 +32,7 @@ h1{
   color: white;
   font-weight: bold;
   padding:10px;
+  font-size: 130%;
 }
 
 #idTaskflowTodaySubTitle {
@@ -39,9 +40,8 @@ h1{
     color: white;
     font-weight: bold;
     padding:10px;
-0
+    font-size: 130%;
   }
-
 
 
 
@@ -55,6 +55,9 @@ h1{
     background-color: #fefefe;
     margin: 25px;
     box-shadow: 1px 10px 20px -20px #514;
+    color:#333333;
+    font-size: 130%;
+    
 
 }
 
@@ -162,7 +165,7 @@ h1{
 
 .clsContainerBack { /* back of task card - entry form */
   position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
-  height: 645px;
+  /* height: 645px; */
   /* width: 100%; */
   backface-visibility: hidden;
   /* padding: 1em; */
@@ -174,8 +177,8 @@ h1{
   right: 0px;
   left: 0px;
   top: 0px;
-  /* width: auto;
-  height: auto; */
+  width: auto;
+  height: auto;
 
   transform: translateZ(-1px) rotateY(180deg);
 
@@ -284,6 +287,7 @@ i.material-icons {
 /* display the icons on hover */
 .clsTaskCard:hover .material-icons{
   display:contents;
+  
 
 }
 
@@ -315,6 +319,7 @@ i.material-icons {
   min-height: 48px; /*same size as hover icons to avoid jitter */
   align-content: center;
   position: absolute;
+  font-size: xx-large;
 }
 
 
