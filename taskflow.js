@@ -63,7 +63,7 @@ let acceptData = () => {
     
     data.push({
       Task_Title: data["Task_Title"]=input.value,
-      task_detail: data["task_detail"]="this is the task",
+      task_detail: data["task_detail"]="[Click edit to enter task detail]",
       date_due: "",
       date_captured: strDate, 
       task_tag:"career",
@@ -108,15 +108,16 @@ let createPost = () =>
           
 
           <div class="clsTaskCardBack">
-            <label for="inpDateDue">Due</label>
-            <input name="inpDateDue" type="date" value="">
-            
-            <label for="inpDateCaptured">Added</label>
-            <input name="inpDateCaptured" type="date" value="">
-            Added on (${x.date_captured})
-            
             <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
           
+            <label for="inpDateDue">Due</label>
+              <input name="inpDateDue" type="date" value="${x.date_due}">
+          
+            <label for="inpTaskTag">Tag</label>
+              <input name="inpTaskTag" type="text" value="${x.task_tag}">
+ 
+            <BR>
+              Created (${x.date_captured})         
 
           </div> <!-- back face clsTaskCardBack -->
         </div>
@@ -140,10 +141,6 @@ function clkFlipTaskCardToForm(e){
   var setClassToFlipped = e.parentElement.parentElement.parentElement
 
   setClassToFlipped.classList.toggle("is-flipped");
-  
-
-
-
 }
 
 
@@ -185,9 +182,6 @@ function clkFlipToCountDownTimer(){
 
 
 
-
-
-
 //immediately invoked function expression to reload tasks
 
 (() => {
@@ -197,7 +191,17 @@ function clkFlipToCountDownTimer(){
 })();
 
 
-
+////////
+// Edit headings on double click. Sets content to editable for a short time
+////////
+function listenForDoubleClick(element) {
+  element.contentEditable = true;
+  setTimeout(function() {
+    if (document.activeElement !== element) {
+      element.contentEditable = false;
+    }
+  }, 300);
+}
 
 //------
 //delete a post function
@@ -548,19 +552,46 @@ function clkPlayAudio(sound){
 
 
 //-------------------------------------------------------------------------
+//
 // TO DO - ironic because soon I'll be able to us the app when it's stable
+//
 //-------------------------------------------------------------------------
 
-// [ ] Fix bug when spreadsheet is uploaded with " it adds quotes to the whole field.
-// [ ] Show age of tasks on card - to help reprioritise each day.
-// [x] Rename title to Task_Title
-// [ ] Also use capitals for all headings
+// ----REFACTOR CODE----
 // [ ] Refactor Vars with Let{} blocks https://www.freecodecamp.org/news/var-let-and-const-whats-the-difference/
 //        - var variables can be updated and re-declared within its scope;
 //        - let variables can be updated but not re-declared;
 //        - const variables can neither be updated nor re-declared.
-// [ ] Field - Add last edited date
-// [ ] Toggle edit icon when in edit task mode
-// [ ] Activate sound icons to show which are playing
+
+
 // [ ] Workflow - should activate enter task detail after entering new task heading
-// [x] css card flip elements on back face clicks still active. FIX add z plane to back
+
+// ----DATA SCHEMA----
+// [/] Rename title to Task_Title
+// [ ] Also use capitals for all headings
+
+
+// ----CSV DOWNLOAD/UPLOAD----
+// [ ] bug in csv export / import - commas within a field are treated as delimiters
+// [ ] Fix bug when spreadsheet is uploaded with " it adds quotes to the whole field.
+// https://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript-which-contains-comma-in-data
+
+// ----TASK FRONT----
+// [ ] show total number of tasks
+// [ ] separate deleted tasks and tasks marked 'completed'. 
+// [ ] Toggle edit icon when in edit task mode
+// [ ] Show age of tasks on card - to help reprioritise each day.
+
+
+// ----TASK BACK FORM----
+// [ ] output all fields on task back
+// [ ] Field - Add last edited date
+// [/] css card flip elements on back face clicks still active. FIXED add z plane to back
+
+
+// ----TIMELINE------
+// [ ] toggle completed tasks from the timeline to reopen (and remove from the timeline)
+// [ ] include only completed tasks in the historical timline view
+
+// ----POMODORO----
+// [/] Activate sound icons to show which are playing

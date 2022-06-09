@@ -111,6 +111,8 @@ h1{
   perspective: 200px;
 }         
 
+
+
 .clsTaskCardBack { /* back of task card - entry form */
   position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
   /* height: 100%; */
@@ -310,7 +312,7 @@ i.material-icons {
 
 
 #divIconBar{
-  min-height: 48px; /*same size as hover icons to avoid jitter */]
+  min-height: 48px; /*same size as hover icons to avoid jitter */
   
 }
 

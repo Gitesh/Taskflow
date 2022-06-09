@@ -21,13 +21,17 @@
 
             <!--- drop boxes --->
             <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <span contenteditable="true" ondragover="" ondrop="">High Impact</span> <br><br>
+                <div title="Double-click to rename">
+                    <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">High Impact</span> <br><br>
+                </div>
                 <!-- <i onclick="clkBoxAdd('box1')" class="btnAdd">+add</i>  -->
             </div><!--end div1-->
 
 
             <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-            Low Impact<br><br>
+                <div title="Double-click to rename">
+                    <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Low Impact</span> <br><br>
+                </div>
                 <!-- <input type="text" id="inputBox2" value="+add" onclick="this.select()"> -->
                 <!-- <button id="myBtn" onclick="javascript:clkBoxAdd('box2', String(inputBox2.value))" hidden></button> -->
 
@@ -35,13 +39,18 @@
 
 
             <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-            Delegate<br><br>
+                <div title="Double-click to rename">
+                    <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Delegate</span> <br><br>
+                </div>
                 <!-- <i onclick="clkBoxAdd('box3')" class="btnAdd">+add</i>  -->
             </div> <!--end div3-->
 
 
             <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"> 
-            Ice Box <br><br>
+                <div title="Double-click to rename">
+                    <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Ice Box</span> <br><br>
+                </div>
+            
                 <!--Entry form-->
                 <form id = "form">
                     <div id="dropbox4"></div>
