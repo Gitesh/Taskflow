@@ -140,6 +140,7 @@ body {
 
 .clsContainerAll .is-flipped {  /*style for .card when it is flipped */
   transform: translateX(-100%) rotateY(-180deg);
+
 }
 
 .clsContainerAll {   /* clsTaskCardAll .card */
@@ -155,6 +156,7 @@ body {
   box-shadow: 4px 3px 7px 2px #00000040;
   /* padding: 1rem; */
   box-sizing: border-box;
+  /* backface-visibility: none; */
 }         
 
 .clsContainerBack { /* back of task card - entry form */
@@ -167,13 +169,12 @@ body {
   border-radius: 20px;
   box-shadow: 4px 3px 7px 2px #00000040;
   font-size: 14px;
-  bottom: 0px;
+  /* bottom: 0px; */
   right: 0px;
   left: 0px;
   top: 0px;
   width: auto;
   height: auto;
-
   transform: translateZ(-1px) rotateY(180deg);
 
 }
@@ -248,55 +249,62 @@ body {
 
 
 
-  /*span for the icons */
 
 
 /*----------------*/
 /* Material Icons */
 /*----------------*/
 
-/* hide the icons - when prefixed by <i> tag */
+/* Span for the hover edit icons revealed when a task is hovered */
 
 .clsTaskCardHoverIcons {
-    padding-left: 5%;
     display: block;
-    height: 30px;
-    /* float: right; */
+    background: ghostwhite; 
+    border-radius: 12px;
     position: absolute;
-    top: -10px;
-    right: 0px
-
+    top: +5px;
+    right: 0px;
+    box-shadow: 3px 3px 2px -2px gainsboro;
 }  
 
 
-/*hide the <i> icons only shown on hover> */
+/*hide the <i> tag - so we con show icons on hover. <i> tag is used for the edit icons */
+
 i.material-icons {
   display: none;
 }
 
 
 /* display the icons on hover */
+
 .clsTaskCard:hover .material-icons{
   display:contents;
+  
 }
 
 
+/* default style for all material icons */
 
 .material-icons{
   display:contents;
   color:grey;
   float: none;
+  
 }
+
+
+/* hover style for all material icons (exept task edit) */
 
 .material-icons:hover{
   cursor: pointer;
-  /* font-size: 25px; */
   color: black;
   text-align: center;
   float: none;
+  background-color:lightgrey;
+  border-radius: 13px;
 }
 
-
+/* icons menu on front of card */
 #divIconBar{
   min-height: 48px; /*same size as hover icons to avoid jitter */
   

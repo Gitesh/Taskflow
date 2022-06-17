@@ -91,12 +91,10 @@ let createPost = () =>
           
                  <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp
                  <span class="clsTaskCardDetail">${x.task_detail}</span>
-                 <span class="clsTaskCardHoverIcons">
-                     
-                    <i onclick="clkCardEditTitleOrDetail(this)" title="Edit task" class="material-icons">edit</i> 
-                    <i onclick="clkFlipTaskCardToForm(this)" title="Edit task attributes" class="material-icons">edit_calendar</i>
+                 <span class="clsTaskCardHoverIcons">                    
+                    <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
+                    <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
                     <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
-                 
                  </span>
           
           </div> <!-- front face clsTaskCard-->
@@ -104,14 +102,15 @@ let createPost = () =>
           
 
           <div class="clsTaskCardBack">
-            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
           
             <label for="inpDateDue">Due</label>
               <input name="inpDateDue" type="date" value="${x.date_due}">
           
             <label for="inpTaskTag">Tag</label>
               <input name="inpTaskTag" type="text" value="${x.task_tag}">
- 
+
+            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
+
             <BR>
               Created (${x.date_captured})         
 
