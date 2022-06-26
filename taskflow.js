@@ -1,5 +1,5 @@
-//load elements into variables
 
+//load elements into variables
 let form = document.getElementById("form");
 let input = document.getElementById("input");
 let msg = document.getElementById("idErrorMessage");
@@ -9,15 +9,13 @@ strDate = strDate.toISOString();
 strDay = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 strToday = new Date();
 
-// alert(strToday.getDay());
-
 strToday = strDay[strToday.getDay()];
-
 // alert(strToday);
 
-document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
-
 console.log("TASKFLOW STARTED:js loaded", strDate)
+
+
+document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 
 //add event listener to the form
 form.addEventListener("submit", (e) => {
@@ -28,9 +26,7 @@ form.addEventListener("submit", (e) => {
     formValidation();
 });
 
-
 //create formValidation function - if text box is empty show error
-
 function formValidation() {
     if (input.value == "+add") {
         msg.innerHTML = "no text entered...";
@@ -95,12 +91,10 @@ let createPost = () =>
           
                  <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp
                  <span class="clsTaskCardDetail">${x.task_detail}</span>
-                 <span class="clsTaskCardHoverIcons">
-                     
-                    <i onclick="clkCardEditTitleOrDetail(this)" title="Edit task" class="material-icons">edit</i> 
-                    <i onclick="clkFlipTaskCardToForm(this)" title="Edit task attributes" class="material-icons">edit_calendar</i>
+                 <span class="clsTaskCardHoverIcons">                    
+                    <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
+                    <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
                     <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
-                 
                  </span>
           
           </div> <!-- front face clsTaskCard-->
@@ -108,14 +102,15 @@ let createPost = () =>
           
 
           <div class="clsTaskCardBack">
-            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
           
             <label for="inpDateDue">Due</label>
               <input name="inpDateDue" type="date" value="${x.date_due}">
           
             <label for="inpTaskTag">Tag</label>
               <input name="inpTaskTag" type="text" value="${x.task_tag}">
- 
+
+            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
+
             <BR>
               Created (${x.date_captured})         
 
@@ -575,6 +570,44 @@ function clkPlayAudio(sound){
 // [ ] bug in csv export / import - commas within a field are treated as delimiters
 // [ ] Fix bug when spreadsheet is uploaded with " it adds quotes to the whole field.
 // https://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript-which-contains-comma-in-data
+
+
+// ----LOCAL STORAGE TIPS----
+// Store variables using the Web Storage API, there are only 4 operations
+//
+//https://code-boxx.com/connect-database-javascript/
+//
+// 1. CREATE a data object:
+//          var user = {
+//            name : "John Doe",
+//            email : "john@doe.com",
+//            gender : "Doe"
+//            };
+// 
+// 2. STORE Saves data into the local storage. Note JSON ENcode:
+//            localStorage.setItem(KEY, VALUE) 
+//    example:
+//            localStorage.setItem("User", JSON.stringify(user));
+// 
+// 3. RETRIEVE from local storage. Note JSON DEcode:
+//
+//          user = localStorage.getItem("User");
+//          user = JSON.parse(user);
+//          console.log(user);
+//
+//    Example:
+//           localStorage.getItem(KEY) 
+//
+// 4. DELETE remove data from the local storage
+//
+//            localStorage.removeItem(KEY) 
+//
+//    Destroy data object 
+//            localStorage.clear() 
+
+
+
+
 
 // ----TASK FRONT----
 // [ ] show total number of tasks
