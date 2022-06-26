@@ -23,9 +23,6 @@ body {
     min-width: 250px;
 }
 
-h1{
-  /* background: rgb(232, 0, 78); color: white; font-weight: bold; visibility: visible; width:31%; */
-}
 
 #idTaskflowAppTitle{
   background: rgb(81, 29, 47);
@@ -61,12 +58,17 @@ h1{
 
 }
 
+/*------------------*/
+/* Error - not details entered */ 
+/*------------------*/
+
 #idErrorMessage{
     color: red;
 }
 
-
-/* +Add new card clickable in each box */
+/*------------------*/
+/* button +Add new card clickable in each box */
+/*------------------*/
 
 .btnAdd {
     color:#aaaaaa;
@@ -79,19 +81,21 @@ h1{
         
 }
 
+#btnSubmit{
+  visibility: hidden;
+}
+
 /*------------------*/
 /* Taskcard styling */
 /*------------------*/
 
 /* FLIP CARD */
 
- .is-flipped {  /*style for .card when it is flipped */
+.is-flipped {  /*style for .card when it is flipped */
   transform: translateX(-100%) rotateY(-180deg);
 } 
 
-
-
- .clsTaskCardWrapper {  /* .scene */
+.clsTaskCardWrapper {  /* .scene */
   width: 100%;
   height: 100%;
   perspective: 200px;
@@ -105,13 +109,10 @@ h1{
   perspective: 333px;
   transform-style: preserve-3d; /* inherit the parent element's perspective - without this the face would be flattend with the parent*/
   transform-origin: center right;
-
   width: 100%;
   height: 100%;
   perspective: 200px;
 }         
-
-
 
 .clsTaskCardBack { /* back of task card - entry form */
   position: absolute; /* position both cards in 2d space first (reset). so it can be repositioned in 3d */
@@ -135,20 +136,12 @@ h1{
 /* Container UI styling */
 /*------------------*/
 
-/* FLIP Container */
+/* FLIP whole container */
 
 .clsContainerAll .is-flipped {  /*style for .card when it is flipped */
   transform: translateX(-100%) rotateY(-180deg);
+
 }
-
-
-
-
-/* .clsTaskCardWrapper { 
-  width: 100%;
-  height: 100%;
-  perspective: 200px;
-} */
 
 .clsContainerAll {   /* clsTaskCardAll .card */
   width: 100%;
@@ -163,6 +156,7 @@ h1{
   box-shadow: 4px 3px 7px 2px #00000040;
   /* padding: 1rem; */
   box-sizing: border-box;
+  /* backface-visibility: none; */
 }         
 
 .clsContainerBack { /* back of task card - entry form */
@@ -175,27 +169,21 @@ h1{
   border-radius: 20px;
   box-shadow: 4px 3px 7px 2px #00000040;
   font-size: 14px;
-  bottom: 0px;
+  /* bottom: 0px; */
   right: 0px;
   left: 0px;
   top: 0px;
   width: auto;
   height: auto;
-
   transform: translateZ(-1px) rotateY(180deg);
 
 }
 
 
 .clsContainerFront  { /* Front of Container */
-  
-  backface-visibility: hidden; /* hide the face */
-  
-  transform: translateZ(0px);
-
+    backface-visibility: hidden; /* hide the face */
+    transform: translateZ(0px);
 }
-
-
 
 
 .clsTaskCard  { /* Front of task card - task details ###rename to clsTaskCardFront */
@@ -218,7 +206,6 @@ h1{
     background-color: #efefef;
 
 }
-
 
 .clsTaskCardTitle{
     color:black;
@@ -262,55 +249,62 @@ h1{
 
 
 
-  /*span for the icons */
 
 
 /*----------------*/
 /* Material Icons */
 /*----------------*/
 
-/* hide the icons - when prefixed by <i> tag */
+/* Span for the hover edit icons revealed when a task is hovered */
 
 .clsTaskCardHoverIcons {
-    padding-left: 5%;
     display: block;
-    height: 30px;
-    float: right;
+    background: ghostwhite; 
+    border-radius: 12px;
+    position: absolute;
+    top: +5px;
+    right: 0px;
+    box-shadow: 3px 3px 2px -2px gainsboro;
 }  
 
 
+/*hide the <i> tag - so we con show icons on hover. <i> tag is used for the edit icons */
 
-/*hide the <i> icons only shown on hover> */
 i.material-icons {
   display: none;
 }
 
 
 /* display the icons on hover */
+
 .clsTaskCard:hover .material-icons{
   display:contents;
   
-
 }
 
 
-
+/* default style for all material icons */
 
 .material-icons{
   display:contents;
   color:grey;
   float: none;
+  
 }
+
+
+/* hover style for all material icons (exept task edit) */
 
 .material-icons:hover{
   cursor: pointer;
-  font-size: 25px;
   color: black;
   text-align: center;
   float: none;
+  background-color:lightgrey;
+  border-radius: 13px;
 }
 
-
+/* icons menu on front of card */
 #divIconBar{
   min-height: 48px; /*same size as hover icons to avoid jitter */
   
@@ -350,6 +344,7 @@ input[type=text] {
     -webkit-transition: width 0.4s ease-in-out;
     transition: width 0.1s ease-in-out;    
 }
+
 
 input:focus{
     outline:none;
