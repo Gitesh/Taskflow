@@ -365,11 +365,21 @@ function clkExportTasksToLocalFile(){
 };
 
 
+////////
+//
+// STUB: Show Pending Tasks View
+//
+////////
 
 function clkFilterPendingTasks(){
   alert("stub for pending tasks");
 };
 
+////////
+//
+// STUB: Show Settings Panel
+//
+////////
 
 function clkSettings(){
   alert("stub for settings");
