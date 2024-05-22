@@ -1,0 +1,37 @@
+[debug] [2024-05-16T21:20:46.116Z] ----------------------------------------------------------------------
+[debug] [2024-05-16T21:20:46.123Z] Command:       /nix/store/qfm6zpnicb4q5x6w6y4cpj5z8ap68j3h-nodejs-18.19.1/bin/node /nix/store/5v7fkyyi565g871f5xgr2prbnwmsi444-firebase-tools-13.8.2/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting
+[debug] [2024-05-16T21:20:46.124Z] CLI Version:   13.8.2
+[debug] [2024-05-16T21:20:46.128Z] Platform:      linux
+[debug] [2024-05-16T21:20:46.128Z] Node Version:  v18.19.1
+[debug] [2024-05-16T21:20:46.128Z] Time:          Thu May 16 2024 21:20:46 GMT+0000 (Coordinated Universal Time)
+[debug] [2024-05-16T21:20:46.129Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2024-05-16T21:20:46.143Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2024-05-16T21:20:46.144Z] > authorizing via signed-in user (gitesh.khodiyar@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/Taskflow
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2024-05-16T21:21:01.938Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2024-05-16T21:21:02.407Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2024-05-16T21:21:02.407Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project actions-codelab-1d0e5 (actions-codelab) 
+[info] 
+=== Hosting Setup
+[debug] [2024-05-16T21:21:27.325Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/actions-codelab-1d0e5 [none]
+[debug] [2024-05-16T21:21:27.534Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/actions-codelab-1d0e5 200
+[debug] [2024-05-16T21:21:27.534Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/actions-codelab-1d0e5 {"projectId":"actions-codelab-1d0e5","projectNumber":"769390757204","displayName":"actions-codelab","name":"projects/actions-codelab-1d0e5","resources":{"hostingSite":"actions-codelab-1d0e5","realtimeDatabaseInstance":"actions-codelab-1d0e5","storageBucket":"actions-codelab-1d0e5.appspot.com","locationId":"us-central"},"state":"ACTIVE","etag":"1_48a5d0b8-c8ce-4167-9662-8b9a5c393987"}

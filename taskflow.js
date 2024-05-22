@@ -89,8 +89,8 @@ let createPost = () =>
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
           <div class="clsTaskCard">
           
-                 <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp
-                 <span class="clsTaskCardDetail">${x.task_detail}</span>
+                 <span class="clsTaskCardTitle" ondblclick="alert('yes');" >${x.Task_Title}</span>&nbsp - &nbsp
+                 <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span>
                  <span class="clsTaskCardHoverIcons">                    
                     <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
                     <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
@@ -244,23 +244,20 @@ function drop(e) {
 
 function clkCardEditTitleOrDetail(e) {
 
-  var keyCode="";
   var editTitle = e.parentElement.previousElementSibling.previousElementSibling;
   var editDetail = e.parentElement.previousElementSibling;
-
 //  alert(editTitle +" "+ editDetail);
-  
+ 
   editTitle.setAttribute("contenteditable", "true");
   editDetail.setAttribute("contenteditable", "true");
 
   editTitle.setAttribute("class", "clsTaskCardTitleEdit");
   editDetail.setAttribute("class", "clsTaskCardDetailEdit");
 
-
   //document.body.setAttribute('contenteditable', 'true');
-  document.onkeydown = function (e) {
-    e = e || window.event;
-    if(e.keyCode==27)  
+  document.onkeydown = function (event) {
+  
+    if(event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
 
     {
       //document.body.setAttribute('contenteditable', 'false');
@@ -270,12 +267,10 @@ function clkCardEditTitleOrDetail(e) {
       editTitle.setAttribute("class", "clsTaskCardTitle");
       editDetail.setAttribute("class", "clsTaskCardDetail");
 
-
       var cardID = editTitle.parentElement.parentElement.parentElement.id; //get the index id from the parent div
 
       data[cardID].Task_Title = editTitle.innerHTML;
       data[cardID].task_detail = editDetail.innerHTML;
-
        
       // data.push({
       //     //title: data["Task_Title"]=editTitle.innerHTML,
