@@ -89,8 +89,12 @@ let createPost = () =>
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
           <div class="clsTaskCard">
           
-                 <span class="clsTaskCardTitle" ondblclick="alert('yes');" >${x.Task_Title}</span>&nbsp - &nbsp
-                 <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span>
+                //  <span class="clsTaskCardTitle" ondblclick="alert('yes');" >${x.Task_Title}</span>&nbsp - &nbsp
+                //  <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span>
+
+                 <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp
+                 <span class="clsTaskCardDetail">${x.task_detail}</span>
+
                  <span class="clsTaskCardHoverIcons">                    
                     <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
                     <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
