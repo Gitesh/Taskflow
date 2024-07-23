@@ -89,10 +89,12 @@ let createPost = () =>
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
           <div class="clsTaskCard">
           
-                //  <span class="clsTaskCardTitle" ondblclick="alert('yes');" >${x.Task_Title}</span>&nbsp - &nbsp
-                //  <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span>
+<!-- TEST CODE: trying to activate tast edit on double click of the title, but issue with identifying parent or child elements -->
 
-                 <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp
+ <!--                <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail();alert('yes - doublclicked Task_Title');" >${x.Task_Title}</span>&nbsp - &nbsp -->
+ <!--                <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span> -->
+
+                 <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp 
                  <span class="clsTaskCardDetail">${x.task_detail}</span>
 
                  <span class="clsTaskCardHoverIcons">                    
