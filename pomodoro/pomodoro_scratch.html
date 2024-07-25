@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        body {       
+            flex-flow: row wrap;
+            padding: 1 px;
+            font-family: 'Arial', sans-serif;
+            color: #FFE365;
+            justify-content: center;
+            align-items: center;
+            height: 79vh;
+        }
+
+        .container {
+            background-color: #000000;
+            padding: 30px;
+            border-radius: 20px;
+            /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
+            text-align: center;
+        }
+
+        input[type="number" i] {
+           /* padding-block: 1px;
+           padding-inline: 2px; */
+           border: none;
+           background-color: #000000;
+           color: goldenrod;
+           text-align: center;
+           appearance: textfield;
+           margin: 0;
+        } 
+
+
+        #timer {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #000000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: goldenrod;
+            color:#000000
+        }
+
+        #break-length, #session-length {
+            width: 50px;
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Taskflow Timer</h1>
+            <div id="timer">no data</div>
+            <br>
+                <label for="session-length">Session Length (min):</label>
+                <input type="number" id="session-length" value="25" min="1">
+            <br>
+                <label for="break-length">Break Length (min):</label>
+                <!-- <input type="range" id="break-length" value="5" min="1"> -->
+                <input type="number" id="break-length" value="5" min="1">
+            <br>
+            <br>
+                <button id="start">Start</button>
+                <!-- <button id="pause">Pause</button> -->
+                <button id="reset">Reset</button>
+
+            </div>
+
+    <script>
+        let timerInterval;
+        let timeLeft = 1500; // 25 minutes in seconds
+        let isRunning = false;
+        let isBreak = false;
+
+        const timerDisplay = document.getElementById('timer');
+        const startButton = document.getElementById('start');
+        const resetButton = document.getElementById('reset');
+        const sessionLengthInput = document.getElementById('session-length');
+        const breakLengthInput = document.getElementById('break-length');
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                // if (timeLeft === 0) {
+                if (timeLeft < 0) {
+                    // alert("Time's up!")
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    if (isBreak) {
+                        isBreak = false;
+                        timeLeft = sessionLengthInput.value * 60;
+                        alert("Session Time!");
+                    } else {
+                        isBreak = true;
+                        timeLeft = breakLengthInput.value * 60;
+                        alert("Break Time!");
+                    }
+                    updateTimerDisplay();
+                }
+            }, 1000);
+        }
+
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isBreak = false;
+            timeLeft = sessionLengthInput.value * 60;
+            updateTimerDisplay();
+        }
+
+              if (!isRunning) {
+                timeLeft = sessionLengthInput.value * 60;
+                updateTimerDisplay();
+            }
+
+        breakLengthInput.addEventListener('change', () => {
+            if (!isRunning) {
+                timeLeft = breakLengthInput.value * 60;
+                updateTimerDisplay();
+            }
+        });
+
+        startButton.addEventListener('click', startTimer);
+        resetButton.addEventListener('click', resetTimer);
+
+    </script>
+</body>
+</html>

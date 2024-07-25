@@ -537,11 +537,11 @@ function clkPlayAudio(sound){
 //-------------------------------------------------------------------------
 
 // Fieldnames 
-//        - Task_Title = write the OUTCOME from completing a task
-//        - task_detail = write the NEXT realistic step in the task
+//        - Task_Title = captures the OUTCOME you want to achieve from completing a task
+//        - task_detail = captures the NEXT realistic step in the task
 //        - date_due = when you need to DELETE it by
-//        - date_captured = auto populated, used for analytics
-//        - task_tag = this is the PROJECT used to filter all tasks by project
+//        - date_captured = auto populated at date of task creation, used for analytics
+//        - task_tag = this is the PROJECT label, used to filter all tasks by project
 
 
 // Source credits
