@@ -383,6 +383,9 @@ function clkFilterPendingTasks(){
 ////////
 
 function clkSettings(){
+  // let strKeyboardShortcuts = " stub for settings " + char(13);
+  // strKeyboardShortcuts = "f = clkFlipToCountDownTimer(); b = clkToggleBackgroundAnimation(); p = clkFilterPendingTasks(); s = clkSettings();">
+  // "
   alert("stub for settings");
 };
 
