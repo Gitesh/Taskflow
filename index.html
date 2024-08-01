@@ -7,7 +7,8 @@
 </head>
 
 
-<body>
+<body onkeydown="if (event.key === 'a') post.select(); if (event.key === 'f') clkFlipToCountDownTimer(); if (event.key === 'b') clkToggleBackgroundAnimation(); if (event.key === 'p') clkFilterPendingTasks(); if (event.key === 's') clkSettings();">
+
 
 <section class="container" id="container">
 
@@ -55,7 +56,8 @@
                 <form id = "form">
                     <div id="dropbox4"></div>
                     <br><br>
-                    <input type="text" name="post" id="input" value="+add" onclick="this.select()">
+                    <input type="text" name="post" id="input" value="+add" onclick="post.select()" accesskey="icon">
+
                     <div id="idErrorMessage"></div>
 
                     <button id="btnSubmit" type="submit">Post</button>
@@ -96,9 +98,11 @@
 
 
 
+
             <!-- START POMODORO -->
             <div class="clsPomodoroContainer">
-                <object type="text/html" data="pomodoro.html" width="100%" height="90%"></object>
+                <!-- <object type="text/html" data="pomodoro/pomodoro.html" width="100%" height="90%"></object> -->
+                <object type="text/html" data="pomodoro/pomodoro_scratch.html" width="100%" height="100%"></object>
             </div>
 
             <!-- END POMODORO -->
@@ -141,5 +145,6 @@
 <script src="taskflow.js"> </script>
 <script src="animated_background/ribbons.js"></script>
 <script> clkToggleBackgroundAnimation()</script> <!--Turn off animated background-->
+
 
 </body>
