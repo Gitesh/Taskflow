@@ -388,7 +388,7 @@ function clkSettings(){
   document.body.appendChild(myDialog)
     myDialog.setAttribute("id","dialog");
     myDialog.setAttribute("onclick","this.close(); this.remove()");
-    myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === 's') this.close(); this.remove();");
+    myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
 
     myDialog.append("f : clkFlipToCountDownTimer()");
     myDialog.appendChild(document.createElement("p"));
@@ -407,7 +407,7 @@ function clkSettings(){
     myDialog.appendChild(document.createElement("p"));
     myDialog.append("ESC to close");
     
-    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: yellow; opacity: 0.7";
+    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7";
     
     myDialog.showModal();
 };
