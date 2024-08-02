@@ -331,7 +331,6 @@ function clkToggleBackgroundAnimation(){
     document.querySelector('link[href$="shapes.css"]').remove() // remove css background
 
   }
-
   
 };
 
