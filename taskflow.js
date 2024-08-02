@@ -382,12 +382,44 @@ function clkFilterPendingTasks(){
 //
 ////////
 
+
 function clkSettings(){
-  // let strKeyboardShortcuts = " stub for settings " + char(13);
-  // strKeyboardShortcuts = "f = clkFlipToCountDownTimer(); b = clkToggleBackgroundAnimation(); p = clkFilterPendingTasks(); s = clkSettings();">
-  // "
-  alert("stub for settings");
+  var myDialog = document.createElement("dialog");
+  document.body.appendChild(myDialog)
+    myDialog.setAttribute("id","dialog");
+    myDialog.setAttribute("onclick","this.close(); this.remove()");
+    myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === 's') this.close(); this.remove();");
+
+    myDialog.append("f : clkFlipToCountDownTimer()");
+    myDialog.appendChild(document.createElement("p"));
+
+    myDialog.append("b = clkToggleBackgroundAnimation()");
+    myDialog.appendChild(document.createElement("p"));
+
+    myDialog.append("p = clkFilterPendingTasks()");
+    myDialog.appendChild(document.createElement("p"));
+
+    myDialog.append("s = clkSettings()");
+    myDialog.appendChild(document.createElement("p"));
+    
+    myDialog.appendChild(document.createElement("p"));
+    myDialog.appendChild(document.createElement("hr"));
+    myDialog.appendChild(document.createElement("p"));
+    myDialog.append("ESC to close");
+    
+    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: yellow; opacity: 0.7";
+    
+    myDialog.showModal();
 };
+
+function closeSettingsDialog() {
+  document.getElementById('dialog').close();
+  document.getElementById('dialog').remove();
+  //alert("rwar");
+  
+};
+
+
 
 ////////
 //
