@@ -10,14 +10,87 @@ strDay = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sat
 strToday = new Date();
 
 strToday = strDay[strToday.getDay()];
-// alert(strToday);
+
 
 console.log("TASKFLOW STARTED:js loaded", strDate)
 
-
+//Set the day of the week in the title to today
 document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 
-//add event listener to the form
+
+////
+// check for shortcut keys
+////
+
+// --START-- Shortcut keys
+window.addEventListener("keydown", function (event) {
+
+  if (event.ctrlKey && event.key === 'a') {event.preventDefault();document.getElementById('input').click()};
+  if (event.ctrlKey && event.key === 'f') clkFlipToCountDownTimer();
+  if (event.ctrlKey && event.key === 'b') clkToggleBackgroundAnimation();
+  if (event.ctrlKey && event.key === 'p') clkFilterPendingTasks();
+  if (event.key === '?') clkSettings();
+
+  // document.getElementById("first").addEventListener("keydown", function(event) {
+  //   event.preventDefault();
+    console.log(`${event.type} has been fired`);
+    console.log(`${event.key} key was pressed`);
+   
+  });
+// --END-- Shortcut keys
+
+////
+//Show Settings Panel
+////
+
+function clkSettings(){
+  var myDialog = document.createElement("dialog");
+  document.body.appendChild(myDialog)
+    myDialog.setAttribute("id","dialog");
+    myDialog.setAttribute("onclick","this.close(); this.remove()");
+    myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
+
+    myDialog.append("a : Add a new task");
+    myDialog.appendChild(document.createElement("p"));
+
+
+    myDialog.append("f : clkFlipToCountDownTimer()");
+    myDialog.appendChild(document.createElement("p"));
+
+    myDialog.append("b = clkToggleBackgroundAnimation()");
+    myDialog.appendChild(document.createElement("p"));
+
+    myDialog.append("p = clkFilterPendingTasks()");
+    myDialog.appendChild(document.createElement("p"));
+    
+    myDialog.append("u = Upload saved file");
+    myDialog.appendChild(document.createElement("p"));
+
+    myDialog.appendChild(document.createElement("p"));
+    myDialog.appendChild(document.createElement("hr"));
+    myDialog.appendChild(document.createElement("p"));
+    myDialog.append("ESC to close");
+    
+    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7";
+    
+    myDialog.showModal();
+};
+
+// function closeSettingsDialog() {
+//   document.getElementById('dialog').close();
+//   document.getElementById('dialog').remove();
+//   alert("rwar");
+  
+// };
+
+
+
+
+
+
+
+
+//add event listener to the form to listen for the submit event
 form.addEventListener("submit", (e) => {
     e.preventDefault();
     console.log("TASKFLOW: submit button clicked");
@@ -29,7 +102,7 @@ form.addEventListener("submit", (e) => {
 //create formValidation function - if text box is empty show error
 function formValidation() {
     if (input.value == "+add") {
-        msg.innerHTML = "no text entered...";
+        msg.innerHTML = "no text entered...";  //display error error message in div
 
         console.log("ERROR: no text was entered");
 
@@ -37,7 +110,7 @@ function formValidation() {
     else {
         console.log("OK: text was entered");
 
-        msg.innerHTML = "";
+        msg.innerHTML = ""; //clear error message dic
 
         acceptData(); // call the acceptData function
 
@@ -94,8 +167,8 @@ let createPost = () =>
  <!--                <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail();alert('yes - doublclicked Task_Title');" >${x.Task_Title}</span>&nbsp - &nbsp -->
  <!--                <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span> -->
 
-                 <span class="clsTaskCardTitle">${x.Task_Title}</span>&nbsp - &nbsp 
-                 <span class="clsTaskCardDetail">${x.task_detail}</span>
+                 <span class="clsTaskCardTitle";">${x.Task_Title}</span>&nbsp - &nbsp 
+                 <span class="clsTaskCardDetail;">${x.task_detail}</span>
 
                  <span class="clsTaskCardHoverIcons">                    
                     <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
@@ -262,7 +335,7 @@ function clkCardEditTitleOrDetail(e) {
 
   //document.body.setAttribute('contenteditable', 'true');
   document.onkeydown = function (event) {
-  
+    
     if(event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
 
     {
@@ -375,48 +448,6 @@ function clkFilterPendingTasks(){
   alert("stub for pending tasks");
 };
 
-////////
-//
-// STUB: Show Settings Panel
-//
-////////
-
-
-function clkSettings(){
-  var myDialog = document.createElement("dialog");
-  document.body.appendChild(myDialog)
-    myDialog.setAttribute("id","dialog");
-    myDialog.setAttribute("onclick","this.close(); this.remove()");
-    myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
-
-    myDialog.append("f : clkFlipToCountDownTimer()");
-    myDialog.appendChild(document.createElement("p"));
-
-    myDialog.append("b = clkToggleBackgroundAnimation()");
-    myDialog.appendChild(document.createElement("p"));
-
-    myDialog.append("p = clkFilterPendingTasks()");
-    myDialog.appendChild(document.createElement("p"));
-
-    myDialog.append("s = clkSettings()");
-    myDialog.appendChild(document.createElement("p"));
-    
-    myDialog.appendChild(document.createElement("p"));
-    myDialog.appendChild(document.createElement("hr"));
-    myDialog.appendChild(document.createElement("p"));
-    myDialog.append("ESC to close");
-    
-    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7";
-    
-    myDialog.showModal();
-};
-
-function closeSettingsDialog() {
-  document.getElementById('dialog').close();
-  document.getElementById('dialog').remove();
-  //alert("rwar");
-  
-};
 
 
 

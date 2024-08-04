@@ -7,13 +7,8 @@
 </head>
 
 
-<body onkeydown="   if (event.key === 'a') post.select(); 
-                    if (event.key === 'f') clkFlipToCountDownTimer();
-                    if (event.key === 'b') clkToggleBackgroundAnimation();
-                    if (event.key === 'p') clkFilterPendingTasks();
-                    if (event.key === '?') clkSettings();
-                    
-                ">
+<!-- <body onkeydown="   <-- if (event.key === 'a') {document.getElementById('input').focus(); formValidation();}; -->
+    <body>
 <!-- Move these key bindings to the relevant button so they are only available when the icon is visible -->
 
 <section class="container" id="container">
@@ -62,11 +57,12 @@
                 <form id = "form">
                     <div id="dropbox4"></div>
                     <br><br>
-                    <input type="text" name="post" id="input" value="+add" onclick="post.select()" accesskey="icon">
+                    <input type="text" name="post" id="input" value="+add" onclick="post.select()" >
+                                         
 
                     <div id="idErrorMessage"></div>
 
-                    <button id="btnSubmit" type="submit">Post</button>
+                    <button id="btnSubmit" type="submit";>Post</button>
                 </form>
 
             </div> <!-- end div4-->
