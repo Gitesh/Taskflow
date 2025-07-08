@@ -6,10 +6,9 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
-<!-- GK the code below pressing ctrl A acitviates the input box BUT the shortuts get activated, need a way to stop those listners if input is selected so you can type text-->
-<!-- <body onkeydown="   <-- if (event.key === 'a') {document.getElementById('input').focus(); formValidation();}; -->
-    <body>
-<!-- Move these key bindings to the relevant button so they are only available when the icon is visible -->
+
+<body onkeydown="if (event.key === 'a') post.select(); if (event.key === 'f') clkFlipToCountDownTimer(); if (event.key === 'b') clkToggleBackgroundAnimation(); if (event.key === 'p') clkFilterPendingTasks(); if (event.key === 's') clkSettings();">
+
 
 <section class="container" id="container">
 
@@ -57,12 +56,11 @@
                 <form id = "form">
                     <div id="dropbox4"></div>
                     <br><br>
-                    <input type="text" name="post" id="input" value="+add" onclick="post.select()" >
-                                         
+                    <input type="text" name="post" id="input" value="+add" onclick="post.select()" accesskey="icon">
 
                     <div id="idErrorMessage"></div>
 
-                    <button id="btnSubmit" type="submit";>Post</button>
+                    <button id="btnSubmit" type="submit">Post</button>
                 </form>
 
             </div> <!-- end div4-->
@@ -72,22 +70,12 @@
 
             <div id="divIconBar">
 
-                <!-- <span class="material-icons" title="Upload tasks from CSV" >
+                <span class="material-icons" title="Upload tasks from CSV" >
                     <label for="uploadCSV" click="preventDefault()">
                         file_upload 
                         <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
                     </label>
-                </span> -->
-
-                <span class="material-icons" title="Upload tasks from CSV" >
-                    <label for="uploadCSV" click="preventDefault()">
-                        file_upload
-                        <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
-                    </label>
                 </span>
-                
-
-
 
                 <span class="material-icons" title="Download tasks" onclick="clkExportTasksToLocalFile()">save</span>
 
@@ -158,5 +146,5 @@
 <script src="animated_background/ribbons.js"></script>
 <script> clkToggleBackgroundAnimation()</script> <!--Turn off animated background-->
 
-VER 0807
+
 </body>
