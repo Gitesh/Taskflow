@@ -25,10 +25,10 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 // --START-- Shortcut keys
 window.addEventListener("keydown", function (event) {
 
-  if (event.ctrlKey && event.key === 'a') {event.preventDefault();document.getElementById('input').click()};
-  if (event.ctrlKey && event.key === 'f') clkFlipToCountDownTimer();
-  if (event.ctrlKey && event.key === 'b') clkToggleBackgroundAnimation();
-  if (event.ctrlKey && event.key === 'p') clkFilterPendingTasks();
+  if (event.ctrlKey && event.key === 'A') {event.preventDefault();document.getElementById('input').click()};
+  if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
+  if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
+  if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
   if (event.key === '?') clkSettings();
 
   // document.getElementById("first").addEventListener("keydown", function(event) {
@@ -50,26 +50,26 @@ function clkSettings(){
     myDialog.setAttribute("onclick","this.close(); this.remove()");
     myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
 
-    myDialog.append("<ctrl> + a : Add a new task");
+    myDialog.append("[CTRL + SHIFT + A] Add a new task");
     myDialog.appendChild(document.createElement("p"));
 
 
-    myDialog.append("<ctrl> + f : Flip to timer");
+    myDialog.append("[CTRL + SHIFT + F] Flip to timer");
     myDialog.appendChild(document.createElement("p"));
 
-    myDialog.append("<ctrl> + b : Toggle background animation");
+    myDialog.append("[CTRL + SHIFT + B] Toggle background animation");
     myDialog.appendChild(document.createElement("p"));
 
-    myDialog.append("<ctrl> + p : Filter Pending Tasks");
+    myDialog.append("[CTRL + SHIFT + P] Filter Pending Tasks");
     myDialog.appendChild(document.createElement("p"));
     
-    myDialog.append("<ctrl> + u : Upload saved file");
+    myDialog.append("[CTRL + SHIFT + U] Upload saved file");
     myDialog.appendChild(document.createElement("p"));
 
     myDialog.appendChild(document.createElement("p"));
     myDialog.appendChild(document.createElement("hr"));
     myDialog.appendChild(document.createElement("p"));
-    myDialog.append("ESC to close");
+    myDialog.append("Press any key to close");
     
     myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7; text-align:left";
     
