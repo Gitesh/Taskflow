@@ -50,20 +50,20 @@ function clkSettings(){
     myDialog.setAttribute("onclick","this.close(); this.remove()");
     myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
 
-    myDialog.append("a : Add a new task");
+    myDialog.append("<ctrl> + a : Add a new task");
     myDialog.appendChild(document.createElement("p"));
 
 
-    myDialog.append("f : clkFlipToCountDownTimer()");
+    myDialog.append("<ctrl> + f : Flip to timer");
     myDialog.appendChild(document.createElement("p"));
 
-    myDialog.append("b = clkToggleBackgroundAnimation()");
+    myDialog.append("<ctrl> + b : Toggle background animation");
     myDialog.appendChild(document.createElement("p"));
 
-    myDialog.append("p = clkFilterPendingTasks()");
+    myDialog.append("<ctrl> + p : Filter Pending Tasks");
     myDialog.appendChild(document.createElement("p"));
     
-    myDialog.append("u = Upload saved file");
+    myDialog.append("<ctrl> + u : Upload saved file");
     myDialog.appendChild(document.createElement("p"));
 
     myDialog.appendChild(document.createElement("p"));
@@ -71,7 +71,7 @@ function clkSettings(){
     myDialog.appendChild(document.createElement("p"));
     myDialog.append("ESC to close");
     
-    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7";
+    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7; text-align:left";
     
     myDialog.showModal();
 };
@@ -457,33 +457,35 @@ function clkFilterPendingTasks(){
 //
 ////////
 
-function clkUploadTasksToLocalStorage(){
-  console.log("CLICKED - stub for file upload")
+//OLD upload code 2025-07-08
 
-  var fileInput = document.getElementById("uploadCSV"),
+// function clkUploadTasksToLocalStorage(){
+//   console.log("CLICKED - stub for file upload")
 
-  readFile = function () {
-      var reader = new FileReader();
-      reader.onload = function () {
+//   var fileInput = document.getElementById("uploadCSV"),
+
+//   readFile = function () {
+//       var reader = new FileReader();
+//       reader.onload = function () {
   
         
-//        convertCSVtoJSON(reader.result);
+// //        convertCSVtoJSON(reader.result);
 
-      convertCSVtoJSON (reader.result);
+//       convertCSVtoJSON (reader.result);
 
         
 
 
-        // document.getElementById('uploadCSVOutput').innerHTML = reader.result;
-      };
-      // start reading the file. When it is done, calls the onload event defined above.
-      reader.readAsBinaryString(fileInput.files[0]);
+//         // document.getElementById('uploadCSVOutput').innerHTML = reader.result;
+//       };
+//       // start reading the file. When it is done, calls the onload event defined above.
+//       reader.readAsBinaryString(fileInput.files[0]);
 
-  };
+//   };
 
-fileInput.addEventListener('change', readFile);
+// fileInput.addEventListener('change', readFile);
 
-}
+// }
 
 //Convert CSV to OBJECT -- original replaced 2025-07-08
 // function convertCSVtoJSON(uploadedCSV) {
@@ -545,6 +547,136 @@ fileInput.addEventListener('change', readFile);
 
   
 // }
+
+
+//new upload code 2025-07-08
+function clkUploadTasksToLocalStorage() {
+  console.log("CLICKED - stub for file upload");
+
+  var fileInput = document.getElementById("uploadCSV");
+
+  // Define the readFile function inside clkUploadTasksToLocalStorage
+  // This ensures it has access to the correct fileInput element
+  var readFile = function () {
+      var reader = new FileReader();
+      reader.onload = function () {
+          convertCSVtoJSON (reader.result);
+      };
+      // Read as text for CSV with UTF-8 encoding
+      reader.readAsText(fileInput.files[0], 'UTF-8');
+  };
+
+  // Add the event listener directly here.
+  // The onclick in HTML will call this function when the input is clicked.
+  // The change event will fire when a file is selected.
+  fileInput.addEventListener('change', readFile);
+}
+
+// The convertCSVtoJSON function (use the corrected version I provided earlier)
+// function convertCSVtoJSON(uploadedCSV) {
+//   // ... (the corrected code for convertCSVtoJSON) ...
+//   //lop off any trailing or starting whitespace
+//   csv = uploadedCSV.trim();
+
+//   const lines = csv.split('\n');
+//   const headers = lines[0].split(',');
+//   const output = [];
+
+//   for (let i = 1; i < lines.length; i++) {
+//     const values = [];
+//     let withinQuotes = false;
+//     let start = 0;
+
+//     for (let j = 0; j < lines[i].length; j++) {
+//       const char = lines[i][j];
+
+//       if (char === '"') {
+//         withinQuotes = !withinQuotes;
+//       } else if (char === ',' && !withinQuotes) {
+//         values.push(lines[i].substring(start, j));
+//         start = j + 1;
+//       }
+//     }
+
+//     values.push(lines[i].substring(start)); // Push the last value
+
+//     const obj = {};
+//     for (let k = 0; k < headers.length; k++) {
+//       let value = values[k] || '';
+//       // Remove leading/trailing quotes and unescape double quotes
+//       if (value.startsWith('"') && value.endsWith('"')) {
+//         value = value.substring(1, value.length - 1).replace(/""/g, '"');
+//       }
+//       obj[headers[k]] = value;
+//     }
+//     output.push(obj);
+//   }
+
+//   // Store the uploaded data into local storage replacing data object
+//   localStorage.setItem("data", JSON.stringify(output));
+//   console.log("TASKFLOW convert data: ", output);
+//   document.location.reload();
+
+//   return output;
+// }
+
+
+//NEW CONVERTCSVTOJSON 2025-07-08
+function convertCSVtoJSON(uploadedCSV) {
+  //lop off any trailing or starting whitespace
+  csv = uploadedCSV.trim();
+
+  const lines = csv.split('\n');
+  const headers = lines[0].split(',');
+  const output = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = [];
+    let withinQuotes = false;
+    let start = 0;
+
+    for (let j = 0; j < lines[i].length; j++) {
+      const char = lines[i][j];
+
+      if (char === '"') {
+        withinQuotes = !withinQuotes;
+      } else if (char === ',' && !withinQuotes) {
+        values.push(lines[i].substring(start, j));
+        start = j + 1;
+      }
+    }
+
+    values.push(lines[i].substring(start)); // Push the last value
+
+    const obj = {};
+    for (let k = 0; k < headers.length; k++) {
+      let value = values[k] || '';
+      // Remove leading/trailing quotes and unescape double quotes
+      if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.substring(1, value.length - 1).replace(/""/g, '"');
+      }
+
+      // *** MODIFICATION START ***
+      // Handle the 'date_due' field specifically
+      if (headers[k] === 'date_due' && value === '') {
+        obj[headers[k]] = ''; // Assign an empty string, or a default date if preferred
+      } else {
+        obj[headers[k]] = value;
+      }
+      // *** MODIFICATION END ***
+    }
+    output.push(obj);
+  }
+
+  // Store the uploaded data into local storage replacing data object
+  localStorage.setItem("data", JSON.stringify(output));
+  console.log("TASKFLOW convert data: ", output);
+  document.location.reload();
+
+  return output;
+}
+
+
 
 
 

@@ -72,12 +72,22 @@
 
             <div id="divIconBar">
 
-                <span class="material-icons" title="Upload tasks from CSV" >
+                <!-- <span class="material-icons" title="Upload tasks from CSV" >
                     <label for="uploadCSV" click="preventDefault()">
                         file_upload 
                         <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
                     </label>
+                </span> -->
+
+                <span class="material-icons" title="Upload tasks from CSV" >
+                    <label for="uploadCSV" click="preventDefault()">
+                        file_upload
+                        <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
+                    </label>
                 </span>
+                
+
+
 
                 <span class="material-icons" title="Download tasks" onclick="clkExportTasksToLocalFile()">save</span>
 
