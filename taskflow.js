@@ -485,66 +485,115 @@ fileInput.addEventListener('change', readFile);
 
 }
 
-//Convert CSV to OBJECT 
-function convertCSVtoJSON(uploadedCSV) {
+//Convert CSV to OBJECT -- original replaced 2025-07-08
+// function convertCSVtoJSON(uploadedCSV) {
 
-  //lop off any trailing or starting whitespace
-  csv = uploadedCSV.trim();
+//   //lop off any trailing or starting whitespace
+//   csv = uploadedCSV.trim();
  
-  //check for special characters
-  let string = ''
-  let quoteFlag = 0
-  for (let character of csv) {
-    //console.log("TASKFLOW character: ", character);
-    if (character === '"' && quoteFlag === 0) {
-        quoteFlag = 1
+//   //check for special characters
+//   let string = ''
+//   let quoteFlag = 0
+//   for (let character of csv) {
+//     //console.log("TASKFLOW character: ", character);
+//     if (character === '"' && quoteFlag === 0) {
+//         quoteFlag = 1
+//     }
+//     else if (character === '"' && quoteFlag == 1) quoteFlag = 0
+//     if (character === ',' && quoteFlag === 0) character = '|'
+//     if (character !== '"') string += character
+//   }
+
+
+//   //prep
+//   let lines = csv.split('\n'),
+//       headers,
+//       output = [];
+
+//   //console.log("TASKFLOW headers: ", headers);
+//   //console.log("TASKFLOW lines: ", lines);
+  
+//   //iterate over lines...
+//   lines.forEach((line, i) => {
+
+//       //...break line into tab-separated parts
+//       // let parts = line.split(/\t+/);
+//       let parts = line.split(',');
+
+//       //...if not the headers line, push to output. By this time
+//      //we have the headers logged, so just match the value to
+//      //header of the same index
+//       if (i) {
+//           let obj = {};
+//           parts.forEach((part, i) => obj[headers[i]] = part);
+//           output.push(obj);
+
+//       //...else if headers line, log headers
+//       } else
+//           headers = parts;
+//   })
+
+//   //done
+//   //console.log("TASKFLOW convert CSV to Object: ",output);
+
+//   // Store the uploaded data into local storage replacing data object
+//   localStorage.setItem("data",JSON.stringify(output));
+//   console.log("TASKFLOW convert data: ",data);
+//   document. location. reload()
+
+//   return output;
+
+  
+// }
+
+
+
+// convert CSV to JSON REPLACED 2025-07-08
+function clkExportTasksToLocalFile() {
+  console.log("CLICKED stub for saving tasks");
+
+  // Use first element to choose the keys and the order
+  var keys = Object.keys(data[0]);
+
+  // Build header
+  var csvContent = keys.map(escapeCsvValue).join(",") + "\n";
+
+  // Add the rows
+  data.forEach(function(obj) {
+    csvContent += keys.map(key => escapeCsvValue(obj[key])).join(",") + "\n";
+  });
+
+  console.log(csvContent);
+
+  //Download the <timestamp>Taskflow.csv file
+  var hiddenElement = document.createElement('a');
+  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+  hiddenElement.target = '_blank';
+
+  //provide the name for the CSV file to be downloaded
+  hiddenElement.download = Date.now() + 'Taskflow.csv';
+  hiddenElement.click();
+
+  // Helper function to escape values for CSV
+  function escapeCsvValue(value) {
+    if (value === null || value === undefined) {
+      return '';
     }
-    else if (character === '"' && quoteFlag == 1) quoteFlag = 0
-    if (character === ',' && quoteFlag === 0) character = '|'
-    if (character !== '"') string += character
+    let stringValue = String(value);
+    // Check if the value contains a comma, double quote, or newline
+    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+      // Escape double quotes by replacing them with two double quotes
+      stringValue = stringValue.replace(/"/g, '""');
+      // Enclose the value in double quotes
+      return `"${stringValue}"`;
+    } else {
+      return stringValue;
+    }
   }
-
-
-  //prep
-  let lines = csv.split('\n'),
-      headers,
-      output = [];
-
-  //console.log("TASKFLOW headers: ", headers);
-  //console.log("TASKFLOW lines: ", lines);
-  
-  //iterate over lines...
-  lines.forEach((line, i) => {
-
-      //...break line into tab-separated parts
-      // let parts = line.split(/\t+/);
-      let parts = line.split(',');
-
-      //...if not the headers line, push to output. By this time
-     //we have the headers logged, so just match the value to
-     //header of the same index
-      if (i) {
-          let obj = {};
-          parts.forEach((part, i) => obj[headers[i]] = part);
-          output.push(obj);
-
-      //...else if headers line, log headers
-      } else
-          headers = parts;
-  })
-
-  //done
-  //console.log("TASKFLOW convert CSV to Object: ",output);
-
-  // Store the uploaded data into local storage replacing data object
-  localStorage.setItem("data",JSON.stringify(output));
-  console.log("TASKFLOW convert data: ",data);
-  document. location. reload()
-
-  return output;
-
-  
 }
+
+
+
 
 
 ////////
