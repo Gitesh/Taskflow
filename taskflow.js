@@ -29,6 +29,7 @@ window.addEventListener("keydown", function (event) {
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
+
   // Check if user is editing text
   const isEditing = document.activeElement.isContentEditable ||
     document.activeElement.tagName === 'INPUT' ||
@@ -36,8 +37,6 @@ window.addEventListener("keydown", function (event) {
 
   if (event.key === '?' && !isEditing) clkSettings();
 
-  // document.getElementById("first").addEventListener("keydown", function(event) {
-  //   event.preventDefault();
   console.log(`${event.type} has been fired`);
   console.log(`${event.key} key was pressed`);
 
@@ -89,12 +88,6 @@ function clkSettings() {
 // };
 
 
-
-
-
-
-
-
 //add event listener to the form to listen for the submit event
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -104,11 +97,19 @@ form.addEventListener("submit", (e) => {
   formValidation();
 });
 
+// Reset input box on Escape key
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    input.value = '+add'; // Reset text
+    input.blur();         // Remove focus
+  }
+});
+
 //create formValidation function - if text box is empty show error
 function formValidation() {
-  if (input.value == "+add") {
-    msg.innerHTML = "no text entered...";  //display error error message in div
-
+  if (input.value === "+add" || input.value.trim() === "") {
+    // msg.innerHTML = "no text entered...";  //display error error message in div
+    showToast("Please enter text for the task", "error");
     console.log("ERROR: no text was entered");
 
   }
@@ -122,6 +123,45 @@ function formValidation() {
     input.blur(input.value = "+add"); //clear the input textbox
 
   }
+}
+
+// Toast Notification Function
+function showToast(message, type = 'info') {
+  let container = document.getElementById('toast-container');
+
+  // Create container if it doesn't exist
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <span>${message}</span>
+    <span class="material-icons" style="font-size: 18px; cursor: pointer;" onclick="this.parentElement.remove()">close</span>
+  `;
+
+  // Add to container
+  container.appendChild(toast);
+
+  // Trigger animation
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+
+  // Auto remove after 3 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    toast.classList.add('hide');
+
+    // Remove from DOM after animation
+    setTimeout(() => {
+      toast.remove();
+    }, 300);
+  }, 3000);
 }
 
 
@@ -176,41 +216,41 @@ let createPost = () => {
   data.map((x, y) => {
 
     return (dropbox4.innerHTML += `
-    <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">       
+    <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
-          <div class="clsTaskCard">      
+          <div class="clsTaskCard">
 
-                 <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.Task_Title}</span>&nbsp - &nbsp 
-                 <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.task_detail}</span>
+            <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.Task_Title}</span>&nbsp - &nbsp
+            <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.task_detail}</span>
 
-                 <span class="clsTaskCardHoverIcons">                    
-                    <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
-                    <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
-                    <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
-                 </span>
-          
+            <span class="clsTaskCardHoverIcons">
+              <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i>
+              <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
+              <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
+            </span>
+
           </div> <!-- front face clsTaskCard-->
-          
-          
+
+
 
           <div class="clsTaskCardBack">
-          
+
             <label for="inpDateDue">Due</label>
-              <input name="inpDateDue" type="date" value="${x.date_due}">
-          
-            <label for="inpTaskTag">Tag</label>
+            <input name="inpDateDue" type="date" value="${x.date_due}">
+
+              <label for="inpTaskTag">Tag</label>
               <input name="inpTaskTag" type="text" value="${x.task_tag}">
 
-            <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
+                <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
 
-            <BR>
-              Created (${x.date_captured})         
+                <BR>
+                  Created (${x.date_captured})
 
-          </div> <!-- back face clsTaskCardBack -->
-        </div>
-    </div>
+                </div> <!-- back face clsTaskCardBack -->
+              </div>
+          </div>
 
-    `);
+          `);
 
 
   });
