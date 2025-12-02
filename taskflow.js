@@ -1,4 +1,4 @@
-
+﻿
 //load elements into variables
 let form = document.getElementById("form");
 let input = document.getElementById("input");
@@ -29,7 +29,12 @@ window.addEventListener("keydown", function (event) {
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
-  if (event.key === '?') clkSettings();
+  // Check if user is editing text
+  const isEditing = document.activeElement.isContentEditable ||
+    document.activeElement.tagName === 'INPUT' ||
+    document.activeElement.tagName === 'TEXTAREA';
+
+  if (event.key === '?' && !isEditing) clkSettings();
 
   // document.getElementById("first").addEventListener("keydown", function(event) {
   //   event.preventDefault();
