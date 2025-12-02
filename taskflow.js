@@ -25,7 +25,7 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 // --START-- Shortcut keys
 window.addEventListener("keydown", function (event) {
 
-  if (event.ctrlKey && event.key === 'A') {event.preventDefault();document.getElementById('input').click()};
+  if (event.ctrlKey && event.key === 'A') { event.preventDefault(); document.getElementById('input').click() };
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
@@ -33,54 +33,54 @@ window.addEventListener("keydown", function (event) {
 
   // document.getElementById("first").addEventListener("keydown", function(event) {
   //   event.preventDefault();
-    console.log(`${event.type} has been fired`);
-    console.log(`${event.key} key was pressed`);
-   
-  });
+  console.log(`${event.type} has been fired`);
+  console.log(`${event.key} key was pressed`);
+
+});
 // --END-- Shortcut keys
 
 ////
 //Show Settings Panel
 ////
 
-function clkSettings(){
+function clkSettings() {
   var myDialog = document.createElement("dialog");
   document.body.appendChild(myDialog)
-    myDialog.setAttribute("id","dialog");
-    myDialog.setAttribute("onclick","this.close(); this.remove()");
-    myDialog.setAttribute("onkeydown","if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
+  myDialog.setAttribute("id", "dialog");
+  myDialog.setAttribute("onclick", "this.close(); this.remove()");
+  myDialog.setAttribute("onkeydown", "if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
 
-    myDialog.append("[CTRL + SHIFT + A] Add a new task");
-    myDialog.appendChild(document.createElement("p"));
+  myDialog.append("[CTRL + SHIFT + A] Add a new task");
+  myDialog.appendChild(document.createElement("p"));
 
 
-    myDialog.append("[CTRL + SHIFT + F] Flip to timer");
-    myDialog.appendChild(document.createElement("p"));
+  myDialog.append("[CTRL + SHIFT + F] Flip to timer");
+  myDialog.appendChild(document.createElement("p"));
 
-    myDialog.append("[CTRL + SHIFT + B] Toggle background animation");
-    myDialog.appendChild(document.createElement("p"));
+  myDialog.append("[CTRL + SHIFT + B] Toggle background animation");
+  myDialog.appendChild(document.createElement("p"));
 
-    myDialog.append("[CTRL + SHIFT + P] Filter Pending Tasks");
-    myDialog.appendChild(document.createElement("p"));
-    
-    myDialog.append("[CTRL + SHIFT + U] Upload saved file");
-    myDialog.appendChild(document.createElement("p"));
+  myDialog.append("[CTRL + SHIFT + P] Filter Pending Tasks");
+  myDialog.appendChild(document.createElement("p"));
 
-    myDialog.appendChild(document.createElement("p"));
-    myDialog.appendChild(document.createElement("hr"));
-    myDialog.appendChild(document.createElement("p"));
-    myDialog.append("Press any key to close");
-    
-    myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7; text-align:left";
-    
-    myDialog.showModal();
+  myDialog.append("[CTRL + SHIFT + U] Upload saved file");
+  myDialog.appendChild(document.createElement("p"));
+
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.appendChild(document.createElement("hr"));
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("Press any key to close");
+
+  myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7; text-align:left";
+
+  myDialog.showModal();
 };
 
 // function closeSettingsDialog() {
 //   document.getElementById('dialog').close();
 //   document.getElementById('dialog').remove();
 //   alert("rwar");
-  
+
 // };
 
 
@@ -92,31 +92,31 @@ function clkSettings(){
 
 //add event listener to the form to listen for the submit event
 form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    console.log("TASKFLOW: submit button clicked");
+  e.preventDefault();
+  console.log("TASKFLOW: submit button clicked");
 
-    //create formValidation function 
-    formValidation();
+  //create formValidation function 
+  formValidation();
 });
 
 //create formValidation function - if text box is empty show error
 function formValidation() {
-    if (input.value == "+add") {
-        msg.innerHTML = "no text entered...";  //display error error message in div
+  if (input.value == "+add") {
+    msg.innerHTML = "no text entered...";  //display error error message in div
 
-        console.log("ERROR: no text was entered");
+    console.log("ERROR: no text was entered");
 
-    }
-    else {
-        console.log("OK: text was entered");
+  }
+  else {
+    console.log("OK: text was entered");
 
-        msg.innerHTML = ""; //clear error message dic
+    msg.innerHTML = ""; //clear error message dic
 
-        acceptData(); // call the acceptData function
+    acceptData(); // call the acceptData function
 
-        input.blur(input.value ="+add"); //clear the input textbox
+    input.blur(input.value = "+add"); //clear the input textbox
 
-    }
+  }
 }
 
 
@@ -125,50 +125,58 @@ function formValidation() {
 //------
 
 //create empty data object to store tasks
-let data =[];
+let data = [];
 
 //create a function called accept data to store the input in the object named data
 let acceptData = () => {
-    
-    data.push({
-      Task_Title: data["Task_Title"]=input.value,
-      task_detail: data["task_detail"]="[Click edit to enter task detail]",
-      date_due: "",
-      date_captured: strDate, 
-      task_tag:"career",
-    })
 
-    localStorage.setItem("data", JSON.stringify(data));
+  data.push({
+    Task_Title: data["Task_Title"] = input.value,
+    task_detail: data["task_detail"] = "[Click edit to enter task detail]",
+    date_due: "",
+    date_captured: strDate,
+    task_tag: "career",
+  })
 
-    console.log("TASKFLOW acceptData +add: ",data)
-    
-    createPost();
+  localStorage.setItem("data", JSON.stringify(data));
 
-  };
+  console.log("TASKFLOW acceptData +add: ", data)
+
+  createPost();
+
+  // Auto-focus on the task detail of the newly added task
+  setTimeout(() => {
+    const newTaskIndex = data.length - 1;
+    const newTaskCard = document.getElementById(newTaskIndex.toString());
+    if (newTaskCard) {
+      const detailSpan = newTaskCard.querySelector('.clsTaskCardDetail');
+      const editIcon = newTaskCard.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
+      if (detailSpan && editIcon) {
+        clkCardEditTitleOrDetail(editIcon);
+        detailSpan.innerHTML = ''; // Clear the placeholder text
+        setTimeout(() => detailSpan.focus(), 10);
+      }
+    }
+  }, 50);
+
+};
 
 
 //------
 //publish the data as a new task
 //------
-let createPost = () => 
-{
-  dropbox4.innerHTML ="";
+let createPost = () => {
+  dropbox4.innerHTML = "";
 
-  data.map((x, y) =>
-  {
+  data.map((x, y) => {
 
     return (dropbox4.innerHTML += `
     <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">       
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
-          <div class="clsTaskCard">
-          
-<!-- TEST CODE: trying to activate tast edit on double click of the title, but issue with identifying parent or child elements -->
+          <div class="clsTaskCard">      
 
- <!--                <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail();alert('yes - doublclicked Task_Title');" >${x.Task_Title}</span>&nbsp - &nbsp -->
- <!--                <span class="clsTaskCardDetail" onclick="alert('no');">${x.task_detail}</span> -->
-
-                 <span class="clsTaskCardTitle";">${x.Task_Title}</span>&nbsp - &nbsp 
-                 <span class="clsTaskCardDetail;">${x.task_detail}</span>
+                 <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.Task_Title}</span>&nbsp - &nbsp 
+                 <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.task_detail}</span>
 
                  <span class="clsTaskCardHoverIcons">                    
                     <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i> 
@@ -199,7 +207,7 @@ let createPost = () =>
 
     `);
 
-    
+
   });
 
 
@@ -207,7 +215,7 @@ let createPost = () =>
 
 
 
-function clkFlipTaskCardToForm(e){
+function clkFlipTaskCardToForm(e) {
   //var cardID = e.parentElement.parentElement.parentElement.parentElement.id; //get the index id from the parent div
   //console.log("TASKFLOW: ", cardID);
   //  console.log(e.parentElement.parentElement.parentElement.classList);// this is the clsTasKCardAll span
@@ -218,13 +226,13 @@ function clkFlipTaskCardToForm(e){
 }
 
 
-function clkFlipTaskCardToTask(e){
+function clkFlipTaskCardToTask(e) {
 
   var setClassToUnFlipped = e.parentElement.parentElement
-  
+
   setClassToUnFlipped.classList.toggle("is-flipped");
 
-  
+
   // const setFrontToInvisible = document.getElementsByClass("clsContainerFront");
   // setFrontToInvisible.style.visibility = 'hidden';
 
@@ -244,10 +252,10 @@ function clkFlipTaskCardToTask(e){
 ////////
 
 
-function clkFlipToCountDownTimer(){
+function clkFlipToCountDownTimer() {
 
   console.log("TASKFLOW: clkFlipToCountDownTimer");
-  
+
   document.getElementById("idContainerAll").classList.toggle("is-flipped");
 
 
@@ -260,7 +268,7 @@ function clkFlipToCountDownTimer(){
 
 (() => {
   data = JSON.parse(localStorage.getItem("data")) || [];
-  console.log("json loaded: ",data);
+  console.log("json loaded: ", data);
   createPost();
 })();
 
@@ -270,7 +278,7 @@ function clkFlipToCountDownTimer(){
 ////////
 function listenForDoubleClick(element) {
   element.contentEditable = true;
-  setTimeout(function() {
+  setTimeout(function () {
     if (document.activeElement !== element) {
       element.contentEditable = false;
     }
@@ -287,15 +295,15 @@ function listenForDoubleClick(element) {
 //     e.parentElement.parentElement.remove();
 // };  
 
-function clkCardDeleteTask(e){
-    //e.parentElement.parentElement.remove();
+function clkCardDeleteTask(e) {
+  //e.parentElement.parentElement.remove();
 
-    e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.remove(); //this is the parent of the title, left in previous sibling to toubleshoot changes
+  e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.remove(); //this is the parent of the title, left in previous sibling to toubleshoot changes
 
-    data.splice(e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.id,1);
+  data.splice(e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.id, 1);
 
-    localStorage.setItem("data",JSON.stringify(data));
-};  
+  localStorage.setItem("data", JSON.stringify(data));
+};
 
 
 
@@ -325,8 +333,8 @@ function clkCardEditTitleOrDetail(e) {
 
   var editTitle = e.parentElement.previousElementSibling.previousElementSibling;
   var editDetail = e.parentElement.previousElementSibling;
-//  alert(editTitle +" "+ editDetail);
- 
+  //  alert(editTitle +" "+ editDetail);
+
   editTitle.setAttribute("contenteditable", "true");
   editDetail.setAttribute("contenteditable", "true");
 
@@ -335,8 +343,8 @@ function clkCardEditTitleOrDetail(e) {
 
   //document.body.setAttribute('contenteditable', 'true');
   document.onkeydown = function (event) {
-    
-    if(event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
+
+    if (event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
 
     {
       //document.body.setAttribute('contenteditable', 'false');
@@ -350,24 +358,24 @@ function clkCardEditTitleOrDetail(e) {
 
       data[cardID].Task_Title = editTitle.innerHTML;
       data[cardID].task_detail = editDetail.innerHTML;
-       
+
       // data.push({
       //     //title: data["Task_Title"]=editTitle.innerHTML,
       //     //task_detail:data["task_detail"]=editDetail.innerHTML,
       //     title: data[cardID].Task_Title=editTitle.innerHTML,
       //     task_detail:data[cardID].task_detail=editDetail.innerHTML,
-          
+
       //     date_due: "17/07/2022",
       //     date_captured: "16/07/2022", 
       //     task_tag:"career",
       //   });
-    
-        localStorage.setItem("data", JSON.stringify(data));
-    
-        console.log("TASKFLOW: ",data);
+
+      localStorage.setItem("data", JSON.stringify(data));
+
+      console.log("TASKFLOW: ", data);
 
 
-     // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
+      // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
 
       //createPost(); //eventually want to replace the ID instead of adding/deleting
 
@@ -379,18 +387,18 @@ function clkCardEditTitleOrDetail(e) {
 
 
 
-function clkToggleBackgroundAnimation(){
+function clkToggleBackgroundAnimation() {
 
-////
-// Toggle JS and CSS background
-////
+  ////
+  // Toggle JS and CSS background
+  ////
 
   var setJSAnimatedBackgroundOnOff = document.getElementsByTagName("Canvas")[0];
 
   if (setJSAnimatedBackgroundOnOff.style.display === "none") {
-  
+
     setJSAnimatedBackgroundOnOff.style.display = "block";  // make visible JS background
-  
+
     let s = document.createElement('link');               // make visible css background
     s.rel = 'stylesheet';
     s.type = 'text/css';
@@ -400,17 +408,17 @@ function clkToggleBackgroundAnimation(){
 
   } else {
     setJSAnimatedBackgroundOnOff.style.display = "none";  // remove javascript background
-    
+
     document.querySelector('link[href$="shapes.css"]').remove() // remove css background
 
   }
-  
+
 };
 
 
 
 
-function clkExportTasksToLocalFile(){
+function clkExportTasksToLocalFile() {
   console.log("CLICKED stub for saving tasks");
 
   // Use first element to choose the keys and the order
@@ -420,20 +428,20 @@ function clkExportTasksToLocalFile(){
   var result = keys.join(",") + "\n";
 
   // Add the rows
-  data.forEach(function(obj){
-      result += keys.map(k => obj[k]).join(",") + "\n";
+  data.forEach(function (obj) {
+    result += keys.map(k => obj[k]).join(",") + "\n";
   });
 
   console.log(result);
 
   //Download the <timestamp>Taskflow.csv file
-  var hiddenElement = document.createElement('a');  
-  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);  
-  hiddenElement.target = '_blank';  
-    
+  var hiddenElement = document.createElement('a');
+  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);
+  hiddenElement.target = '_blank';
+
   //provide the name for the CSV file to be downloaded  
-  hiddenElement.download = Date.now()+'Taskflow.csv';  
-  hiddenElement.click();  
+  hiddenElement.download = Date.now() + 'Taskflow.csv';
+  hiddenElement.click();
 
 };
 
@@ -444,7 +452,7 @@ function clkExportTasksToLocalFile(){
 //
 ////////
 
-function clkFilterPendingTasks(){
+function clkFilterPendingTasks() {
   alert("stub for pending tasks");
 };
 
@@ -467,13 +475,13 @@ function clkFilterPendingTasks(){
 //   readFile = function () {
 //       var reader = new FileReader();
 //       reader.onload = function () {
-  
-        
+
+
 // //        convertCSVtoJSON(reader.result);
 
 //       convertCSVtoJSON (reader.result);
 
-        
+
 
 
 //         // document.getElementById('uploadCSVOutput').innerHTML = reader.result;
@@ -492,7 +500,7 @@ function clkFilterPendingTasks(){
 
 //   //lop off any trailing or starting whitespace
 //   csv = uploadedCSV.trim();
- 
+
 //   //check for special characters
 //   let string = ''
 //   let quoteFlag = 0
@@ -514,7 +522,7 @@ function clkFilterPendingTasks(){
 
 //   //console.log("TASKFLOW headers: ", headers);
 //   //console.log("TASKFLOW lines: ", lines);
-  
+
 //   //iterate over lines...
 //   lines.forEach((line, i) => {
 
@@ -545,7 +553,7 @@ function clkFilterPendingTasks(){
 
 //   return output;
 
-  
+
 // }
 
 
@@ -558,12 +566,12 @@ function clkUploadTasksToLocalStorage() {
   // Define the readFile function inside clkUploadTasksToLocalStorage
   // This ensures it has access to the correct fileInput element
   var readFile = function () {
-      var reader = new FileReader();
-      reader.onload = function () {
-          convertCSVtoJSON (reader.result);
-      };
-      // Read as text for CSV with UTF-8 encoding
-      reader.readAsText(fileInput.files[0], 'UTF-8');
+    var reader = new FileReader();
+    reader.onload = function () {
+      convertCSVtoJSON(reader.result);
+    };
+    // Read as text for CSV with UTF-8 encoding
+    reader.readAsText(fileInput.files[0], 'UTF-8');
   };
 
   // Add the event listener directly here.
@@ -691,7 +699,7 @@ function clkExportTasksToLocalFile() {
   var csvContent = keys.map(escapeCsvValue).join(",") + "\n";
 
   // Add the rows
-  data.forEach(function(obj) {
+  data.forEach(function (obj) {
     csvContent += keys.map(key => escapeCsvValue(obj[key])).join(",") + "\n";
   });
 
@@ -731,45 +739,45 @@ function clkExportTasksToLocalFile() {
 ////////
 //  play the audio loop which is selected by passing the div
 ////////
-function clkPlayAudio(sound){
- 
- // console.log("TASKFLOW: playaudio",sound); 
- 
- var audioElement= document.getElementById(sound);
+function clkPlayAudio(sound) {
 
- console.log("TASKFLOW audioelement: ",audioElement);
-     if (audioElement.paused) {
-         audioElement.play();
-   //      console.log("TASKFLOW audio element play: ",audioElement);
+  // console.log("TASKFLOW: playaudio",sound); 
 
+  var audioElement = document.getElementById(sound);
 
-        //--change the icon colour, selected as the sibling element of the audio
-         var strChildElement = document.getElementById(sound).nextElementSibling;
-
-         strChildElement.style.color = "black";
-         
-   //      console.log("Taskflow child:", strChildElement);
+  console.log("TASKFLOW audioelement: ", audioElement);
+  if (audioElement.paused) {
+    audioElement.play();
+    //      console.log("TASKFLOW audio element play: ",audioElement);
 
 
-     }
-     else {
-         audioElement.pause();  //pause the audio loop
+    //--change the icon colour, selected as the sibling element of the audio
+    var strChildElement = document.getElementById(sound).nextElementSibling;
 
-        //  console.log("TASKFLOW audio element pause: ",audioElement);
+    strChildElement.style.color = "black";
 
-        //--change the icon colour--
-         var strChildElement = document.getElementById(sound).nextElementSibling;
-
-         strChildElement.style.color = "grey";
-         
-        //  console.log("Taskflow child:", strChildElement);
+    //      console.log("Taskflow child:", strChildElement);
 
 
+  }
+  else {
+    audioElement.pause();  //pause the audio loop
+
+    //  console.log("TASKFLOW audio element pause: ",audioElement);
+
+    //--change the icon colour--
+    var strChildElement = document.getElementById(sound).nextElementSibling;
+
+    strChildElement.style.color = "grey";
+
+    //  console.log("Taskflow child:", strChildElement);
 
 
 
 
-     } 
+
+
+  }
 
 };
 
@@ -782,7 +790,7 @@ function clkPlayAudio(sound){
 // DOCUMENTATION
 //-------------------------------------------------------------------------
 
-// Fieldnames 
+// Fieldnames
 //        - Task_Title = captures the OUTCOME you want to achieve from completing a task
 //        - task_detail = captures the NEXT realistic step in the task
 //        - date_due = when you need to DELETE it by
@@ -840,12 +848,12 @@ function clkPlayAudio(sound){
 //            email : "john@doe.com",
 //            gender : "Doe"
 //            };
-// 
+//
 // 2. STORE Saves data into the local storage. Note JSON ENcode:
-//            localStorage.setItem(KEY, VALUE) 
+//            localStorage.setItem(KEY, VALUE)
 //    example:
 //            localStorage.setItem("User", JSON.stringify(user));
-// 
+//
 // 3. RETRIEVE from local storage. Note JSON DEcode:
 //
 //          user = localStorage.getItem("User");
@@ -853,14 +861,14 @@ function clkPlayAudio(sound){
 //          console.log(user);
 //
 //    Example:
-//           localStorage.getItem(KEY) 
+//           localStorage.getItem(KEY)
 //
 // 4. DELETE remove data from the local storage
 //
-//            localStorage.removeItem(KEY) 
+//            localStorage.removeItem(KEY)
 //
-//    Destroy data object 
-//            localStorage.clear() 
+//    Destroy data object
+//            localStorage.clear()
 
 
 
@@ -868,7 +876,7 @@ function clkPlayAudio(sound){
 
 // ----TASK FRONT----
 // [ ] show total number of tasks
-// [ ] separate deleted tasks and tasks marked 'completed'. 
+// [ ] separate deleted tasks and tasks marked 'completed'.
 // [ ] Toggle edit icon when in edit task mode
 // [ ] Show age of tasks on card - to help reprioritise each day.
 

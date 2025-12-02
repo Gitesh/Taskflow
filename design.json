@@ -1,0 +1,245 @@
+{
+  "meta": {
+    "projectName": "Taskflow",
+    "version": "1.0.0",
+    "description": "A playful, tactile task organization and productivity application with a focus on high-contrast visuals and 3D interactions.",
+    "designDirectorNotes": "The design should feel 'alive' and 'physical'. Use 3D flips for state changes rather than simple fades. Colors should be bold and high-contrast. The interface is split into two main 'faces' (Task View and Pomodoro View) that physically flip to reveal each other.",
+    "detailed project": "The project is a task organisation and productivity application. There are two containers, one for the front and one for the back. If the user clicks on the start countdown timer, the front container flips to reveal a pomodoro app. There are icons at the bottom of the pomodoro app that play focus and relaxing audio looped sounds. Users can quickly add a new task using keyboard shortucts (CTRL+SHIFT+A) to enter the new task's title. A new task card is added to the Ice Box section and (TODO: the input box for the task is activated so the user can type the task detail directly into the card. The user then hits CTRL+ENTER) and the task is added. Tasks can be dragged between four sections: High-Impact, Low Impact, Delegate, and Ice Box. Each task is a card that can is flipped using CSS animation to reveal a form with Due date, comma separated project tags, and (TODO: Date added). At the bottom of the main container are icons for 1. Upload 2. Download in JSON or CSV format, 3. Turn on background animation, 4. TODO: Show a report with pending tasks 5. TODO: Display a settings page to enable the user to customise the application. If the user presses SHIFT+/ a modal pop-up is displayed with keyboard shortcuts."
+  },
+  "designPrinciples": [
+    {
+      "name": "Tactile Materiality",
+      "description": "Elements should feel like physical objects. Use 3D transforms, shadows, and flip animations to convey depth and substance."
+    },
+    {
+      "name": "High Contrast & Playful",
+      "description": "Use a dark, immersive background contrasted with bright, solid colors for containers and text. The aesthetic is functional but energetic."
+    },
+    {
+      "name": "Focus-Driven",
+      "description": "The interface adapts to the user's mode (Planning vs. Doing). The Pomodoro mode is distinct and immersive (black background, golden text)."
+    }
+  ],
+  "TODO:": [
+    {
+      "name": "TASK FRONT",
+      "tasks": [
+        {
+          "name": "show total number of tasks"
+        },
+        {
+          "name": "separate deleted tasks and tasks marked 'completed'."
+        },
+        {
+          "name": "Toggle edit icon when in edit task mode"
+        },
+        {
+          "name": "Show age of tasks on card - to help reprioritise each day."
+        }
+      ]
+    },
+    {
+      "name": "TASK BACK FORM",
+      "tasks": [
+        {
+          "name": "output all fields on task back",
+          "status": "open"
+        },
+        {
+          "name": "Field - Add last edited date",
+          "status": "open"
+        },
+        {
+          "name": "css card flip elements on back face clicks still active. FIXED add z plane to back",
+          "status": "closed"
+        }
+      ]
+    },
+    {
+      "name": "TIMELINE",
+      "tasks": [
+        {
+          "name": "toggle completed tasks from the timeline to reopen (and remove from the timeline)",
+          "status": "open"
+        },
+        {
+          "name": "create a modal that shows all the tasks",
+          "status": "open"
+        },
+        {
+          "name": "include only completed tasks in the historical timeline view",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "name": "POMODORO",
+      "tasks": [
+        {
+          "name": "Activate sound icons to show which are playing",
+          "status": "closed"
+        },
+        {
+          "name": "Add gentle chime sound when timer runs out",
+          "status": "open"
+        },
+        {
+          "name": "Add visual circle to show progress",
+          "status": "open"
+        }
+      ]
+    }
+  ],
+  "tokens": {
+    "colors": {
+      "backgrounds": {
+        "appBody": "#333333",
+        "appBodyGradient": "radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.8) 100%)",
+        "containerFront": "#f1f5f8",
+        "containerBack": "#ffe635",
+        "pomodoroContainer": "#000000",
+        "dropArea": "#fefefe",
+        "taskCardFront": "#f1f5f8",
+        "taskCardBack": "#AAAA02",
+        "taskCardHover": "#efefef",
+        "headerTitle": "rgb(81, 29, 47)",
+        "headerSubtitle": "rgb(232, 0, 78)",
+        "animatedTheme": [
+          "#74C390",
+          "#5DBDB6",
+          "#59D4E1",
+          "#51BCE8",
+          "#FA5374",
+          "#E46653"
+        ]
+      },
+      "text": {
+        "primary": "#0f0f0f",
+        "inverse": "#ffffff",
+        "pomodoroPrimary": "#FFE365",
+        "placeholder": "#aaaaaa",
+        "error": "red"
+      },
+      "borders": {
+        "light": "#DFE2E8",
+        "editMode": "#51bce8"
+      },
+      "shadows": {
+        "container": "4px 3px 7px 2px #00000040",
+        "dropArea": "1px 10px 20px -20px #551144",
+        "cardHover": "1px 10px 20px 0px rgba(218, 215, 206, 0.8)"
+      }
+    },
+    "typography": {
+      "fontFamilies": {
+        "primary": "'Lucida Sans', sans-serif",
+        "pomodoro": "'Arial', sans-serif"
+      },
+      "sizes": {
+        "base": "130%",
+        "h1": "130%",
+        "taskTitle": "14px",
+        "taskDetail": "12px",
+        "timerDisplay": "4em"
+      },
+      "weights": {
+        "bold": "bold",
+        "normal": "normal"
+      }
+    },
+    "spacing": {
+      "containerMaxWidth": "500px",
+      "containerMinWidth": "250px",
+      "borderRadius": {
+        "large": "20px",
+        "medium": "12px",
+        "small": "5px"
+      },
+      "padding": {
+        "base": "1rem",
+        "card": "1em",
+        "small": "5px"
+      }
+    },
+    "animations": {
+      "flip": {
+        "type": "transform",
+        "property": "rotateY",
+        "value": "-180deg",
+        "duration": "1.3s",
+        "perspective": "333px"
+      },
+      "backgroundCycle": {
+        "name": "theme",
+        "duration": "21s",
+        "timing": "linear",
+        "iteration": "infinite"
+      },
+      "backgroundRotate": {
+        "name": "background",
+        "duration": "90s",
+        "timing": "linear",
+        "iteration": "infinite"
+      }
+    }
+  },
+  "components": {
+    "MainContainer": {
+      "description": "The central hub of the application. It is a double-sided card.",
+      "styles": {
+        "width": "100%",
+        "maxWidth": "500px",
+        "perspective": "333px",
+        "transformStyle": "preserve-3d",
+        "transition": "transform 1.3s"
+      },
+      "states": {
+        "flipped": {
+          "transform": "translateX(-100%) rotateY(-180deg)"
+        }
+      }
+    },
+    "TaskCard": {
+      "description": "Represents an individual task. Draggable and flippable.",
+      "styles": {
+        "backgroundColor": "transparent",
+        "borderTop": "1px solid #DFE2E8",
+        "padding": "1em",
+        "display": "flex",
+        "transition": "transform 0.3s"
+      },
+      "interactions": {
+        "hover": {
+          "backgroundColor": "#efefef",
+          "boxShadow": "1px 10px 20px 0px rgba(218, 215, 206, 0.8)",
+          "transform": "scale(1.02)"
+        }
+      }
+    },
+    "PomodoroTimer": {
+      "description": "A dedicated focus mode with a dark theme.",
+      "styles": {
+        "backgroundColor": "#000000",
+        "color": "#FFE365",
+        "borderRadius": "20px",
+        "padding": "30px",
+        "textAlign": "center"
+      }
+    },
+    "AudioControls": {
+      "description": "Icon-based controls for ambient sound.",
+      "styles": {
+        "fontSize": "xx-large",
+        "color": "grey",
+        "cursor": "pointer"
+      },
+      "interactions": {
+        "hover": {
+          "color": "black",
+          "backgroundColor": "lightgrey",
+          "borderRadius": "13px"
+        }
+      }
+    }
+  }
+}
