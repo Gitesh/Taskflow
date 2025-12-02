@@ -463,32 +463,62 @@ function clkToggleBackgroundAnimation() {
 
 
 
+// function clkExportTasksToLocalFile() {
+//   console.log("CLICKED stub for saving tasks");
+
+//   // Use first element to choose the keys and the order
+//   var keys = Object.keys(data[0]);
+
+//   // Build header
+//   var result = keys.join(",") + "\n";
+
+//   // Add the rows
+//   data.forEach(function (obj) {
+//     result += keys.map(k => obj[k]).join(",") + "\n";
+//   });
+
+//   console.log(result);
+
+//   //Download the <timestamp>Taskflow.csv file
+//   var hiddenElement = document.createElement('a');
+//   hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);
+//   hiddenElement.target = '_blank';
+
+//   //provide the name for the CSV file to be downloaded  
+//   hiddenElement.download = Date.now() + 'Taskflow.csv';
+//   hiddenElement.click();
+
+// };
+
+
 function clkExportTasksToLocalFile() {
-  console.log("CLICKED stub for saving tasks");
+  console.log("Exporting tasks from localStorage");
+  // Get data from localStorage
+  var exportData = JSON.parse(localStorage.getItem("data")) || [];
 
+  if (exportData.length === 0) {
+    alert("No tasks to export");
+    return;
+  }
   // Use first element to choose the keys and the order
-  var keys = Object.keys(data[0]);
-
-  // Build header
-  var result = keys.join(",") + "\n";
-
-  // Add the rows
-  data.forEach(function (obj) {
-    result += keys.map(k => obj[k]).join(",") + "\n";
+  var keys = Object.keys(exportData[0]);
+  // Build header with semicolon delimiter
+  var csvContent = keys.join(";") + "\n";
+  // Add the rows with semicolon delimiter
+  exportData.forEach(function (obj) {
+    csvContent += keys.map(k => obj[k]).join(";") + "\n";
   });
-
-  console.log(result);
-
+  console.log("CSV Content:", csvContent);
   //Download the <timestamp>Taskflow.csv file
   var hiddenElement = document.createElement('a');
-  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);
+  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
   hiddenElement.target = '_blank';
 
   //provide the name for the CSV file to be downloaded  
-  hiddenElement.download = Date.now() + 'Taskflow.csv';
+  hiddenElement.download = Date.now() + '_Taskflow.csv';
   hiddenElement.click();
-
 };
+
 
 
 ////////
