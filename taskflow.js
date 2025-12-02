@@ -462,42 +462,15 @@ function clkToggleBackgroundAnimation() {
 
 
 
-
-// function clkExportTasksToLocalFile() {
-//   console.log("CLICKED stub for saving tasks");
-
-//   // Use first element to choose the keys and the order
-//   var keys = Object.keys(data[0]);
-
-//   // Build header
-//   var result = keys.join(",") + "\n";
-
-//   // Add the rows
-//   data.forEach(function (obj) {
-//     result += keys.map(k => obj[k]).join(",") + "\n";
-//   });
-
-//   console.log(result);
-
-//   //Download the <timestamp>Taskflow.csv file
-//   var hiddenElement = document.createElement('a');
-//   hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(result);
-//   hiddenElement.target = '_blank';
-
-//   //provide the name for the CSV file to be downloaded  
-//   hiddenElement.download = Date.now() + 'Taskflow.csv';
-//   hiddenElement.click();
-
-// };
-
-
 function clkExportTasksToLocalFile() {
   console.log("Exporting tasks from localStorage");
+  showToast("Exporting tasks from localStorage to CSV file", "info");
+
   // Get data from localStorage
   var exportData = JSON.parse(localStorage.getItem("data")) || [];
 
   if (exportData.length === 0) {
-    alert("No tasks to export");
+    showToast("No tasks to export", "error");
     return;
   }
   // Use first element to choose the keys and the order
@@ -517,7 +490,11 @@ function clkExportTasksToLocalFile() {
   //provide the name for the CSV file to be downloaded  
   hiddenElement.download = Date.now() + '_Taskflow.csv';
   hiddenElement.click();
+  showToast("Tasks exported successfully!", "success");
 };
+
+
+
 
 
 
@@ -763,49 +740,49 @@ function convertCSVtoJSON(uploadedCSV) {
 
 
 
-// convert CSV to JSON REPLACED 2025-07-08
-function clkExportTasksToLocalFile() {
-  console.log("CLICKED stub for saving tasks");
+// // convert CSV to JSON REPLACED 2025-07-08
+// function clkExportTasksToLocalFile() {
+//   console.log("CLICKED stub for saving tasks");
 
-  // Use first element to choose the keys and the order
-  var keys = Object.keys(data[0]);
+//   // Use first element to choose the keys and the order
+//   var keys = Object.keys(data[0]);
 
-  // Build header
-  var csvContent = keys.map(escapeCsvValue).join(",") + "\n";
+//   // Build header
+//   var csvContent = keys.map(escapeCsvValue).join(",") + "\n";
 
-  // Add the rows
-  data.forEach(function (obj) {
-    csvContent += keys.map(key => escapeCsvValue(obj[key])).join(",") + "\n";
-  });
+//   // Add the rows
+//   data.forEach(function (obj) {
+//     csvContent += keys.map(key => escapeCsvValue(obj[key])).join(",") + "\n";
+//   });
 
-  console.log(csvContent);
+//   console.log(csvContent);
 
-  //Download the <timestamp>Taskflow.csv file
-  var hiddenElement = document.createElement('a');
-  hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-  hiddenElement.target = '_blank';
+//   //Download the <timestamp>Taskflow.csv file
+//   var hiddenElement = document.createElement('a');
+//   hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+//   hiddenElement.target = '_blank';
 
-  //provide the name for the CSV file to be downloaded
-  hiddenElement.download = Date.now() + 'Taskflow.csv';
-  hiddenElement.click();
+//   //provide the name for the CSV file to be downloaded
+//   hiddenElement.download = Date.now() + 'Taskflow.csv';
+//   hiddenElement.click();
 
-  // Helper function to escape values for CSV
-  function escapeCsvValue(value) {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    let stringValue = String(value);
-    // Check if the value contains a comma, double quote, or newline
-    if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-      // Escape double quotes by replacing them with two double quotes
-      stringValue = stringValue.replace(/"/g, '""');
-      // Enclose the value in double quotes
-      return `"${stringValue}"`;
-    } else {
-      return stringValue;
-    }
-  }
-}
+//   // Helper function to escape values for CSV
+//   function escapeCsvValue(value) {
+//     if (value === null || value === undefined) {
+//       return '';
+//     }
+//     let stringValue = String(value);
+//     // Check if the value contains a comma, double quote, or newline
+//     if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+//       // Escape double quotes by replacing them with two double quotes
+//       stringValue = stringValue.replace(/"/g, '""');
+//       // Enclose the value in double quotes
+//       return `"${stringValue}"`;
+//     } else {
+//       return stringValue;
+//     }
+//   }
+// }
 
 
 
