@@ -2,16 +2,15 @@
 <html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <title>Taskflow - Organize Your Tasks with Ease</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="taskflow.css">
     <link rel="stylesheet" href="animated_background/shapes.css" id="idAnimatedBackgroundCSSStylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
-<!-- GK the code below pressing ctrl A acitviates the input box BUT the shortuts get activated, need a way to stop those listners if input is selected so you can type text-->
-<!-- <body onkeydown="   <-- if (event.key === 'a') {document.getElementById('input').focus(); formValidation();}; -->
-
 <body>
-    <!-- Move these key bindings to the relevant button so they are only available when the icon is visible -->
 
     <section class="container" id="container">
 
@@ -26,64 +25,58 @@
                 <!--- drop boxes --->
                 <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">High
-                            Impact</span> <br><br>
+                        <span id="heading1" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">High Impact</span><br><br>
                     </div>
-                    <!-- <i onclick="clkBoxAdd('box1')" class="btnAdd">+add</i>  -->
+                    <div id="dropbox1"></div>
                 </div><!--end div1-->
 
 
                 <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Low
+                        <span id="heading2" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">Low
                             Impact</span> <br><br>
                     </div>
-                    <!-- <input type="text" id="inputBox2" value="+add" onclick="this.select()"> -->
-                    <!-- <button id="myBtn" onclick="javascript:clkBoxAdd('box2', String(inputBox2.value))" hidden></button> -->
-
+                    <div id="dropbox2"></div>
                 </div><!--end div2-->
 
 
                 <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Delegate</span>
+                        <span id="heading3" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">Delegate</span>
                         <br><br>
                     </div>
-                    <!-- <i onclick="clkBoxAdd('box3')" class="btnAdd">+add</i>  -->
+                    <div id="dropbox3"></div>
                 </div> <!--end div3-->
 
 
                 <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Ice Box</span>
+                        <span id="heading4" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">Ice Box</span>
                         <br><br>
                     </div>
 
                     <!--Entry form-->
-                    <form id="form">
-                        <div id="dropbox4"></div>
-                        <br><br>
-                        <input type="text" name="post" id="input" value="+add" onclick="post.select()">
-
-
-                        <div id="idErrorMessage"></div>
-
-                        <button id="btnSubmit" type="submit" ;>Post</button>
-                    </form>
+                    <div id="dropbox4"></div>
 
                 </div> <!-- end div4-->
 
 
+                <!-- Input Section -->
+                <div id="idInputSection">
+                    <form id="form">
+                        <input type="text" name="post" id="input" value="+add" placeholder="Add a new task" onclick="post.select()">
+                        <div id="idErrorMessage"></div>
+                        <button id="btnSubmit" type="submit">Post</button>
+                    </form>
+                </div>
+
                 <!-- icon bar -->
 
                 <div id="divIconBar">
-
-                    <!-- <span class="material-icons" title="Upload tasks from CSV" >
-                    <label for="uploadCSV" click="preventDefault()">
-                        file_upload 
-                        <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
-                    </label>
-                </span> -->
 
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
@@ -93,16 +86,12 @@
                         </label>
                     </span>
 
-
-
-
-                    <span class="material-icons" title="Download tasks"
-                        onclick="clkExportTasksToLocalFile()">save</span>
+                    <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
 
                     <span class="material-icons" title="Toggle background animation"
-                        onclick="clkToggleBackgroundAnimation()"">animation</span>
+                        onclick="clkToggleBackgroundAnimation()">animation</span>
 
-                <span class=" material-icons" title="Start countdown timer"
+                    <span class="material-icons" title="Start countdown timer"
                         onclick="clkFlipToCountDownTimer()">hourglass_top</span>
 
                     <span class="material-icons" title="Show pending tasks"
@@ -110,33 +99,34 @@
 
                     <span class="material-icons" title="Settings" onclick="clkSettings()">settings</span>
 
-                </div>
+                    <span class="material-icons" title="Toggle Light/Dark Theme" onclick="toggleTheme()">brightness_4</span>
+
+
+                </div> <!-- end div icon bar -->
 
 
             </div><!--end div clsContainterFront-->
 
             <br>
 
+
+            <!--this is the back of the container where the pomodoro timer and audio icons are-->
+
             <div class="clsContainerBack">
-
-
-
 
                 <!-- START POMODORO -->
                 <div class="clsPomodoroContainer">
                     <!-- <object type="text/html" data="pomodoro/pomodoro.html" width="100%" height="90%"></object> -->
                     <object type="text/html" data="pomodoro/pomodoro_scratch.html" width="100%" height="100%"></object>
                 </div>
-
                 <!-- END POMODORO -->
 
 
-                <!-- ICONS TO PLAY AUDIO LOOPS -->
+                <!-- START ICONS TO PLAY AUDIO LOOPS -->
                 <span clsAudioIconsBar>
                     <audio id="forest" src="audio_loops/forest.mp3" preload="true" type="audio/mpeg" loop></audio>
                     <span class="material-icons" title="Outdoors - creative space"
                         onclick="clkPlayAudio('forest')">forest</span>
-
 
                     <audio id="water" src="audio_loops/water.mp3" preload="true" type="audio/mpeg" loop></audio>
                     <span class="material-icons" title="Waves - breathe" onclick="clkPlayAudio('water')">water</span>
@@ -145,7 +135,6 @@
                         loop></audio>
                     <span class="material-icons" title="Rain - focus thoughts"
                         onclick="clkPlayAudio('thunderstorm');">thunderstorm</span>
-
 
                     <audio id="self_improvement" src="audio_loops/self_improvement.mp3" preload="true" type="audio/mpeg"
                         loop></audio>
@@ -157,6 +146,7 @@
                     <span class="material-icons" title="Café - drown out voices"
                         onclick="clkPlayAudio('local_cafe')">local_cafe</span>
                 </span>
+                <!-- END ICONS TO PLAY AUDIO LOOPS -->
 
                 <p></p>
                 <p></p>
@@ -164,19 +154,18 @@
                     title="Return">keyboard_double_arrow_left</span>
 
 
-
             </div><!--end div clsContainterBack-->
 
         </div><!--end div clsContainerAll-->
+
+        <!--version-->
+        <p style="color: #fa0101;">V2025-12-23_2037</p>
     </section>
 
-
-
-
-
-    <div id="toast-container"></div>
 
     <script src="taskflow.js"> </script>
     <script src="animated_background/ribbons.js"></script>
     <script> clkToggleBackgroundAnimation()</script> <!--Turn off animated background-->
+
+
 </body>
