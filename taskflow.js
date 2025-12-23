@@ -145,7 +145,8 @@ input.addEventListener('keydown', (e) => {
 function formValidation() {
   if (input.value === "+add" || input.value.trim() === "") {
     // msg.innerHTML = "no text entered...";  //display error error message in div
-    showToast("Please enter text for the task", "error");
+    showToast("Type a title/outcome, or ESC to cancel", "error");
+
     console.log("ERROR: no text was entered");
 
   }

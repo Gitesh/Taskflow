@@ -346,6 +346,15 @@ i.material-icons {
 }
 
 
+
+#idInputSection {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
 /* form styles */
 
 input[type=text] {
