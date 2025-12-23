@@ -298,7 +298,7 @@ let createPost = () => {
           <div class="clsTaskCardBack">
 
             <label for="inpDateDue">Due</label>
-            <input name="inpDateDue" type="date" value="${x.date_due}" onchange="updateTaskField(${y}, 'date_due', this.value)">
+            <input name="inpDateDue" type="date" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value)">
 
              <label for="inpTaskTag">Tag</label>
               <input name="inpTaskTag" type="text" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value)">
@@ -312,12 +312,12 @@ let createPost = () => {
              </select>
 
              <label for="inpDateClosed">Closed</label>
-             <input name="inpDateClosed" type="date" value="${x.date_closed}" onchange="updateTaskField(${y}, 'date_closed', this.value)">
+             <input name="inpDateClosed" type="date" value="${x.date_closed ? x.date_closed.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_closed', this.value)">
 
                 <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
 
                 <BR>
-                  Created (${x.date_captured})
+                  Created (${x.date_captured ? x.date_captured.split('T')[0] : ''})
 
                 </div> <!-- back face clsTaskCardBack -->
               </div>
@@ -333,7 +333,12 @@ let createPost = () => {
 
 // Function to update single fields from card back
 function updateTaskField(index, field, value) {
-  data[index][field] = value;
+  if (field.startsWith('date_') && value) {
+    // Store as ISO string
+    data[index][field] = new Date(value).toISOString();
+  } else {
+    data[index][field] = value;
+  }
   localStorage.setItem("data", JSON.stringify(data));
 }
 
@@ -644,13 +649,24 @@ function clkExportTasksToJSON() {
   showToast("Exporting tasks from localStorage to JSON file", "info");
 
   var exportData = JSON.parse(localStorage.getItem("data")) || [];
+  var exportSettings = JSON.parse(localStorage.getItem("settings")) || {};
 
   if (exportData.length === 0) {
     showToast("No tasks to export", "error");
     return;
   }
 
-  var jsonContent = JSON.stringify(exportData, null, 2);
+  // Create full state object
+  var fullState = {
+    meta: {
+      version: "2.0",
+      exported_at: new Date().toISOString()
+    },
+    settings: exportSettings,
+    tasks: exportData
+  };
+
+  var jsonContent = JSON.stringify(fullState, null, 2);
 
   var hiddenElement = document.createElement('a');
   hiddenElement.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonContent);
@@ -794,12 +810,28 @@ function clkUploadTasksToLocalStorage() {
       // Try to parse as JSON first
       try {
         let json = JSON.parse(content);
-        if (Array.isArray(json)) {
-          localStorage.setItem("data", JSON.stringify(json));
-          showToast("Imported JSON successfully", "success");
+
+        // Handle New Format (Object with tasks/settings)
+        if (json.tasks && Array.isArray(json.tasks)) {
+          localStorage.setItem("data", JSON.stringify(json.tasks));
+
+          if (json.settings) {
+            localStorage.setItem("settings", JSON.stringify(json.settings));
+          }
+
+          showToast("Imported Full State successfully", "success");
           setTimeout(() => document.location.reload(), 1000);
           return;
         }
+
+        // Handle Legacy Format (Array only)
+        if (Array.isArray(json)) {
+          localStorage.setItem("data", JSON.stringify(json));
+          showToast("Imported Legacy JSON successfully", "success");
+          setTimeout(() => document.location.reload(), 1000);
+          return;
+        }
+
       } catch (err) {
         // Not JSON, assume CSV
         console.log("Not JSON, attempting CSV import...");
@@ -876,6 +908,7 @@ function convertCSVtoJSON(uploadedCSV) {
     // Default new fields if missing
     if (!obj.section) obj.section = "div4";
     if (!obj.status) obj.status = "Open";
+    if (!obj.subtasks) obj.subtasks = [];
     if (!obj.id) obj.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
 
     output.push(obj);
