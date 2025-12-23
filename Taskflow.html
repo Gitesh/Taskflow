@@ -22,31 +22,38 @@
                 <!--- drop boxes --->
                 <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">High
+                        <span id="heading1" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">High
                             Impact</span> <br><br>
                     </div>
+                    <div id="dropbox1"></div>
                 </div><!--end div1-->
 
 
                 <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Low
+                        <span id="heading2" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">Low
                             Impact</span> <br><br>
                     </div>
+                    <div id="dropbox2"></div>
                 </div><!--end div2-->
 
 
                 <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Delegate</span>
+                        <span id="heading3" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">Delegate</span>
                         <br><br>
                     </div>
+                    <div id="dropbox3"></div>
                 </div> <!--end div3-->
 
 
                 <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
-                        <span onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Ice Box</span>
+                        <span id="heading4" onclick="listenForDoubleClick(this);"
+                            onblur="this.contentEditable=false;">Ice Box</span>
                         <br><br>
                     </div>
 
@@ -75,8 +82,7 @@
                         </label>
                     </span>
 
-                    <span class="material-icons" title="Download tasks"
-                        onclick="clkExportTasksToLocalFile()">save</span>
+                    <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
 
                     <span class="material-icons" title="Toggle background animation"
                         onclick="clkToggleBackgroundAnimation()">animation</span>
@@ -144,6 +150,9 @@
             </div><!--end div clsContainterBack-->
 
         </div><!--end div clsContainerAll-->
+
+        <!--version-->
+        <p style="color: #fa0101;">V2025-12-23_1212</p>
     </section>
 
 
@@ -151,5 +160,5 @@
     <script src="animated_background/ribbons.js"></script>
     <script> clkToggleBackgroundAnimation()</script> <!--Turn off animated background-->
 
-    VER251202
+
 </body>

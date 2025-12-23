@@ -25,7 +25,7 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 // --START-- Shortcut keys
 window.addEventListener("keydown", function (event) {
 
-  if (event.ctrlKey && event.key === 'A') { event.preventDefault(); document.getElementById('input').click() };
+  if (event.key === '+') { event.preventDefault(); document.getElementById('input').click() };
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
@@ -70,6 +70,9 @@ function clkSettings() {
   myDialog.append("[CTRL + SHIFT + U] Upload saved file");
   myDialog.appendChild(document.createElement("p"));
 
+  myDialog.append("Double click section headers to rename them.");
+  myDialog.appendChild(document.createElement("p"));
+
   myDialog.appendChild(document.createElement("p"));
   myDialog.appendChild(document.createElement("hr"));
   myDialog.appendChild(document.createElement("p"));
@@ -79,6 +82,39 @@ function clkSettings() {
 
   myDialog.showModal();
 };
+
+function clkShowExportModal() {
+  var myDialog = document.createElement("dialog");
+  document.body.appendChild(myDialog);
+  myDialog.setAttribute("id", "exportDialog");
+  myDialog.setAttribute("onclick", "if(event.target === this) { this.close(); this.remove(); }");
+  myDialog.setAttribute("onkeydown", "if (event.key === 'Escape') { this.close(); this.remove(); }");
+
+  let title = document.createElement("h3");
+  title.innerText = "Export Tasks";
+  myDialog.appendChild(title);
+
+  let btnCSV = document.createElement("button");
+  btnCSV.innerText = "Export as CSV";
+  btnCSV.style.cssText = "margin: 10px; padding: 10px; cursor: pointer;";
+  btnCSV.onclick = function () { clkExportTasksToLocalFile(); myDialog.close(); myDialog.remove(); };
+  myDialog.appendChild(btnCSV);
+
+  let btnJSON = document.createElement("button");
+  btnJSON.innerText = "Export as JSON";
+  btnJSON.style.cssText = "margin: 10px; padding: 10px; cursor: pointer;";
+  btnJSON.onclick = function () { clkExportTasksToJSON(); myDialog.close(); myDialog.remove(); };
+  myDialog.appendChild(btnJSON);
+
+  let closeMsg = document.createElement("p");
+  closeMsg.innerText = "(Press Esc to close)";
+  closeMsg.style.fontSize = "small";
+  myDialog.appendChild(closeMsg);
+
+  myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.9; text-align:center; border: 1px solid cyan; border-radius: 10px;";
+
+  myDialog.showModal();
+}
 
 // function closeSettingsDialog() {
 //   document.getElementById('dialog').close();
@@ -171,16 +207,29 @@ function showToast(message, type = 'info') {
 
 //create empty data object to store tasks
 let data = [];
+let settings = {
+  sections: {
+    heading1: "High Impact",
+    heading2: "Low Impact",
+    heading3: "Delegate",
+    heading4: "Ice Box"
+  }
+};
 
 //create a function called accept data to store the input in the object named data
 let acceptData = () => {
 
   data.push({
+    id: Date.now().toString(), // Unique ID for reliable referencing
     Task_Title: data["Task_Title"] = input.value,
     task_detail: data["task_detail"] = "[Click edit to enter task detail]",
     date_due: "",
     date_captured: strDate,
+    date_closed: "",
     task_tag: "career",
+    section: "div4", // Default to Ice Box
+    status: "Open", // Open, Closed, Pending
+    subtasks: [] // Future proofing
   })
 
   localStorage.setItem("data", JSON.stringify(data));
@@ -211,11 +260,24 @@ let acceptData = () => {
 //publish the data as a new task
 //------
 let createPost = () => {
-  dropbox4.innerHTML = "";
+  // Clear all dropboxes
+  document.getElementById("dropbox1").innerHTML = "";
+  document.getElementById("dropbox2").innerHTML = "";
+  document.getElementById("dropbox3").innerHTML = "";
+  document.getElementById("dropbox4").innerHTML = "";
 
-  data.map((x, y) => {
+  data.forEach((x, y) => {
+    // Determine target dropbox based on section
+    let targetId = "dropbox4"; // Default
+    if (x.section) {
+      // Map divX to dropboxX
+      targetId = x.section.replace("div", "dropbox");
+    }
 
-    return (dropbox4.innerHTML += `
+    let target = document.getElementById(targetId);
+    if (!target) target = document.getElementById("dropbox4"); // Fallback
+
+    target.innerHTML += `
     <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
           <div class="clsTaskCard">
@@ -236,10 +298,21 @@ let createPost = () => {
           <div class="clsTaskCardBack">
 
             <label for="inpDateDue">Due</label>
-            <input name="inpDateDue" type="date" value="${x.date_due}">
+            <input name="inpDateDue" type="date" value="${x.date_due}" onchange="updateTaskField(${y}, 'date_due', this.value)">
 
-              <label for="inpTaskTag">Tag</label>
-              <input name="inpTaskTag" type="text" value="${x.task_tag}">
+             <label for="inpTaskTag">Tag</label>
+              <input name="inpTaskTag" type="text" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value)">
+
+             <br>
+             <label for="inpStatus">Status</label>
+             <select name="inpStatus" onchange="updateTaskField(${y}, 'status', this.value)">
+                <option value="Open" ${x.status === 'Open' ? 'selected' : ''}>Open</option>
+                <option value="Pending" ${x.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                <option value="Closed" ${x.status === 'Closed' ? 'selected' : ''}>Closed</option>
+             </select>
+
+             <label for="inpDateClosed">Closed</label>
+             <input name="inpDateClosed" type="date" value="${x.date_closed}" onchange="updateTaskField(${y}, 'date_closed', this.value)">
 
                 <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
 
@@ -250,12 +323,18 @@ let createPost = () => {
               </div>
           </div>
 
-          `);
+          `;
 
 
   });
 
 
+}
+
+// Function to update single fields from card back
+function updateTaskField(index, field, value) {
+  data[index][field] = value;
+  localStorage.setItem("data", JSON.stringify(data));
 }
 
 
@@ -311,8 +390,27 @@ function clkFlipToCountDownTimer() {
 
 //immediately invoked function expression to reload tasks
 
+//immediately invoked function expression to reload tasks
 (() => {
+  // Load data
   data = JSON.parse(localStorage.getItem("data")) || [];
+  // Migration for old data
+  data.forEach(task => {
+    if (!task.section) task.section = "div4";
+    if (!task.status) task.status = "Open";
+  });
+
+  // Load Settings
+  let storedSettings = JSON.parse(localStorage.getItem("settings"));
+  if (storedSettings) {
+    settings = storedSettings;
+    // Apply headers
+    Object.keys(settings.sections).forEach(id => {
+      let el = document.getElementById(id);
+      if (el) el.innerText = settings.sections[id];
+    });
+  }
+
   console.log("json loaded: ", data);
   createPost();
 })();
@@ -323,11 +421,19 @@ function clkFlipToCountDownTimer() {
 ////////
 function listenForDoubleClick(element) {
   element.contentEditable = true;
-  setTimeout(function () {
-    if (document.activeElement !== element) {
-      element.contentEditable = false;
+  element.focus();
+
+  // Save on blur
+  element.onblur = function () {
+    element.contentEditable = false;
+    // Save new text
+    let id = element.id;
+    if (settings.sections[id] !== undefined) {
+      settings.sections[id] = element.innerText;
+      localStorage.setItem("settings", JSON.stringify(settings));
+      showToast("Section name saved", "success");
     }
-  }, 300);
+  };
 }
 
 //------
@@ -341,13 +447,17 @@ function listenForDoubleClick(element) {
 // };  
 
 function clkCardDeleteTask(e) {
-  //e.parentElement.parentElement.remove();
+  //e.parentElement.parentElement.remove(); // Removed visual remove, relying on createPost reflow logic which is cleaner
 
-  e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.remove(); //this is the parent of the title, left in previous sibling to toubleshoot changes
+  // Find index from wrapper ID
+  let wrapper = e.closest('.clsTaskCardWrapper');
+  let id = wrapper.id;
 
-  data.splice(e.parentElement.previousElementSibling.previousElementSibling.parentElement.parentElement.id, 1);
+  data.splice(id, 1);
 
   localStorage.setItem("data", JSON.stringify(data));
+
+  createPost(); // Re-render to fix indices
 };
 
 
@@ -365,9 +475,28 @@ function drag(e) {
 }
 
 function drop(e) {
-  var data = e.dataTransfer.getData("Text");
-  e.target.appendChild(document.getElementById(data));
   e.preventDefault();
+  var taskIndex = e.dataTransfer.getData("Text");
+
+  // Find which drop area (section) was target
+  var dropZone = e.target.closest('.clsDropArea');
+
+  if (dropZone) {
+    var sectionId = dropZone.id;
+    // Update data model
+    if (data[taskIndex]) {
+      data[taskIndex].section = sectionId;
+      localStorage.setItem("data", JSON.stringify(data));
+
+      // Move visually to the correct dropbox
+      // We find the dropbox within the section
+      var dropboxId = sectionId.replace("div", "dropbox");
+      var dropbox = document.getElementById(dropboxId);
+      if (dropbox) {
+        dropbox.appendChild(document.getElementById(taskIndex));
+      }
+    }
+  }
 }
 
 //-------------------
@@ -475,11 +604,28 @@ function clkExportTasksToLocalFile() {
   }
   // Use first element to choose the keys and the order
   var keys = Object.keys(exportData[0]);
-  // Build header with semicolon delimiter
-  var csvContent = keys.join(";") + "\n";
-  // Add the rows with semicolon delimiter
+  // Build header with COMMA delimiter
+  var csvContent = keys.join(",") + "\n";
+  // Add the rows
   exportData.forEach(function (obj) {
-    csvContent += keys.map(k => obj[k]).join(";") + "\n";
+    csvContent += keys.map(k => {
+      let val = obj[k];
+
+      // Handle arrays/objects -> Semicolon separated string
+      if (Array.isArray(val)) {
+        return `"${val.join(';')}"`;
+      } else if (typeof val === 'object' && val !== null) {
+        return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
+      }
+
+      // Handle strings with commas or quotes
+      let strVal = String(val || '');
+      if (strVal.includes(',') || strVal.includes('"') || strVal.includes('\n')) {
+        return `"${strVal.replace(/"/g, '""')}"`;
+      }
+
+      return strVal;
+    }).join(",") + "\n";
   });
   console.log("CSV Content:", csvContent);
   //Download the <timestamp>Taskflow.csv file
@@ -492,6 +638,28 @@ function clkExportTasksToLocalFile() {
   hiddenElement.click();
   showToast("Tasks exported successfully!", "success");
 };
+
+function clkExportTasksToJSON() {
+  console.log("Exporting tasks from localStorage to JSON");
+  showToast("Exporting tasks from localStorage to JSON file", "info");
+
+  var exportData = JSON.parse(localStorage.getItem("data")) || [];
+
+  if (exportData.length === 0) {
+    showToast("No tasks to export", "error");
+    return;
+  }
+
+  var jsonContent = JSON.stringify(exportData, null, 2);
+
+  var hiddenElement = document.createElement('a');
+  hiddenElement.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonContent);
+  hiddenElement.target = '_blank';
+
+  hiddenElement.download = Date.now() + '_Taskflow.json';
+  hiddenElement.click();
+  showToast("Tasks exported to JSON successfully!", "success");
+}
 
 
 
@@ -615,71 +783,38 @@ function clkUploadTasksToLocalStorage() {
 
   var fileInput = document.getElementById("uploadCSV");
 
-  // Define the readFile function inside clkUploadTasksToLocalStorage
-  // This ensures it has access to the correct fileInput element
+  // Define the readFile function
   var readFile = function () {
     var reader = new FileReader();
-    reader.onload = function () {
-      convertCSVtoJSON(reader.result);
+    var file = fileInput.files[0];
+
+    reader.onload = function (e) {
+      let content = e.target.result;
+
+      // Try to parse as JSON first
+      try {
+        let json = JSON.parse(content);
+        if (Array.isArray(json)) {
+          localStorage.setItem("data", JSON.stringify(json));
+          showToast("Imported JSON successfully", "success");
+          setTimeout(() => document.location.reload(), 1000);
+          return;
+        }
+      } catch (err) {
+        // Not JSON, assume CSV
+        console.log("Not JSON, attempting CSV import...");
+        convertCSVtoJSON(content);
+      }
     };
-    // Read as text for CSV with UTF-8 encoding
-    reader.readAsText(fileInput.files[0], 'UTF-8');
+
+    // Read as text
+    reader.readAsText(file, 'UTF-8');
   };
 
-  // Add the event listener directly here.
-  // The onclick in HTML will call this function when the input is clicked.
-  // The change event will fire when a file is selected.
-  fileInput.addEventListener('change', readFile);
+  fileInput.onclick = function () { this.value = null; }; // Allow re-uploading same file
+  fileInput.onchange = readFile;
+  fileInput.click(); // Trigger file dialog
 }
-
-// The convertCSVtoJSON function (use the corrected version I provided earlier)
-// function convertCSVtoJSON(uploadedCSV) {
-//   // ... (the corrected code for convertCSVtoJSON) ...
-//   //lop off any trailing or starting whitespace
-//   csv = uploadedCSV.trim();
-
-//   const lines = csv.split('\n');
-//   const headers = lines[0].split(',');
-//   const output = [];
-
-//   for (let i = 1; i < lines.length; i++) {
-//     const values = [];
-//     let withinQuotes = false;
-//     let start = 0;
-
-//     for (let j = 0; j < lines[i].length; j++) {
-//       const char = lines[i][j];
-
-//       if (char === '"') {
-//         withinQuotes = !withinQuotes;
-//       } else if (char === ',' && !withinQuotes) {
-//         values.push(lines[i].substring(start, j));
-//         start = j + 1;
-//       }
-//     }
-
-//     values.push(lines[i].substring(start)); // Push the last value
-
-//     const obj = {};
-//     for (let k = 0; k < headers.length; k++) {
-//       let value = values[k] || '';
-//       // Remove leading/trailing quotes and unescape double quotes
-//       if (value.startsWith('"') && value.endsWith('"')) {
-//         value = value.substring(1, value.length - 1).replace(/""/g, '"');
-//       }
-//       obj[headers[k]] = value;
-//     }
-//     output.push(obj);
-//   }
-
-//   // Store the uploaded data into local storage replacing data object
-//   localStorage.setItem("data", JSON.stringify(output));
-//   console.log("TASKFLOW convert data: ", output);
-//   document.location.reload();
-
-//   return output;
-// }
-
 
 //NEW CONVERTCSVTOJSON 2025-07-08
 function convertCSVtoJSON(uploadedCSV) {
@@ -687,51 +822,70 @@ function convertCSVtoJSON(uploadedCSV) {
   csv = uploadedCSV.trim();
 
   const lines = csv.split('\n');
-  const headers = lines[0].split(',');
+  const headers = lines[0].split(',').map(h => h.trim()); // Assume comma for standard CSV
   const output = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = [];
-    let withinQuotes = false;
-    let start = 0;
+    // Regex to split by comma but ignore commas inside quotes
+    // const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+    // Fallback if regex fails or simple split needed? No, regex is better for quoted CSV.
+    // Actually, simple regex might miss empty fields. Let's use a robust parser loop.
 
-    for (let j = 0; j < lines[i].length; j++) {
-      const char = lines[i][j];
-
+    const rowValues = [];
+    let currentVal = '';
+    let inQuote = false;
+    for (let charIndex = 0; charIndex < lines[i].length; charIndex++) {
+      let char = lines[i][charIndex];
       if (char === '"') {
-        withinQuotes = !withinQuotes;
-      } else if (char === ',' && !withinQuotes) {
-        values.push(lines[i].substring(start, j));
-        start = j + 1;
+        inQuote = !inQuote;
+      } else if (char === ',' && !inQuote) {
+        rowValues.push(currentVal);
+        currentVal = '';
+        continue;
       }
+      currentVal += char;
     }
+    rowValues.push(currentVal); // push last value
 
-    values.push(lines[i].substring(start)); // Push the last value
+    // Clean up quotes
+    const cleanValues = rowValues.map(v => {
+      let val = v.trim();
+      if (val.startsWith('"') && val.endsWith('"')) {
+        val = val.substring(1, val.length - 1).replace(/""/g, '"');
+      }
+      return val;
+    });
+
+    // Safety check
+    if (cleanValues.length < 1) continue;
 
     const obj = {};
     for (let k = 0; k < headers.length; k++) {
-      let value = values[k] || '';
-      // Remove leading/trailing quotes and unescape double quotes
-      if (value.startsWith('"') && value.endsWith('"')) {
-        value = value.substring(1, value.length - 1).replace(/""/g, '"');
-      }
+      let key = headers[k];
+      let value = cleanValues[k] || '';
 
-      // *** MODIFICATION START ***
-      // Handle the 'date_due' field specifically
-      if (headers[k] === 'date_due' && value === '') {
-        obj[headers[k]] = ''; // Assign an empty string, or a default date if preferred
-      } else {
-        obj[headers[k]] = value;
-      }
-      // *** MODIFICATION END ***
+      // Handle arrays (semicolon separated)
+      // Check if it looks like an array we exported? 
+      // We can't know for sure without schema, but for 'subtasks' or tags we might guess.
+      // For now, keep as string unless it clearly contains semicolons? 
+      // User only asked to use semicolons as separators.
+
+      obj[key] = value;
     }
+
+    // Default new fields if missing
+    if (!obj.section) obj.section = "div4";
+    if (!obj.status) obj.status = "Open";
+    if (!obj.id) obj.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
+
     output.push(obj);
   }
 
   // Store the uploaded data into local storage replacing data object
   localStorage.setItem("data", JSON.stringify(output));
   console.log("TASKFLOW convert data: ", output);
-  document.location.reload();
+  showToast("Imported CSV successfully", "success");
+  setTimeout(() => document.location.reload(), 1000);
 
   return output;
 }
