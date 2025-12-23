@@ -228,6 +228,15 @@ function processCommand(command) {
       clkShowExportModal();
       break;
 
+    case '/dark':
+      setTheme('dark');
+      break;
+
+    case '/light':
+      setTheme('light');
+      break;
+
+
     default:
       showToast(`Unknown command: ${cmd}. Try /help for available commands.`, "error");
       break;
@@ -235,6 +244,34 @@ function processCommand(command) {
 
   console.log(`TASKFLOW: Executed command - ${cmd}`);
 }
+
+
+// Theme Management
+function setTheme(themeName) {
+  document.documentElement.setAttribute('data-theme', themeName);
+  localStorage.setItem('theme', themeName);
+  showToast(`Switched to ${themeName} mode`, 'success');
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const newTheme = current === 'light' ? 'dark' : 'light';
+  setTheme(newTheme);
+}
+
+// Load saved theme on init
+(() => {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+})();
+
+
+
+
+
+
+
+
 
 // Toast Notification Function
 function showToast(message, type = 'info') {
