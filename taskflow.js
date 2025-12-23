@@ -37,6 +37,16 @@ window.addEventListener("keydown", function (event) {
 
   if (event.key === '?' && !isEditing) clkSettings();
 
+  // Command Palette: Activate input box with / for commands
+  if (event.key === '/' && !isEditing) {
+    event.preventDefault();
+    const inputBox = document.getElementById('input');
+    inputBox.value = '/';
+    inputBox.focus();
+    // Position cursor at the end instead of selecting text
+    inputBox.setSelectionRange(1, 1);
+  }
+
   console.log(`${event.type} has been fired`);
   console.log(`${event.key} key was pressed`);
 
@@ -71,6 +81,22 @@ function clkSettings() {
   myDialog.appendChild(document.createElement("p"));
 
   myDialog.append("Double click section headers to rename them.");
+  myDialog.appendChild(document.createElement("p"));
+
+  myDialog.appendChild(document.createElement("hr"));
+  myDialog.appendChild(document.createElement("p"));
+
+  myDialog.append("COMMAND PALETTE - Press / to activate:");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/flip - Toggle timer view");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/bg or /background - Toggle background animation");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/pending - Filter pending tasks");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/export - Export tasks");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/help or /settings - Show this dialog");
   myDialog.appendChild(document.createElement("p"));
 
   myDialog.appendChild(document.createElement("p"));
@@ -143,7 +169,17 @@ input.addEventListener('keydown', (e) => {
 
 //create formValidation function - if text box is empty show error
 function formValidation() {
-  if (input.value === "+add" || input.value.trim() === "") {
+  const inputValue = input.value.trim();
+
+  // Check if this is a command (starts with /)
+  if (inputValue.startsWith('/')) {
+    processCommand(inputValue);
+    input.blur();
+    input.value = "+add";
+    return;
+  }
+
+  if (input.value === "+add" || inputValue === "") {
     // msg.innerHTML = "no text entered...";  //display error error message in div
     showToast("Type a title/outcome, or ESC to cancel", "error");
 
@@ -160,6 +196,44 @@ function formValidation() {
     input.blur(input.value = "+add"); //clear the input textbox
 
   }
+}
+
+// Command Palette Processor
+function processCommand(command) {
+  const cmd = command.toLowerCase().trim();
+
+  switch (cmd) {
+    case '/flip':
+      clkFlipToCountDownTimer();
+      showToast("Toggled timer view", "success");
+      break;
+
+    case '/background':
+    case '/bg':
+      clkToggleBackgroundAnimation();
+      showToast("Toggled background animation", "success");
+      break;
+
+    case '/pending':
+      clkFilterPendingTasks();
+      showToast("Filtered pending tasks", "success");
+      break;
+
+    case '/settings':
+    case '/help':
+      clkSettings();
+      break;
+
+    case '/export':
+      clkShowExportModal();
+      break;
+
+    default:
+      showToast(`Unknown command: ${cmd}. Try /help for available commands.`, "error");
+      break;
+  }
+
+  console.log(`TASKFLOW: Executed command - ${cmd}`);
 }
 
 // Toast Notification Function
