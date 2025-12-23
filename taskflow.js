@@ -340,7 +340,7 @@ let acceptData = () => {
     date_closed: "",
     task_tag: "career",
     section: "div4", // Default to Ice Box
-    status: "Open", // Open, Closed, Pending
+    status: "Pending", // Pending, In Progress, Completed, Cancelled
     subtasks: [] // Future proofing
   })
 
@@ -408,30 +408,64 @@ let createPost = () => {
 
 
           <div class="clsTaskCardBack">
+            <div class="clsTaskCardBackContainer">
+              
+              <!-- 3-Row Layout with inline labels and values -->
+              <div class="clsTaskCardGridLayout">
+                
+                <!-- Row 1: Due Date and Status -->
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'date_due')">
+                  <div class="clsTaskCardBackDisplay" id="display_date_due_${y}">
+                    <span class="clsFieldLabel">Due</span> ${x.date_due ? x.date_due.split('T')[0] : 'None'}
+                  </div>
+                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_due_${y}" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value); toggleTaskFieldEdit(null, ${y}, 'date_due');">
+                </div>
 
-            <label for="inpDateDue">Due</label>
-            <input name="inpDateDue" type="date" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value)">
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'status')">
+                  <div class="clsTaskCardBackDisplay" id="display_status_${y}">
+                    <span class="clsFieldLabel">Status</span> ${x.status || 'None'}
+                  </div>
+                  <select class="clsTaskCardBackInput hidden" id="input_status_${y}" onchange="updateTaskField(${y}, 'status', this.value); toggleTaskFieldEdit(null, ${y}, 'status');">
+                    <option value="Pending" ${x.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                    <option value="In Progress" ${x.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="Completed" ${x.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                    <option value="Cancelled" ${x.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                  </select>
+                </div>
 
-             <label for="inpTaskTag">Tag</label>
-              <input name="inpTaskTag" type="text" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value)">
+                <!-- Row 2: Created Date and Closed Date -->
+                <div class="clsTaskCardBackField clsTaskCardBackFieldReadOnly">
+                  <div class="clsTaskCardBackDisplay" id="display_date_captured_${y}">
+                    <span class="clsFieldLabel">Created</span> ${x.date_captured ? x.date_captured.split('T')[0] : 'Unknown'}
+                  </div>
+                </div>
 
-             <br>
-             <label for="inpStatus">Status</label>
-             <select name="inpStatus" onchange="updateTaskField(${y}, 'status', this.value)">
-                <option value="Open" ${x.status === 'Open' ? 'selected' : ''}>Open</option>
-                <option value="Pending" ${x.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                <option value="Closed" ${x.status === 'Closed' ? 'selected' : ''}>Closed</option>
-             </select>
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'date_closed')">
+                  <div class="clsTaskCardBackDisplay" id="display_date_closed_${y}">
+                    <span class="clsFieldLabel">Closed</span> ${x.date_closed ? x.date_closed.split('T')[0] : 'None'}
+                  </div>
+                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_closed_${y}" value="${x.date_closed ? x.date_closed.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_closed', this.value); toggleTaskFieldEdit(null, ${y}, 'date_closed');">
+                </div>
 
-             <label for="inpDateClosed">Closed</label>
-             <input name="inpDateClosed" type="date" value="${x.date_closed ? x.date_closed.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_closed', this.value)">
+              </div>
 
-                <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
+              <!-- Row 3: Tags (outside grid) and Flip Button -->
+              
+              <div class="clsTaskCardTagsRow">
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'task_tag')">
+                  <div class="clsTaskCardBackDisplay" id="display_task_tag_${y}">
+                    <span class="clsFieldLabel">Tags</span> ${x.task_tag || 'None'}
+                  </div>
+                  <input type="text" class="clsTaskCardBackInput hidden" id="input_task_tag_${y}" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value); toggleTaskFieldEdit(null, ${y}, 'task_tag');">
+                </div>
 
-                <BR>
-                  Created (${x.date_captured ? x.date_captured.split('T')[0] : ''})
+                <div class="clsTaskCardBackFieldButton">
+                  <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
+                </div>
+              </div>
 
-                </div> <!-- back face clsTaskCardBack -->
+            </div> <!-- clsTaskCardBackContainer -->
+          </div> <!-- back face clsTaskCardBack -->
               </div>
           </div>
 
@@ -452,8 +486,78 @@ function updateTaskField(index, field, value) {
     data[index][field] = value;
   }
   localStorage.setItem("data", JSON.stringify(data));
+  
+  // Update the display text while preserving the label
+  const displayEl = document.getElementById(`display_${field}_${index}`);
+  if (displayEl) {
+    // Get or create the label span
+    let labelEl = displayEl.querySelector('.clsFieldLabel');
+    let displayText = '';
+    
+    if (field.startsWith('date_') && value) {
+      displayText = new Date(value).toISOString().split('T')[0];
+    } else if (value) {
+      displayText = value;
+    } else {
+      displayText = 'None';
+    }
+    
+    // Clear the display element but preserve or recreate the label
+    displayEl.innerHTML = '';
+    if (labelEl) {
+      displayEl.appendChild(labelEl);
+    } else {
+      // Recreate label if it doesn't exist
+      const newLabel = document.createElement('span');
+      newLabel.className = 'clsFieldLabel';
+      // Derive label from field name
+      const labelMap = {
+        'date_due': 'Due',
+        'status': 'Status',
+        'date_closed': 'Closed',
+        'task_tag': 'Tags'
+      };
+      newLabel.textContent = labelMap[field] || field;
+      displayEl.appendChild(newLabel);
+    }
+    
+    // Add the value text after the label
+    displayEl.appendChild(document.createTextNode(' ' + displayText));
+  }
 }
 
+// Toggle between display and edit mode for task card back fields
+function toggleTaskFieldEdit(event, index, fieldName) {
+  const displayEl = document.getElementById(`display_${fieldName}_${index}`);
+  const inputEl = document.getElementById(`input_${fieldName}_${index}`);
+  
+  if (!displayEl || !inputEl) return;
+  
+  // If event exists, it's a click to edit
+  if (event) {
+    // Only hide the display and show input if not already editing
+    if (!inputEl.classList.contains('hidden')) {
+      return; // Already in edit mode
+    }
+    
+    // Get the field label and preserve it
+    const labelEl = displayEl.querySelector('.clsFieldLabel');
+    const labelText = labelEl ? labelEl.textContent : '';
+    
+    displayEl.classList.add('hidden');
+    inputEl.classList.remove('hidden');
+    inputEl.focus();
+    
+    // For select elements, open the dropdown
+    if (inputEl.tagName === 'SELECT') {
+      inputEl.click();
+    }
+  } else {
+    // Called from input change/blur - switch back to display mode
+    inputEl.classList.add('hidden');
+    displayEl.classList.remove('hidden');
+  }
+}
 
 
 function clkFlipTaskCardToForm(e) {
@@ -461,16 +565,14 @@ function clkFlipTaskCardToForm(e) {
   //console.log("TASKFLOW: ", cardID);
   //  console.log(e.parentElement.parentElement.parentElement.classList);// this is the clsTasKCardAll span
 
-  var setClassToFlipped = e.parentElement.parentElement.parentElement
-
+  var setClassToFlipped = e.closest('.clsTaskCardAll');
   setClassToFlipped.classList.toggle("is-flipped");
 }
 
 
 function clkFlipTaskCardToTask(e) {
 
-  var setClassToUnFlipped = e.parentElement.parentElement
-
+  var setClassToUnFlipped = e.closest('.clsTaskCardAll');
   setClassToUnFlipped.classList.toggle("is-flipped");
 
 
@@ -514,7 +616,9 @@ function clkFlipToCountDownTimer() {
   // Migration for old data
   data.forEach(task => {
     if (!task.section) task.section = "div4";
-    if (!task.status) task.status = "Open";
+    if (!task.status || task.status === "Open" || task.status === "Closed") {
+      task.status = "Pending";
+    }
   });
 
   // Load Settings
