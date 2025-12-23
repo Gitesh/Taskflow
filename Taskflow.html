@@ -2,6 +2,9 @@
 <html lang="en">
 
 <head>
+    <meta charset="utf-8">
+    <title>Taskflow - Organize Your Tasks with Ease</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="taskflow.css">
     <link rel="stylesheet" href="animated_background/shapes.css" id="idAnimatedBackgroundCSSStylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -23,8 +26,7 @@
                 <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
                     <div title="Double-click to rename">
                         <span id="heading1" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">High
-                            Impact</span> <br><br>
+                            onblur="this.contentEditable=false;">High Impact</span><br><br>
                     </div>
                     <div id="dropbox1"></div>
                 </div><!--end div1-->
@@ -66,7 +68,7 @@
                 <!-- Input Section -->
                 <div id="idInputSection">
                     <form id="form">
-                        <input type="text" name="post" id="input" value="+add" onclick="post.select()">
+                        <input type="text" name="post" id="input" value="+add" placeholder="Add a new task" onclick="post.select()">
                         <div id="idErrorMessage"></div>
                         <button id="btnSubmit" type="submit">Post</button>
                     </form>
