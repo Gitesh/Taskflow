@@ -58,10 +58,7 @@
                             onblur="this.contentEditable=false;">Ice Box</span>
                         <br><br>
                     </div>
-
-                    <!--Entry form-->
                     <div id="dropbox4"></div>
-
                 </div> <!-- end div4-->
 
 
@@ -81,7 +78,8 @@
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
-                            <input id="uploadCSV" type="file" onclick="clkUploadTasksToLocalStorage()" />
+                            <!-- <input id="uploadCSV" type="file" onclick="clkUploadTasksToLocalStorage()" /> -->
+                            <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
                         </label>
                     </span>
 
@@ -158,7 +156,7 @@
         </div><!--end div clsContainerAll-->
 
         <!--version-->
-        <p class="clsVersionText">V2025-12-23_2037</p>
+        <p class="clsVersionText">V2025-12-23_2038</p>
     </section>
 
 
