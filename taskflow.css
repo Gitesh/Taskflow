@@ -225,7 +225,10 @@ body {
   /* clsTaskCardAll .card */
   width: 100%;
   height: 100%;
-  /* position: relative; */
+  /* allow faces to overlay and inherit size */
+  display: grid;
+  position: relative;
+  align-items: stretch;
   transition: transform 0.3s;
   perspective: 333px;
   transform-style: preserve-3d;
@@ -238,18 +241,18 @@ body {
 
 .clsTaskCardBack {
   /* back of task card - entry form */
-  position: absolute;
   backface-visibility: hidden;
-  /* padding: var(--card-padding); */
+  padding: var(--card-padding);
   background-color: var(--color-bg-card-back);
   font-size: var(--font-size-base);
   transform: rotateY(180deg);
-  bottom: 0px;
-  right: -4px;
-  left: -4px;
-  top: -4px;
-  width: auto;
-  height: auto;
+  box-sizing: border-box;
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  align-self: stretch;
+  justify-self: stretch;
+  border-top: 1px solid var(--color-border);
 }
 
 /* if the card back is hovered, change shape */
@@ -325,6 +328,12 @@ body {
   line-height: 1.3;
   min-height: calc(2 * 0.3em + 2 * var(--card-padding));
   
+}
+
+.clsTaskCard,
+.clsTaskCardBack {
+  box-sizing: border-box;
+  grid-area: 1 / 1;
 }
 
 /* if the card is hovered, change shape */
