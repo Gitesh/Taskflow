@@ -418,14 +418,14 @@ let createPost = () => {
                   <div class="clsTaskCardBackDisplay" id="display_date_due_${y}">
                     <span class="clsFieldLabel">Due</span> ${x.date_due ? x.date_due.split('T')[0] : 'None'}
                   </div>
-                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_due_${y}" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value); toggleTaskFieldEdit(null, ${y}, 'date_due');">
+                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_due_${y}" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value); toggleTaskFieldEdit(null, ${y}, 'date_due');" onblur="toggleTaskFieldEdit(null, ${y}, 'date_due');">
                 </div>
 
                 <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'status')">
                   <div class="clsTaskCardBackDisplay" id="display_status_${y}">
                     <span class="clsFieldLabel">Status</span> ${x.status || 'None'}
                   </div>
-                  <select class="clsTaskCardBackInput hidden" id="input_status_${y}" onchange="updateTaskField(${y}, 'status', this.value); toggleTaskFieldEdit(null, ${y}, 'status');">
+                  <select class="clsTaskCardBackInput hidden" id="input_status_${y}" onchange="updateTaskField(${y}, 'status', this.value); toggleTaskFieldEdit(null, ${y}, 'status');" onblur="toggleTaskFieldEdit(null, ${y}, 'status');">
                     <option value="Pending" ${x.status === 'Pending' ? 'selected' : ''}>Pending</option>
                     <option value="In Progress" ${x.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                     <option value="Completed" ${x.status === 'Completed' ? 'selected' : ''}>Completed</option>
@@ -444,7 +444,7 @@ let createPost = () => {
                   <div class="clsTaskCardBackDisplay" id="display_date_closed_${y}">
                     <span class="clsFieldLabel">Closed</span> ${x.date_closed ? x.date_closed.split('T')[0] : 'None'}
                   </div>
-                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_closed_${y}" value="${x.date_closed ? x.date_closed.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_closed', this.value); toggleTaskFieldEdit(null, ${y}, 'date_closed');">
+                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_closed_${y}" value="${x.date_closed ? x.date_closed.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_closed', this.value); toggleTaskFieldEdit(null, ${y}, 'date_closed');" onblur="toggleTaskFieldEdit(null, ${y}, 'date_closed');">
                 </div>
 
               </div>
@@ -456,7 +456,7 @@ let createPost = () => {
                   <div class="clsTaskCardBackDisplay" id="display_task_tag_${y}">
                     <span class="clsFieldLabel">Tags</span> ${x.task_tag || 'None'}
                   </div>
-                  <input type="text" class="clsTaskCardBackInput hidden" id="input_task_tag_${y}" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value); toggleTaskFieldEdit(null, ${y}, 'task_tag');">
+                  <input type="text" class="clsTaskCardBackInput hidden" id="input_task_tag_${y}" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value); toggleTaskFieldEdit(null, ${y}, 'task_tag');" onblur="toggleTaskFieldEdit(null, ${y}, 'task_tag');">
                 </div>
 
                 <div class="clsTaskCardBackFieldButton">
