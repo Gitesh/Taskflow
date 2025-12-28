@@ -535,6 +535,10 @@ function toggleTaskFieldEdit(event, index, fieldName) {
   
   // If event exists, it's a click to edit
   if (event) {
+    
+     event.stopPropagation(); // Add this line at the start
+
+    
     // Only hide the display and show input if not already editing
     if (!inputEl.classList.contains('hidden')) {
       return; // Already in edit mode
@@ -548,9 +552,32 @@ function toggleTaskFieldEdit(event, index, fieldName) {
     inputEl.classList.remove('hidden');
     inputEl.focus();
     
-    // For select elements, open the dropdown
-    if (inputEl.tagName === 'SELECT') {
-      inputEl.click();
+    // Open the control immediately where possible so a single click activates it
+    const tag = inputEl.tagName;
+    const type = (inputEl.type || '').toLowerCase();
+
+    if (tag === 'SELECT') {
+      // Defer the click so the element is focusable and the dropdown opens
+      setTimeout(() => {
+        try {
+          inputEl.focus();
+          inputEl.click();
+        } catch (err) {
+          // ignore
+        }
+      }, 0);
+    } else if (tag === 'INPUT') {
+      // For date/time pickers prefer showPicker() when available, otherwise click()
+      if (type === 'date' || type === 'time' || type === 'datetime-local' || type === 'month' || type === 'week') {
+        if (typeof inputEl.showPicker === 'function') {
+          try { inputEl.showPicker(); } catch (err) { inputEl.click(); }
+        } else {
+          inputEl.click();
+        }
+      } else if (type === 'text' || type === 'search' || type === 'tel' || type === 'url') {
+        // select the text for quick editing
+        if (typeof inputEl.select === 'function') inputEl.select();
+      }
     }
   } else {
     // Called from input change/blur - switch back to display mode

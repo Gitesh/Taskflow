@@ -34,9 +34,21 @@
   --color-bg-section: #fefefe;
   --color-bg-card: #ffffff;
   --color-bg-card-hover: #efefef;
-  --color-bg-card-back: #51bce8;
-  --color-bg-card-back-hover: #405c68;
+  --color-bg-card-back: rgb(81, 29, 47);
+  /* card back border / hover tokens */
+  --color-bg-card-back-border: rgb(81, 29, 47);
+  --color-bg-card-back-hover: rgb(81, 29, 47);
+  --color-bg-card-back-border-hover: #e8004E;
   --color-bg-input-focus: #efefef;
+
+  /* colors for content on the card back */
+  --color-text-on-card-back: #ffffff;
+  /* input tokens */
+  --color-input-bg: #ffffff;
+  --color-input-text: #333333;
+  --color-input-border: #5dade2;
+  --color-input-focus-border: #2874a6;
+  --color-input-focus-glow: rgba(93, 173, 226, 0.4);
 
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
@@ -60,6 +72,18 @@
   --color-bg-card: #1a2332;
   --color-bg-card-hover: #253447;
   --color-bg-card-back: #2a4a6e;
+  /* card back border / hover tokens (dark) */
+  --color-bg-card-back-border: #17324a;
+  --color-bg-card-back-hover: #335b86;
+  --color-bg-card-back-border-hover: rgb(255, 100, 150);
+  /* colors for content on the card back */
+  --color-text-on-card-back: #e4eaf0;
+  /* input tokens (dark) */
+  --color-input-bg: #223344;
+  --color-input-text: #e4e4e7;
+  --color-input-border: #2a6ea0;
+  --color-input-focus-border: #5dade2;
+  --color-input-focus-glow: rgba(46, 134, 193, 0.25);
   --color-bg-input-focus: #2d3748;
 
   --color-text-primary: #e4e4e7;
@@ -245,6 +269,7 @@ body {
   backface-visibility: hidden;
   /* padding: var(--card-padding); */
   background-color: var(--color-bg-card-back);
+  border: 1px solid var(--color-bg-card-back-border);
   font-size: var(--font-size-base);
   transform: rotateY(180deg);
   box-sizing: border-box;
@@ -259,7 +284,7 @@ body {
 .clsTaskCardBack:hover {
   /* padding: var(--card-padding); */
   /* border-top: 1px solid var(--color-border); */
-  border: 1px solid red;
+  border: 1px solid var(--color-bg-card-back-border-hover);
   /* display: flex; */
   box-shadow: var(--shadow-hover);
   background-color: var(--color-bg-card-back-hover);
@@ -729,7 +754,7 @@ input:hover {
 
 .clsTaskCardBackFlipButton .material-icons {
   cursor: pointer;
-  color: #ffffff;
+  color: var(--color-text-on-card-back);
   transition: all 0.2s ease;
   font-size: 24px;
 }
@@ -773,11 +798,11 @@ input:hover {
 
 
 .clsFieldLabel {
-  font-weight: bold;
+  font-weight: normal;
   margin-right: 6px;
   text-transform: uppercase;
-  font-size: 9px;
-  letter-spacing: 0.2px;
+  font-size: 11px;
+  letter-spacing: 1.2px;
 }
 
 .clsTaskCardBackField {
@@ -785,11 +810,12 @@ input:hover {
   cursor: pointer;
 }
 
-.clsTaskCardTagsRow .clsTaskCardBackField {
+.clsTaskCardTagsRow  {
   display: flex;
-  flex-direction: column;
-  flex: 0 1 auto;
-  cursor: pointer;
+  gap: 0px;
+  align-items: flex-start;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .clsTaskCardBackField:hover {
@@ -799,7 +825,7 @@ input:hover {
 .clsTaskCardBackField label {
   font-size: 10px;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--color-text-on-card-back);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   opacity: 0.85;
@@ -812,7 +838,7 @@ input:hover {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0;
   padding: 2px 4px;
-  color: #ffffff;
+  color: var(--color-text-on-card-back);
   font-size: 12px;
   min-height: 0px;
   display: flex;
@@ -828,20 +854,21 @@ input:hover {
 
 .clsTaskCardBackInput {
   padding: 3px 4px;
-  border: 1px solid #5dade2;
+  border: 1px solid var(--color-input-border);
   border-radius: 2px;
   font-size: 12px;
-  background-color: #ffffff;
-  color: #333333;
+  background-color: var(--color-input-bg);
+  color: var(--color-input-text);
   font-family: inherit;
   transition: all 0.2s ease;
   min-height: 20px;
+  pointer-events: auto;
 }
 
 .clsTaskCardBackInput:focus {
   outline: none;
-  border-color: #2874a6;
-  box-shadow: 0 0 4px rgba(93, 173, 226, 0.4);
+  border-color: var(--color-input-focus-border);
+  box-shadow: 0 0 4px var(--color-input-focus-glow);
 }
 
 /* Flip Button Positioning */
@@ -866,7 +893,7 @@ input:hover {
 .clsTaskCardBackFieldReadOnly label {
   font-size: 10px;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--color-text-on-card-back);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   opacity: 0.85;
@@ -879,7 +906,7 @@ input:hover {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0;
   padding: 2px 4px;
-  color: #ffffff;
+  color: var(--color-text-on-card-back);
   font-size: 12px;
   min-height: 20px;
   display: flex;
@@ -896,7 +923,7 @@ input:hover {
 
 .clsTaskCardBackFieldButton .material-icons {
   cursor: pointer;
-  color: #ffffff;
+  color: var(--color-text-on-card-back);
   transition: all 0.2s ease;
   font-size: 24px;
   display: block !important;
