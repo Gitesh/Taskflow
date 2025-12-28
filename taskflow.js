@@ -433,7 +433,7 @@ let createPost = () => {
     if (!target) target = document.getElementById("dropbox4"); // Fallback
 
     target.innerHTML += `
-    <div id="${y}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)">
+    <div id="${y}" data-task-uid="${x.id}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
         <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
           <div class="clsTaskCard">
 
@@ -937,49 +937,116 @@ function clkCardDeleteTask(e) {
 //------
 
 function allowDrop(e) {
+  // Allow drop and show insertion placeholder for reordering
   e.preventDefault();
+
+  const dropZone = e.target.closest('.clsDropArea');
+  if (!dropZone) return;
+
+  const dropbox = dropZone.querySelector('[id^="dropbox"]');
+  if (!dropbox) return;
+
+  // Create placeholder if not exists
+  if (!window._taskDragPlaceholder) {
+    const ph = document.createElement('div');
+    ph.className = 'drag-placeholder';
+    window._taskDragPlaceholder = ph;
+  }
+  const placeholder = window._taskDragPlaceholder;
+
+  // Determine insertion point by mouse Y position
+  const children = Array.from(dropbox.querySelectorAll('.clsTaskCardWrapper'));
+  let inserted = false;
+  for (let child of children) {
+    if (child === window._currentDraggedEl) continue;
+    const rect = child.getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    if (e.clientY < midpoint) {
+      if (child.previousSibling !== placeholder) dropbox.insertBefore(placeholder, child);
+      inserted = true;
+      break;
+    }
+  }
+  if (!inserted) {
+    // append to end
+    if (dropbox.lastElementChild !== placeholder) dropbox.appendChild(placeholder);
+  }
 }
 
 function drag(e) {
-  e.dataTransfer.setData("Text", e.target.id);
+  // mark current dragged element and set transfer data to its UID
+  const wrapper = e.target.closest('.clsTaskCardWrapper');
+  if (!wrapper) return;
+  const uid = wrapper.getAttribute('data-task-uid') || wrapper.id;
+  try { e.dataTransfer.setData('text/plain', uid); } catch (err) { e.dataTransfer.setData('Text', uid); }
+  e.dataTransfer.effectAllowed = 'move';
+  window._currentDraggedEl = wrapper;
+  // add dragging class for visual feedback
+  wrapper.classList.add('dragging');
 }
 
 function drop(e) {
   e.preventDefault();
-  var taskIndex = e.dataTransfer.getData("Text");
+  // Reorder within and across sections
+  const uid = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('Text');
+  if (!uid) return;
 
-  // Find which drop area (section) was target
-  var dropZone = e.target.closest('.clsDropArea');
+  const dropZone = e.target.closest('.clsDropArea');
+  if (!dropZone) return;
+  const dropbox = dropZone.querySelector('[id^="dropbox"]');
+  if (!dropbox) return;
 
-  if (dropZone) {
-    var sectionId = dropZone.id;
-    // Update data model
-    if (data[taskIndex]) {
-      // remember original parent to update its preview later
-      const wrapperEl = document.getElementById(taskIndex);
-      const originalParent = wrapperEl ? wrapperEl.closest('.clsDropArea') : null;
+  // Find dragged element by its UID
+  const draggedEl = window._currentDraggedEl || document.querySelector(`.clsTaskCardWrapper[data-task-uid="${uid}"]`);
 
-      data[taskIndex].section = sectionId;
-      localStorage.setItem("data", JSON.stringify(data));
+  // If we have a placeholder, replace it with the dragged element
+  const placeholder = window._taskDragPlaceholder;
+  if (placeholder && placeholder.parentElement === dropbox) {
+    dropbox.insertBefore(draggedEl, placeholder);
+    placeholder.remove();
+  } else {
+    // Fallback: append
+    dropbox.appendChild(draggedEl);
+  }
 
-      // Move visually to the correct dropbox
-      // We find the dropbox within the section
-      var dropboxId = sectionId.replace("div", "dropbox");
-      var dropbox = document.getElementById(dropboxId);
-      if (dropbox) {
-        dropbox.appendChild(document.getElementById(taskIndex));
+  // Remove dragging class
+  if (draggedEl) draggedEl.classList.remove('dragging');
+
+  // Rebuild `data` array to match DOM order across all sections
+  const newData = [];
+  ['div1','div2','div3','div4'].forEach(sectionId => {
+    const sec = document.getElementById(sectionId);
+    if (!sec) return;
+    const db = sec.querySelector('[id^="dropbox"]');
+    if (!db) return;
+    Array.from(db.querySelectorAll('.clsTaskCardWrapper')).forEach(wrapper => {
+      const taskUid = wrapper.getAttribute('data-task-uid');
+      const obj = data.find(t => t.id === taskUid);
+      if (obj) {
+        // Ensure section property is correct
+        obj.section = sectionId;
+        newData.push(obj);
       }
+    });
+  });
 
-      // Update previews for both source and destination
-      try {
-        updateSectionPreview(sectionId);
-        if (originalParent && originalParent.id && originalParent.id !== sectionId) {
-          updateSectionPreview(originalParent.id);
-        }
-      } catch (err) {
-        try { updateAllSectionPreviews(); } catch (e) { /* ignore */ }
-      }
-    }
+  // Replace data and persist
+  data = newData.concat(data.filter(d => !newData.includes(d)));
+  localStorage.setItem('data', JSON.stringify(data));
+
+  // Re-render to refresh IDs, events and previews
+  createPost();
+  try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
+}
+
+function dragEnd(e) {
+  // cleanup placeholder and classes
+  if (window._taskDragPlaceholder && window._taskDragPlaceholder.parentElement) {
+    window._taskDragPlaceholder.remove();
+  }
+  if (window._currentDraggedEl) {
+    window._currentDraggedEl.classList.remove('dragging');
+    window._currentDraggedEl = null;
   }
 }
 
@@ -1597,7 +1664,7 @@ function clkPlayAudio(sound) {
 
 
 // ----TASK FRONT----
-// [ ] show total number of tasks
+// [/] show total number of tasks
 // [ ] separate deleted tasks and tasks marked 'completed'.
 // [ ] Toggle edit icon when in edit task mode
 // [ ] Show age of tasks on card - to help reprioritise each day.
