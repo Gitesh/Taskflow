@@ -34,10 +34,10 @@
   --color-bg-section: #fefefe;
   --color-bg-card: #ffffff;
   --color-bg-card-hover: #efefef;
-  --color-bg-card-back: rgb(81, 29, 47);
+  --color-bg-card-back: #f2dfce;
   /* card back border / hover tokens */
-  --color-bg-card-back-border: rgb(81, 29, 47);
-  --color-bg-card-back-hover: rgb(81, 29, 47);
+  --color-bg-card-back-border: #ffffff;
+  --color-bg-card-back-hover: #f2dfce;
   --color-bg-card-back-border-hover: #e8004E;
   --color-bg-input-focus: #efefef;
 
@@ -49,6 +49,11 @@
   --color-input-border: #5dade2;
   --color-input-focus-border: #2874a6;
   --color-input-focus-glow: rgba(93, 173, 226, 0.4);
+
+  /* tag tokens (pastel) */
+  --color-tag-bg: rgba(232, 0, 78, 0.12);
+  --color-tag-text: rgb(81, 29, 47);
+  --color-tag-bg-hover: rgba(232, 0, 78, 0.25);
 
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
@@ -85,6 +90,11 @@
   --color-input-focus-border: #5dade2;
   --color-input-focus-glow: rgba(46, 134, 193, 0.25);
   --color-bg-input-focus: #2d3748;
+
+  /* tag tokens (pastel) */
+  --color-tag-bg: rgba(77, 163, 216, 0.2);
+  --color-tag-text: #c5e1f5;
+  --color-tag-bg-hover: rgba(77, 163, 216, 0.35);
 
   --color-text-primary: #e4e4e7;
   --color-text-secondary: #a1a1aa;
@@ -278,6 +288,7 @@ body {
   height: 100%;
   align-self: stretch;
   justify-self: stretch;
+  color: var(--color-text-primary);
 }
 
 /* if the card back is hovered, change shape */
@@ -803,6 +814,7 @@ input:hover {
   text-transform: uppercase;
   font-size: 11px;
   letter-spacing: 1.2px;
+  text-wrap: nowrap;
 }
 
 .clsTaskCardBackField {
@@ -838,7 +850,8 @@ input:hover {
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0;
   padding: 2px 4px;
-  color: var(--color-text-on-card-back);
+  /* color: var(--color-text-on-card-back); */
+  color: var(--color-text-secondary);
   font-size: 12px;
   min-height: 0px;
   display: flex;
@@ -932,6 +945,39 @@ input:hover {
 .clsTaskCardBackFieldButton .material-icons:hover {
   transform: scale(1.1);
   color: #5dade2;
+}
+
+/*==================================*/
+/* Tags Pillbox Styling */
+/*==================================*/
+
+.clsTagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.clsTag {
+  display: inline-block;
+  background-color: var(--color-tag-bg);
+  color: var(--color-tag-text);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+
+.clsTag:hover {
+  background-color: var(--color-tag-bg-hover);
+  color: var(--color-text-on-card-back);
 }
 
 

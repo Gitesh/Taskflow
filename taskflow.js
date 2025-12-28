@@ -108,7 +108,6 @@ function clkSettings() {
 
   myDialog.showModal();
 };
-
 function clkShowExportModal() {
   var myDialog = document.createElement("dialog");
   document.body.appendChild(myDialog);
@@ -469,12 +468,19 @@ let createPost = () => {
               </div>
           </div>
 
-          `;
+            `;
+            // Ensure tags are rendered as pills on initial render
+            try { updateTaskField(y, 'task_tag', x.task_tag); } catch (err) { /* ignore if DOM not ready */ }
+
+          });
 
 
-  });
+}
 
-
+// Helper function to parse, lowercase, and deduplicate tags
+function parseAndDeduplicateTags(tagString) {
+  if (!tagString || tagString.trim() === '') return [];
+  return [...new Set(tagString.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag))];
 }
 
 // Function to update single fields from card back
@@ -492,15 +498,6 @@ function updateTaskField(index, field, value) {
   if (displayEl) {
     // Get or create the label span
     let labelEl = displayEl.querySelector('.clsFieldLabel');
-    let displayText = '';
-    
-    if (field.startsWith('date_') && value) {
-      displayText = new Date(value).toISOString().split('T')[0];
-    } else if (value) {
-      displayText = value;
-    } else {
-      displayText = 'None';
-    }
     
     // Clear the display element but preserve or recreate the label
     displayEl.innerHTML = '';
@@ -521,8 +518,41 @@ function updateTaskField(index, field, value) {
       displayEl.appendChild(newLabel);
     }
     
-    // Add the value text after the label
-    displayEl.appendChild(document.createTextNode(' ' + displayText));
+    // Render content based on field type
+    if (field === 'task_tag') {
+      // Parse, deduplicate, and render tags as pills
+      const tags = parseAndDeduplicateTags(value);
+      if (tags.length > 0) {
+        const tagsContainer = document.createElement('div');
+        tagsContainer.className = 'clsTagsContainer';
+        tags.forEach(tag => {
+          const tagPill = document.createElement('span');
+          tagPill.className = 'clsTag';
+          tagPill.textContent = tag;
+          tagPill.onclick = (e) => {
+            e.stopPropagation();
+            toggleTaskFieldEdit(null, index, 'task_tag'); // Exit pill view
+            toggleTaskFieldEdit({ type: 'click' }, index, 'task_tag'); // Enter edit mode
+          };
+          tagsContainer.appendChild(tagPill);
+        });
+        displayEl.appendChild(tagsContainer);
+      } else {
+        const noneText = document.createTextNode(' None');
+        displayEl.appendChild(noneText);
+      }
+    } else {
+      // Render text/date content as before
+      let displayText = '';
+      if (field.startsWith('date_') && value) {
+        displayText = new Date(value).toISOString().split('T')[0];
+      } else if (value) {
+        displayText = value;
+      } else {
+        displayText = 'None';
+      }
+      displayEl.appendChild(document.createTextNode(' ' + displayText));
+    }
   }
 }
 
@@ -535,10 +565,7 @@ function toggleTaskFieldEdit(event, index, fieldName) {
   
   // If event exists, it's a click to edit
   if (event) {
-    
-     event.stopPropagation(); // Add this line at the start
-
-    
+             
     // Only hide the display and show input if not already editing
     if (!inputEl.classList.contains('hidden')) {
       return; // Already in edit mode
@@ -1353,7 +1380,11 @@ function clkPlayAudio(sound) {
 //            localStorage.clear()
 
 
-
+//----MAIN APP----
+// [ ] Add search bar to filter tasks by title/detail/tags
+// [ ] Add sort options - by due date, created date, title alphabetically
+// [ ] Add bulk actions - delete all completed tasks, export selected tasks
+// [ ] Make sections collapsible to hide/show tasks within each section
 
 
 // ----TASK FRONT----
@@ -1361,17 +1392,25 @@ function clkPlayAudio(sound) {
 // [ ] separate deleted tasks and tasks marked 'completed'.
 // [ ] Toggle edit icon when in edit task mode
 // [ ] Show age of tasks on card - to help reprioritise each day.
+// [ ] Colour cards based on due date - red overdue, orange due today, yellow due this week, green later
+// [ ] Add drag and drop reordering of tasks within each section
+
 
 
 // ----TASK BACK FORM----
 // [ ] output all fields on task back
 // [ ] Field - Add last edited date
 // [/] css card flip elements on back face clicks still active. FIXED add z plane to back
-
+// [ ] Add to calendar button - export to ics file for due date
+// [ ] Add subtasks field - with checkbox to mark complete
+// [ ] Add recurring task option - daily, weekly, monthly
+// [ ] Add reminder option - alert at due date/time
 
 // ----TIMELINE------
 // [ ] toggle completed tasks from the timeline to reopen (and remove from the timeline)
 // [ ] include only completed tasks in the historical timline view
+// [ ] show timeline graph of tasks completed per day/week/month
+// [ ] show average time to complete tasks
 
 // ----POMODORO----
 // [/] Activate sound icons to show which are playing
