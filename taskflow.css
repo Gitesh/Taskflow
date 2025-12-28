@@ -218,6 +218,9 @@ body {
   gap: 8px;
   cursor: default;
   margin-bottom: 8px;
+  justify-content: flex-start;
+  text-align: left;
+  width: 100%;
 }
 
 .clsTwistie {
@@ -245,6 +248,59 @@ body {
 
 .clsDropArea.collapsed .clsTwistie {
   transform: rotate(-90deg);
+}
+
+/* Animated collapse/expand for dropboxes */
+.clsDropArea > div[id^="dropbox"] {
+  overflow: hidden;
+  max-height: 2000px; /* large enough for contents */
+  opacity: 1;
+  transition: max-height 320ms cubic-bezier(.2,.8,.2,1), opacity 200ms ease, padding 200ms ease;
+}
+
+.clsDropArea.collapsed > div[id^="dropbox"] {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Fade/slide cards slightly when collapsing */
+.clsDropArea > div[id^="dropbox"] .clsTaskCardWrapper {
+  transition: transform 260ms ease, opacity 220ms ease;
+}
+.clsDropArea.collapsed > div[id^="dropbox"] .clsTaskCardWrapper {
+  transform: translateY(-6px);
+  opacity: 0;
+}
+
+/* Slim preview text shown when preview mode enabled and section collapsed */
+.sectionPreview {
+  display: none;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-style: italic;
+  margin-left: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+  text-align: right;
+}
+
+/* Ensure heading text stays left while preview floats right */
+.sectionHeader .sectionPreview {
+  margin-left: auto;
+}
+
+/* active state for preview toggle button */
+#btnPreviewMode.active {
+  color: var(--color-accent);
+}
+
+/* Collapse-all button active state */
+#btnCollapseAll.active {
+  color: var(--color-accent);
 }
 
 /*------------------*/

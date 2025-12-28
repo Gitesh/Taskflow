@@ -27,6 +27,7 @@
                     <div class="sectionHeader" title="Toggle section">
                         <button class="clsTwistie" onclick="toggleSection('div1')">▾</button>
                         <span id="heading1" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">High Impact</span>
+                        <span class="sectionPreview"></span>
                     </div>
                     <div id="dropbox1"></div>
                 </div><!--end div1-->
@@ -36,6 +37,7 @@
                     <div class="sectionHeader" title="Toggle section">
                         <button class="clsTwistie" onclick="toggleSection('div2')">▾</button>
                         <span id="heading2" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Low Impact</span>
+                        <span class="sectionPreview"></span>
                     </div>
                     <div id="dropbox2"></div>
                 </div><!--end div2-->
@@ -45,6 +47,7 @@
                     <div class="sectionHeader" title="Toggle section">
                         <button class="clsTwistie" onclick="toggleSection('div3')">▾</button>
                         <span id="heading3" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Delegate</span>
+                        <span class="sectionPreview"></span>
                     </div>
                     <div id="dropbox3"></div>
                 </div> <!--end div3-->
@@ -54,6 +57,7 @@
                     <div class="sectionHeader" title="Toggle section">
                         <button class="clsTwistie" onclick="toggleSection('div4')">▾</button>
                         <span id="heading4" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Ice Box</span>
+                        <span class="sectionPreview"></span>
                     </div>
                     <div id="dropbox4"></div>
                 </div> <!-- end div4-->
@@ -94,7 +98,8 @@
                     <span class="material-icons" title="Settings" onclick="clkSettings()">settings</span>
 
                     <span class="material-icons" title="Toggle Light/Dark Theme" onclick="toggleTheme()">brightness_4</span>
-
+                    <span class="material-icons" id="btnPreviewMode" title="Toggle slim preview" onclick="togglePreviewMode()">view_sidebar</span>
+                    <span class="material-icons" id="btnCollapseAll" title="Collapse/Expand all sections" onclick="toggleCollapseAll()">expand_less</span>
 
                 </div> <!-- end div icon bar -->
 

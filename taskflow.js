@@ -30,6 +30,20 @@ window.addEventListener("keydown", function (event) {
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
 
+  // Collapse/Expand All shortcut: Ctrl+Shift+C
+  if (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'c')) {
+    event.preventDefault();
+    toggleCollapseAll();
+    showToast('Toggled collapse/expand all', 'info');
+  }
+
+  // Toggle slim preview: Ctrl+Shift+V
+  if (event.ctrlKey && event.shiftKey && (event.key === 'V' || event.key === 'v')) {
+    event.preventDefault();
+    togglePreviewMode();
+    showToast('Toggled slim preview', 'info');
+  }
+
   // Check if user is editing text
   const isEditing = document.activeElement.isContentEditable ||
     document.activeElement.tagName === 'INPUT' ||
@@ -46,6 +60,7 @@ window.addEventListener("keydown", function (event) {
     // Position cursor at the end instead of selecting text
     inputBox.setSelectionRange(1, 1);
   }
+
 
   console.log(`${event.type} has been fired`);
   console.log(`${event.key} key was pressed`);
@@ -80,6 +95,12 @@ function clkSettings() {
   myDialog.append("[CTRL + SHIFT + U] Upload saved file");
   myDialog.appendChild(document.createElement("p"));
 
+  myDialog.append("[CTRL + SHIFT + C] Collapse/Expand all sections");
+  myDialog.appendChild(document.createElement("p"));
+
+  myDialog.append("[CTRL + SHIFT + V] Toggle slim preview");
+  myDialog.appendChild(document.createElement("p"));
+
   myDialog.append("Double click section headers to rename them.");
   myDialog.appendChild(document.createElement("p"));
 
@@ -95,6 +116,12 @@ function clkSettings() {
   myDialog.append("/pending - Filter pending tasks");
   myDialog.appendChild(document.createElement("p"));
   myDialog.append("/export - Export tasks");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/collapse or /collapse-all - Collapse all sections");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/expand or /expand-all - Expand all sections");
+  myDialog.appendChild(document.createElement("p"));
+  myDialog.append("/preview or /toggle-preview - Toggle slim preview");
   myDialog.appendChild(document.createElement("p"));
   myDialog.append("/help or /settings - Show this dialog");
   myDialog.appendChild(document.createElement("p"));
@@ -225,6 +252,23 @@ function processCommand(command) {
 
     case '/export':
       clkShowExportModal();
+      break;
+
+    // Collapse/expand commands
+    case '/collapse':
+    case '/collapse-all':
+      collapseAllSections();
+      showToast('All sections collapsed', 'success');
+      break;
+    case '/expand':
+    case '/expand-all':
+      expandAllSections();
+      showToast('All sections expanded', 'success');
+      break;
+    case '/preview':
+    case '/toggle-preview':
+      togglePreviewMode();
+      showToast('Toggled slim preview', 'success');
       break;
 
     case '/dark':
@@ -474,6 +518,9 @@ let createPost = () => {
 
           });
 
+          // After rendering all tasks, update section previews if needed
+          try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
+
 
 }
 
@@ -701,6 +748,15 @@ function clkFlipToCountDownTimer() {
   } catch (err) {
     // ignore
   }
+  // Initialize preview mode from localStorage
+  try {
+    const pm = JSON.parse(localStorage.getItem('sectionPreviewMode') || 'false');
+    setPreviewMode(!!pm);
+  } catch (err) {
+    // ignore
+  }
+  // Update collapse-all button state
+  try { updateCollapseAllButton(); } catch (err) { /* ignore */ }
 })();
 
 // Toggle collapse/expand for a section and persist state
@@ -713,6 +769,120 @@ function toggleSection(sectionId) {
   const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
   collapsed[sectionId] = el.classList.contains('collapsed');
   localStorage.setItem('collapsedSections', JSON.stringify(collapsed));
+  // Update preview for this section (if preview mode enabled)
+  updateSectionPreview(sectionId);
+  // Update collapse-all button state
+  try { updateCollapseAllButton(); } catch (err) { /* ignore */ }
+}
+
+// Preview mode state
+let previewMode = false;
+
+function setPreviewMode(enabled) {
+  previewMode = !!enabled;
+  localStorage.setItem('sectionPreviewMode', JSON.stringify(previewMode));
+  const btn = document.getElementById('btnPreviewMode');
+  if (btn) btn.classList.toggle('active', previewMode);
+  // Refresh previews
+  updateAllSectionPreviews();
+}
+
+function togglePreviewMode() {
+  setPreviewMode(!previewMode);
+}
+
+function updateAllSectionPreviews() {
+  ['div1','div2','div3','div4'].forEach(id => updateSectionPreview(id));
+}
+
+function updateSectionPreview(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  const header = section.querySelector('.sectionHeader');
+  if (!header) return;
+  let previewEl = header.querySelector('.sectionPreview');
+  if (!previewEl) {
+    previewEl = document.createElement('span');
+    previewEl.className = 'sectionPreview';
+    header.appendChild(previewEl);
+  }
+
+  const dropbox = section.querySelector('[id^="dropbox"]');
+  const count = dropbox ? dropbox.children.length : 0;
+
+  if (section.classList.contains('collapsed') && previewMode) {
+    // show a one-line preview using the first task title
+    let firstTitle = '';
+    if (dropbox) {
+      const firstCardTitle = dropbox.querySelector('.clsTaskCardTitle');
+      if (firstCardTitle) firstTitle = firstCardTitle.textContent.trim();
+    }
+    if (firstTitle) {
+      previewEl.textContent = `${firstTitle} (${count})`;
+    } else {
+      previewEl.textContent = `(${count})`;
+    }
+    previewEl.style.display = 'inline';
+  } else {
+    previewEl.style.display = 'none';
+  }
+}
+
+// Collapse / Expand All helpers
+function collapseAllSections() {
+  const ids = ['div1','div2','div3','div4'];
+  const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('collapsed')) el.classList.add('collapsed');
+    collapsed[id] = true;
+  });
+  localStorage.setItem('collapsedSections', JSON.stringify(collapsed));
+  updateAllSectionPreviews();
+  updateCollapseAllButton();
+}
+
+function expandAllSections() {
+  const ids = ['div1','div2','div3','div4'];
+  const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('collapsed')) el.classList.remove('collapsed');
+    collapsed[id] = false;
+  });
+  localStorage.setItem('collapsedSections', JSON.stringify(collapsed));
+  updateAllSectionPreviews();
+  updateCollapseAllButton();
+}
+
+function toggleCollapseAll() {
+  // If any section is NOT collapsed, collapse all. Otherwise expand all.
+  const ids = ['div1','div2','div3','div4'];
+  let anyOpen = false;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('collapsed')) anyOpen = true;
+  });
+  if (anyOpen) collapseAllSections(); else expandAllSections();
+}
+
+function updateCollapseAllButton() {
+  const ids = ['div1','div2','div3','div4'];
+  let allCollapsed = true;
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('collapsed')) allCollapsed = false;
+  });
+  const btn = document.getElementById('btnCollapseAll');
+  if (!btn) return;
+  // If all collapsed, show expand icon; otherwise show collapse icon
+  if (allCollapsed) {
+    btn.innerText = 'expand_more';
+    btn.classList.add('active');
+  } else {
+    btn.innerText = 'expand_less';
+    btn.classList.remove('active');
+  }
 }
 
 
@@ -785,6 +955,10 @@ function drop(e) {
     var sectionId = dropZone.id;
     // Update data model
     if (data[taskIndex]) {
+      // remember original parent to update its preview later
+      const wrapperEl = document.getElementById(taskIndex);
+      const originalParent = wrapperEl ? wrapperEl.closest('.clsDropArea') : null;
+
       data[taskIndex].section = sectionId;
       localStorage.setItem("data", JSON.stringify(data));
 
@@ -794,6 +968,16 @@ function drop(e) {
       var dropbox = document.getElementById(dropboxId);
       if (dropbox) {
         dropbox.appendChild(document.getElementById(taskIndex));
+      }
+
+      // Update previews for both source and destination
+      try {
+        updateSectionPreview(sectionId);
+        if (originalParent && originalParent.id && originalParent.id !== sectionId) {
+          updateSectionPreview(originalParent.id);
+        }
+      } catch (err) {
+        try { updateAllSectionPreviews(); } catch (e) { /* ignore */ }
       }
     }
   }
@@ -1409,7 +1593,7 @@ function clkPlayAudio(sound) {
 // [ ] Add search bar to filter tasks by title/detail/tags
 // [ ] Add sort options - by due date, created date, title alphabetically
 // [ ] Add bulk actions - delete all completed tasks, export selected tasks
-// [ ] Make sections collapsible to hide/show tasks within each section
+// [/] Make sections collapsible to hide/show tasks within each section
 
 
 // ----TASK FRONT----
