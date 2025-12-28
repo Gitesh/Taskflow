@@ -37,11 +37,11 @@ window.addEventListener("keydown", function (event) {
     showToast('Toggled collapse/expand all', 'info');
   }
 
-  // Toggle slim preview: Ctrl+Shift+V
+  // Toggle task preview: Ctrl+Shift+V
   if (event.ctrlKey && event.shiftKey && (event.key === 'V' || event.key === 'v')) {
     event.preventDefault();
     togglePreviewMode();
-    showToast('Toggled slim preview', 'info');
+    showToast('Toggled task preview', 'info');
   }
 
   // Check if user is editing text
@@ -98,7 +98,7 @@ function clkSettings() {
   myDialog.append("[CTRL + SHIFT + C] Collapse/Expand all sections");
   myDialog.appendChild(document.createElement("p"));
 
-  myDialog.append("[CTRL + SHIFT + V] Toggle slim preview");
+  myDialog.append("[CTRL + SHIFT + V] Toggle task preview");
   myDialog.appendChild(document.createElement("p"));
 
   myDialog.append("Double click section headers to rename them.");
@@ -121,7 +121,7 @@ function clkSettings() {
   myDialog.appendChild(document.createElement("p"));
   myDialog.append("/expand or /expand-all - Expand all sections");
   myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/preview or /toggle-preview - Toggle slim preview");
+  myDialog.append("/preview or /toggle-preview - Toggle task preview");
   myDialog.appendChild(document.createElement("p"));
   myDialog.append("/help or /settings - Show this dialog");
   myDialog.appendChild(document.createElement("p"));
@@ -268,7 +268,7 @@ function processCommand(command) {
     case '/preview':
     case '/toggle-preview':
       togglePreviewMode();
-      showToast('Toggled slim preview', 'success');
+      showToast('Toggled task preview', 'success');
       break;
 
     case '/dark':
@@ -464,7 +464,7 @@ let createPost = () => {
                   <input type="date" class="clsTaskCardBackInput hidden" id="input_date_due_${y}" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value); toggleTaskFieldEdit(null, ${y}, 'date_due');" onblur="toggleTaskFieldEdit(null, ${y}, 'date_due');">
                 </div>
 
-                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'status')">
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'status');">
                   <div class="clsTaskCardBackDisplay" id="display_status_${y}">
                     <span class="clsFieldLabel">Status</span> ${x.status || 'None'}
                   </div>
@@ -810,7 +810,8 @@ function updateSectionPreview(sectionId) {
   const dropbox = section.querySelector('[id^="dropbox"]');
   const count = dropbox ? dropbox.children.length : 0;
 
-  if (section.classList.contains('collapsed') && previewMode) {
+  // if (section.classList.contains('collapsed') && previewMode) {
+  if (previewMode) {
     // show a one-line preview using the first task title
     let firstTitle = '';
     if (dropbox) {
