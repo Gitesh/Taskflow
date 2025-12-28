@@ -211,6 +211,42 @@ body {
   font-size: var(--font-size-lg);
 }
 
+/* Section header and twistie (collapse control) */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+  margin-bottom: 8px;
+}
+
+.clsTwistie {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 4px;
+  transition: transform 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+
+.clsTwistie:hover {
+  color: var(--color-text-primary);
+  background: rgba(0,0,0,0.04);
+}
+
+/* Collapsed state: hide dropbox contents and rotate twistie */
+.clsDropArea.collapsed > div[id^="dropbox"] {
+  display: none;
+}
+
+.clsDropArea.collapsed .clsTwistie {
+  transform: rotate(-90deg);
+}
+
 /*------------------*/
 /* Error - not details entered */
 /*------------------*/

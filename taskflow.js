@@ -688,7 +688,32 @@ function clkFlipToCountDownTimer() {
 
   console.log("json loaded: ", data);
   createPost();
+
+  // Initialize collapsed sections from localStorage
+  try {
+    const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
+    Object.keys(collapsed).forEach(secId => {
+      if (collapsed[secId]) {
+        const el = document.getElementById(secId);
+        if (el && el.classList) el.classList.add('collapsed');
+      }
+    });
+  } catch (err) {
+    // ignore
+  }
 })();
+
+// Toggle collapse/expand for a section and persist state
+function toggleSection(sectionId) {
+  const el = document.getElementById(sectionId);
+  if (!el) return;
+  el.classList.toggle('collapsed');
+
+  // Save collapsed sections map
+  const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
+  collapsed[sectionId] = el.classList.contains('collapsed');
+  localStorage.setItem('collapsedSections', JSON.stringify(collapsed));
+}
 
 
 ////////

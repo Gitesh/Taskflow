@@ -24,39 +24,36 @@
 
                 <!--- drop boxes --->
                 <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading1" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">High Impact</span><br><br>
+                    <div class="sectionHeader" title="Toggle section">
+                        <button class="clsTwistie" onclick="toggleSection('div1')">▾</button>
+                        <span id="heading1" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">High Impact</span>
                     </div>
                     <div id="dropbox1"></div>
                 </div><!--end div1-->
 
 
                 <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading2" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">Low
-                            Impact</span> <br><br>
+                    <div class="sectionHeader" title="Toggle section">
+                        <button class="clsTwistie" onclick="toggleSection('div2')">▾</button>
+                        <span id="heading2" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Low Impact</span>
                     </div>
                     <div id="dropbox2"></div>
                 </div><!--end div2-->
 
 
                 <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading3" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">Delegate</span>
-                        <br><br>
+                    <div class="sectionHeader" title="Toggle section">
+                        <button class="clsTwistie" onclick="toggleSection('div3')">▾</button>
+                        <span id="heading3" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Delegate</span>
                     </div>
                     <div id="dropbox3"></div>
                 </div> <!--end div3-->
 
 
                 <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading4" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">Ice Box</span>
-                        <br><br>
+                    <div class="sectionHeader" title="Toggle section">
+                        <button class="clsTwistie" onclick="toggleSection('div4')">▾</button>
+                        <span id="heading4" onclick="listenForDoubleClick(this);" onblur="this.contentEditable=false;">Ice Box</span>
                     </div>
                     <div id="dropbox4"></div>
                 </div> <!-- end div4-->
