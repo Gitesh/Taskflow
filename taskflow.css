@@ -149,22 +149,65 @@ body {
 
 /* Responsive Container Widths - New Views expand to fill screen */
 
-/* Common expanded style for Kanban and Dashboard */
-.view-kanban .container,
+/* Responsive Container Widths - New Views expand to fill screen */
+
+/* Dashboard Expanded Style */
+/* Dashboard Expanded Style */
 .view-dashboard .container {
-  max-width: calc(100vw - 4rem);
-  width: 100%;
+  max-width: none;
+  width: calc(100vw - 4rem);
+  height: calc(100vh - 4rem);
+  margin: 0;
+  overflow: hidden;
+  /* Ensure internal scrolling works */
 }
 
-/* Matrix View: Constraint height to viewport to force internal scrolling */
+/* Remove body padding for full-screen views so flex centering works with calculated widths */
+body.view-kanban,
+body.view-matrix,
+body.view-dashboard {
+  padding: 0;
+}
+
+/* Kanban View: Full Viewport with Even Border */
+.view-kanban .container {
+  max-width: none;
+  width: 96vw;
+  /* Explicit viewport width with gap */
+  height: 96vh;
+  margin: 0;
+  /* Flexbox on body handles centering */
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  /* Optional polish: slight rounding if floating */
+}
+
+/* Scrollable Task List Container */
+.view-kanban #idTaskListContainer {
+  display: flex;
+  gap: var(--section-gap);
+  overflow-x: auto;
+  padding: 10px;
+  /* Internal padding for shadows/focus */
+  flex: 1;
+  min-height: 0;
+}
+
+/* (Removed duplicate rule for .view-kanban .clsDropArea - definition exists below around line 980) */
+
+
+/* Matrix View: Constraint height */
 .view-matrix .container {
-  max-width: calc(100vw - 4rem);
-  width: 100%;
-  height: 90vh;
-  /* Fixed height relative to viewport */
+  max-width: none;
+  width: calc(100vw - 4rem);
+  height: calc(100vh - 4rem);
+  margin: 0;
   position: relative;
   overflow: hidden;
-  /* Prevent container scroll, force grid scroll */
+  box-sizing: border-box;
 }
 
 /* Matrix View - 2x2 Grid Fitting Viewport */
@@ -908,7 +951,7 @@ input:hover {
 }
 
 /* Kanban View - Flexible Columns */
-/* Note: Wrapper layout handled globally or below */
+/* Note: Main container layout defined in media queries/above */
 
 .view-kanban #idTaskListContainer {
   display: flex;
@@ -919,19 +962,62 @@ input:hover {
   min-height: 0;
 }
 
+
+
+/* Restored Flexible Columns - Fit to window */
 .view-kanban .clsDropArea {
-  flex: 1 0 300px;
+  flex: 1 1 0;
+  /* Fit 4 columns in window */
+  min-width: 220px;
+  /* Allow horizontal scroll on very narrow screens */
   margin: 0;
-  height: 100%;
-  overflow-y: auto;
+  height: 95%;
+  overflow-y: hidden;
+  /* Let dropbox handle scroll */
   display: flex;
   flex-direction: column;
+}
+
+/* Scrollable dropbox content for Kanban */
+.view-kanban .clsDropArea>div[id^="dropbox"] {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent) transparent;
 }
 
 .view-kanban #idInputSection {
   order: -1;
   width: 100%;
   margin-bottom: 10px;
+}
+
+/* Compact Cards and Stacking Fix for Kanban View */
+.view-kanban .clsTaskCard {
+  padding: 8px;
+  min-height: 40px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.view-kanban .clsTaskCardTitle {
+  font-size: 12px;
+}
+
+.view-kanban .clsTaskCardDetail {
+  font-size: 11px;
+}
+
+.view-kanban .clsTaskCardWrapper {
+  margin-bottom: 5px;
+  height: auto;
+  min-height: 40px;
+}
+
+.view-kanban .clsTaskCardAll {
+  height: auto;
+  min-height: 100%;
 }
 
 
