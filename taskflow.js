@@ -2,7 +2,7 @@
 //load elements into variables
 let form = document.getElementById("form");
 let input = document.getElementById("input");
-let msg = document.getElementById("idErrorMessage");
+//let msg = document.getElementById("idErrorMessage");
 
 strDate = new Date();
 strDate = strDate.toISOString();
@@ -215,7 +215,7 @@ function formValidation() {
   else {
     console.log("OK: text was entered");
 
-    msg.innerHTML = ""; //clear error message dic
+    //msg.innerHTML = ""; //clear error message dic
 
     acceptData(); // call the acceptData function
 
@@ -286,6 +286,58 @@ function processCommand(command) {
   }
 
   console.log(`TASKFLOW: Executed command - ${cmd}`);
+}
+
+
+// View Management
+const VALID_VIEWS = ['view-standard', 'view-kanban', 'view-matrix', 'view-dashboard'];
+
+function setView(viewName) {
+  if (!VALID_VIEWS.includes(viewName)) return;
+
+  const targetElement = document.body; // Changed from idContainerAll to body to allow styling parents/global layout
+
+  // Remove all view classes from body (new target)
+  targetElement.classList.remove(...VALID_VIEWS);
+
+  // Clean up legacy/previous view classes from idContainerAll if they exist
+  const containerAll = document.getElementById('idContainerAll');
+  if (containerAll) {
+    containerAll.classList.remove(...VALID_VIEWS);
+  }
+
+  // Add new view class to body
+  targetElement.classList.add(viewName);
+
+  // Special handling for dashboard...
+  if (viewName === 'view-dashboard') {
+    // Apply details-open to the specific container if needed for internal logic
+    if (containerAll) containerAll.classList.add('details-open');
+    targetElement.classList.add('details-open');
+  } else {
+    if (containerAll) containerAll.classList.remove('details-open');
+    targetElement.classList.remove('details-open');
+  }
+
+  // Persist preference
+  localStorage.setItem('currentView', viewName);
+
+  // Update active state of icons
+  updateViewIconState(viewName);
+
+  showToast(`Switched to ${viewName.replace('view-', '')} view`, 'success');
+}
+
+function updateViewIconState(activeView) {
+  // Find all view icons and update opacity or style
+  const icons = document.querySelectorAll('#divIconBar .material-icons[onclick^="setView"]');
+  icons.forEach(icon => {
+    if (icon.getAttribute('onclick').includes(activeView)) {
+      icon.style.color = 'var(--color-accent)'; // Highlight active
+    } else {
+      icon.style.color = ''; // Reset
+    }
+  });
 }
 
 
@@ -757,6 +809,15 @@ function clkFlipToCountDownTimer() {
   }
   // Update collapse-all button state
   try { updateCollapseAllButton(); } catch (err) { /* ignore */ }
+
+  // Initialize View
+  try {
+    const savedView = localStorage.getItem('currentView') || 'view-standard';
+    setView(savedView);
+  } catch (err) {
+    console.error("Error setting view:", err);
+  }
+
 })();
 
 // Toggle collapse/expand for a section and persist state
@@ -1597,7 +1658,85 @@ function clkPlayAudio(sound) {
 
 // ----TASK BACK FORM----
 // [ ] output all fields on task back
-// [ ] Field - Add last edited date
+//------------------
+// Dashboard Detail Pane Interaction
+//------------------
+
+function selectTaskForDashboard(card) {
+  // Only active in dashboard view
+  if (!document.body.classList.contains('view-dashboard')) return;
+
+  const detailPane = document.getElementById('idDetailPane');
+  if (!detailPane) return;
+
+  // Clear previous content
+  detailPane.innerHTML = '';
+
+  const title = card.querySelector('.clsTaskCardTitle').textContent;
+
+  // Safe text content retrieval
+  const detailEl = card.querySelector('.clsTaskCardDetail');
+  const detail = detailEl ? detailEl.textContent : '';
+
+  const dateEl = card.querySelector('.clsTaskInfo');
+  const date = dateEl ? dateEl.textContent : '';
+
+  const tagEl = card.querySelector('.clsTaskTag');
+  const tag = tagEl ? tagEl.textContent : '';
+
+  const sectionHeader = card.closest('.clsDropArea').querySelector('.sectionHeader');
+  const status = sectionHeader ? sectionHeader.textContent.trim() : 'Unknown';
+
+  // Highlight active card
+  document.querySelectorAll('.clsTaskCardWrapper.active').forEach(el => el.classList.remove('active'));
+  card.closest('.clsTaskCardWrapper').classList.add('active');
+
+  // Build Detail Pane Content
+  const html = `
+    <h3>${title}</h3>
+    <div style="margin-bottom: 20px;">
+        <span class="clsTaskTag" style="font-size: 1.1em">${tag}</span>
+        <span style="float: right; color: var(--color-text-secondary)">${date}</span>
+    </div>
+    <div style="background: var(--color-bg-container); padding: 15px; border-radius: var(--radius-md); min-height: 200px;">
+        <p style="white-space: pre-wrap;">${detail || 'No details provided.'}</p>
+    </div>
+    <br>
+    <p><strong>Status:</strong> ${status}</p>
+    <div style="margin-top: 20px; text-align: right;">
+         <button class="btnEditDetails" style="cursor:pointer; padding: 8px 16px; border: none; background: var(--color-primary); color: white; border-radius: 4px;">Edit Task</button>
+    </div>
+  `;
+
+  detailPane.innerHTML = html;
+
+  // Attach edit handler
+  const editIcon = card.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
+  if (editIcon) {
+    const btn = detailPane.querySelector('.btnEditDetails');
+    if (btn) btn.onclick = function () {
+      editIcon.click();
+    };
+  }
+}
+
+// Attach click listeners to cards global or via delegation
+// We can use the existing drag/drop or global click handler
+const taskListContainer = document.getElementById('idTaskListContainer');
+if (taskListContainer) {
+  taskListContainer.addEventListener('click', function (e) {
+    const cardWrapper = e.target.closest('.clsTaskCardWrapper');
+    if (cardWrapper && document.body.classList.contains('view-dashboard')) {
+      // Don't override edit/delete buttons
+      const targetTag = e.target.tagName.toLowerCase();
+      if (targetTag === 'i' || targetTag === 'button') return;
+
+      const card = cardWrapper.querySelector('.clsTaskCard');
+      selectTaskForDashboard(card);
+    }
+  });
+}
+// [ ] Add last edited date
 // [/] css card flip elements on back face clicks still active. FIXED add z plane to back
 // [ ] Add to calendar button - export to ics file for due date
 // [ ] Add subtasks field - with checkbox to mark complete
