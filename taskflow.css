@@ -171,8 +171,9 @@ body {
 
 .view-matrix #idTaskListContainer {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  /* Use minmax(0, 1fr) to prevent tracks from expanding beyond available space */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--section-gap);
   flex: 1;
   min-height: 0;
@@ -181,24 +182,35 @@ body {
   overflow: hidden;
 }
 
+/* Matrix view drop area container - Fix header, scroll content */
 .view-matrix .clsDropArea {
   margin: 0;
   padding: 5px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   height: 100%;
-  /* Ensure it fills the grid cell */
-  /* Scrollbar styling for Webkit */
+  overflow: hidden;
+  /* Prevent container scroll, force inner dropbox scroll */
+}
+
+/* Scrollable dropbox list */
+.view-matrix .clsDropArea>div[id^="dropbox"] {
+  flex: 1;
+  overflow-y: auto;
+  max-height: none;
+  /* Override default animation max-height */
+  padding-right: 2px;
+
+  /* Scrollbar styling */
   scrollbar-width: thin;
   scrollbar-color: var(--color-accent) transparent;
 }
 
-.view-matrix .clsDropArea::-webkit-scrollbar {
+.view-matrix .clsDropArea>div[id^="dropbox"]::-webkit-scrollbar {
   width: 6px;
 }
 
-.view-matrix .clsDropArea::-webkit-scrollbar-thumb {
+.view-matrix .clsDropArea>div[id^="dropbox"]::-webkit-scrollbar-thumb {
   background-color: var(--color-accent);
   border-radius: 4px;
 }
