@@ -513,13 +513,13 @@ let createPost = () => {
           </div>
 
             `;
-            // Ensure tags are rendered as pills on initial render
-            try { updateTaskField(y, 'task_tag', x.task_tag); } catch (err) { /* ignore if DOM not ready */ }
+    // Ensure tags are rendered as pills on initial render
+    try { updateTaskField(y, 'task_tag', x.task_tag); } catch (err) { /* ignore if DOM not ready */ }
 
-          });
+  });
 
-          // After rendering all tasks, update section previews if needed
-          try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
+  // After rendering all tasks, update section previews if needed
+  try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
 
 
 }
@@ -539,13 +539,13 @@ function updateTaskField(index, field, value) {
     data[index][field] = value;
   }
   localStorage.setItem("data", JSON.stringify(data));
-  
+
   // Update the display text while preserving the label
   const displayEl = document.getElementById(`display_${field}_${index}`);
   if (displayEl) {
     // Get or create the label span
     let labelEl = displayEl.querySelector('.clsFieldLabel');
-    
+
     // Clear the display element but preserve or recreate the label
     displayEl.innerHTML = '';
     if (labelEl) {
@@ -564,7 +564,7 @@ function updateTaskField(index, field, value) {
       newLabel.textContent = labelMap[field] || field;
       displayEl.appendChild(newLabel);
     }
-    
+
     // Render content based on field type
     if (field === 'task_tag') {
       // Parse, deduplicate, and render tags as pills
@@ -607,25 +607,25 @@ function updateTaskField(index, field, value) {
 function toggleTaskFieldEdit(event, index, fieldName) {
   const displayEl = document.getElementById(`display_${fieldName}_${index}`);
   const inputEl = document.getElementById(`input_${fieldName}_${index}`);
-  
+
   if (!displayEl || !inputEl) return;
-  
+
   // If event exists, it's a click to edit
   if (event) {
-             
+
     // Only hide the display and show input if not already editing
     if (!inputEl.classList.contains('hidden')) {
       return; // Already in edit mode
     }
-    
+
     // Get the field label and preserve it
     const labelEl = displayEl.querySelector('.clsFieldLabel');
     const labelText = labelEl ? labelEl.textContent : '';
-    
+
     displayEl.classList.add('hidden');
     inputEl.classList.remove('hidden');
     inputEl.focus();
-    
+
     // Open the control immediately where possible so a single click activates it
     const tag = inputEl.tagName;
     const type = (inputEl.type || '').toLowerCase();
@@ -792,7 +792,7 @@ function togglePreviewMode() {
 }
 
 function updateAllSectionPreviews() {
-  ['div1','div2','div3','div4'].forEach(id => updateSectionPreview(id));
+  ['div1', 'div2', 'div3', 'div4'].forEach(id => updateSectionPreview(id));
 }
 
 function updateSectionPreview(sectionId) {
@@ -831,7 +831,7 @@ function updateSectionPreview(sectionId) {
 
 // Collapse / Expand All helpers
 function collapseAllSections() {
-  const ids = ['div1','div2','div3','div4'];
+  const ids = ['div1', 'div2', 'div3', 'div4'];
   const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -844,7 +844,7 @@ function collapseAllSections() {
 }
 
 function expandAllSections() {
-  const ids = ['div1','div2','div3','div4'];
+  const ids = ['div1', 'div2', 'div3', 'div4'];
   const collapsed = JSON.parse(localStorage.getItem('collapsedSections') || '{}');
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -858,7 +858,7 @@ function expandAllSections() {
 
 function toggleCollapseAll() {
   // If any section is NOT collapsed, collapse all. Otherwise expand all.
-  const ids = ['div1','div2','div3','div4'];
+  const ids = ['div1', 'div2', 'div3', 'div4'];
   let anyOpen = false;
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -868,7 +868,7 @@ function toggleCollapseAll() {
 }
 
 function updateCollapseAllButton() {
-  const ids = ['div1','div2','div3','div4'];
+  const ids = ['div1', 'div2', 'div3', 'div4'];
   let allCollapsed = true;
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -937,118 +937,131 @@ function clkCardDeleteTask(e) {
 // add a new card
 //------
 
-function allowDrop(e) {
-  // Allow drop and show insertion placeholder for reordering
-  e.preventDefault();
+// --- DRAG AND DROP IMPLEMENTATION ---
 
-  const dropZone = e.target.closest('.clsDropArea');
-  if (!dropZone) return;
+/**
+ * Triggered when the user starts dragging a task card.
+ * Stores the index of the task being dragged.
+ */
+// --- ENHANCED DRAG AND DROP WITH SEPARATION ---
 
-  const dropbox = dropZone.querySelector('[id^="dropbox"]');
-  if (!dropbox) return;
+// --- SMOOTH DRAG AND DROP LOGIC ---
 
-  // Create placeholder if not exists
-  if (!window._taskDragPlaceholder) {
-    const ph = document.createElement('div');
-    ph.className = 'drag-placeholder';
-    window._taskDragPlaceholder = ph;
-  }
-  const placeholder = window._taskDragPlaceholder;
+// --- SMOOTH DRAG AND DROP LOGIC (LASER LINE) ---
 
-  // Determine insertion point by mouse Y position
-  const children = Array.from(dropbox.querySelectorAll('.clsTaskCardWrapper'));
-  let inserted = false;
-  for (let child of children) {
-    if (child === window._currentDraggedEl) continue;
-    const rect = child.getBoundingClientRect();
-    const midpoint = rect.top + rect.height / 2;
-    if (e.clientY < midpoint) {
-      if (child.previousSibling !== placeholder) dropbox.insertBefore(placeholder, child);
-      inserted = true;
-      break;
-    }
-  }
-  if (!inserted) {
-    // append to end
-    if (dropbox.lastElementChild !== placeholder) dropbox.appendChild(placeholder);
-  }
+function drag(ev) {
+  const taskUID = ev.currentTarget.getAttribute('data-task-uid');
+  ev.dataTransfer.setData("text/plain", taskUID);
+
+  // Delay adding the class so the "ghost" image remains visible
+  setTimeout(() => ev.target.classList.add('dragging'), 0);
+  ev.dataTransfer.effectAllowed = "move";
 }
 
-function drag(e) {
-  // mark current dragged element and set transfer data to its UID
-  const wrapper = e.target.closest('.clsTaskCardWrapper');
-  if (!wrapper) return;
-  const uid = wrapper.getAttribute('data-task-uid') || wrapper.id;
-  try { e.dataTransfer.setData('text/plain', uid); } catch (err) { e.dataTransfer.setData('Text', uid); }
-  e.dataTransfer.effectAllowed = 'move';
-  window._currentDraggedEl = wrapper;
-  // add dragging class for visual feedback
-  wrapper.classList.add('dragging');
+function allowDrop(ev) {
+  ev.preventDefault();
+  const dropArea = ev.target.closest('.clsDropArea');
+  if (!dropArea) return;
+
+  dropArea.classList.add('drag-over');
+
+  // Insert Laser Line
+  updateDropLine(dropArea, ev.clientY);
 }
 
-function drop(e) {
-  e.preventDefault();
-  // Reorder within and across sections
-  const uid = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('Text');
-  if (!uid) return;
+function updateDropLine(dropArea, mouseY) {
+  // 1. Get all cards in this section containing our laser line
+  const cards = [...dropArea.querySelectorAll('.clsTaskCardWrapper:not(.dragging)')];
+  const dropbox = dropArea.querySelector('[id^="dropbox"]');
 
-  const dropZone = e.target.closest('.clsDropArea');
-  if (!dropZone) return;
-  const dropbox = dropZone.querySelector('[id^="dropbox"]');
-  if (!dropbox) return;
-
-  // Find dragged element by its UID
-  const draggedEl = window._currentDraggedEl || document.querySelector(`.clsTaskCardWrapper[data-task-uid="${uid}"]`);
-
-  // If we have a placeholder, replace it with the dragged element
-  const placeholder = window._taskDragPlaceholder;
-  if (placeholder && placeholder.parentElement === dropbox) {
-    dropbox.insertBefore(draggedEl, placeholder);
-    placeholder.remove();
-  } else {
-    // Fallback: append
-    dropbox.appendChild(draggedEl);
-  }
-
-  // Remove dragging class
-  if (draggedEl) draggedEl.classList.remove('dragging');
-
-  // Rebuild `data` array to match DOM order across all sections
-  const newData = [];
-  ['div1','div2','div3','div4'].forEach(sectionId => {
-    const sec = document.getElementById(sectionId);
-    if (!sec) return;
-    const db = sec.querySelector('[id^="dropbox"]');
-    if (!db) return;
-    Array.from(db.querySelectorAll('.clsTaskCardWrapper')).forEach(wrapper => {
-      const taskUid = wrapper.getAttribute('data-task-uid');
-      const obj = data.find(t => t.id === taskUid);
-      if (obj) {
-        // Ensure section property is correct
-        obj.section = sectionId;
-        newData.push(obj);
-      }
-    });
+  // 2. Determine insertion point
+  const nextCard = cards.find(card => {
+    const box = card.getBoundingClientRect();
+    return mouseY < box.top + box.height / 2;
   });
 
-  // Replace data and persist
-  data = newData.concat(data.filter(d => !newData.includes(d)));
-  localStorage.setItem('data', JSON.stringify(data));
+  // 3. Find or Create Laser Line
+  let line = document.getElementById('idLaserLine');
+  if (!line) {
+    line = document.createElement('div');
+    line.id = 'idLaserLine';
+    line.className = 'drop-line';
+  }
 
-  // Re-render to refresh IDs, events and previews
-  createPost();
-  try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
+  // 4. Position the line only if it's not already there
+  if (line.nextElementSibling !== nextCard || line.parentElement !== dropbox) {
+    if (nextCard) {
+      dropbox.insertBefore(line, nextCard); // Place before the card we are hovering
+    } else {
+      dropbox.appendChild(line); // Place at the end if no next card found
+    }
+  }
 }
 
-function dragEnd(e) {
-  // cleanup placeholder and classes
-  if (window._taskDragPlaceholder && window._taskDragPlaceholder.parentElement) {
-    window._taskDragPlaceholder.remove();
+function dragLeave(ev) {
+  const dropArea = ev.target.closest('.clsDropArea');
+  const relatedTarget = ev.relatedTarget;
+
+  // Only remove if we really left the drop area (not just entered a child element)
+  if (dropArea && !dropArea.contains(relatedTarget)) {
+    dropArea.classList.remove('drag-over');
+    removeDropLine();
   }
-  if (window._currentDraggedEl) {
-    window._currentDraggedEl.classList.remove('dragging');
-    window._currentDraggedEl = null;
+}
+
+function removeDropLine() {
+  const line = document.getElementById('idLaserLine');
+  if (line) line.remove();
+}
+
+function drop(ev) {
+  ev.preventDefault();
+  const taskUID = ev.dataTransfer.getData("text/plain");
+  const dropArea = ev.target.closest('.clsDropArea');
+
+  // Clean up visual cues
+  removeDropLine();
+  if (dropArea) dropArea.classList.remove('drag-over');
+
+  if (!dropArea || !taskUID) return;
+
+  const targetSectionId = dropArea.id;
+
+  // Find the insertion point using the same logic as the laser line
+  const cards = [...dropArea.querySelectorAll('.clsTaskCardWrapper:not(.dragging)')];
+  const nextCard = cards.find(card => {
+    const box = card.getBoundingClientRect();
+    return ev.clientY < box.top + box.height / 2;
+  });
+
+  // 1. Find the task object in the data array
+  const taskIndex = data.findIndex(t => t.id === taskUID);
+  if (taskIndex === -1) return;
+
+  const [movedTask] = data.splice(taskIndex, 1);
+
+  // 2. Update section
+  movedTask.section = targetSectionId;
+
+  // 3. Find new array position
+  if (nextCard) {
+    const nextUID = nextCard.getAttribute('data-task-uid');
+    const newIndex = data.findIndex(t => t.id === nextUID);
+    data.splice(newIndex, 0, movedTask);
+  } else {
+    data.push(movedTask);
   }
+
+  // 4. Save and Re-render
+  localStorage.setItem("data", JSON.stringify(data));
+  createPost();
+  showToast("Position updated", "success");
+}
+
+function dragEnd(ev) {
+  ev.target.classList.remove('dragging');
+  document.querySelectorAll('.clsDropArea').forEach(da => da.classList.remove('drag-over'));
+  removeDropLine();
 }
 
 //-------------------
@@ -1247,98 +1260,6 @@ function clkFilterPendingTasks() {
 // Upload CSV into local storage
 //
 ////////
-
-//OLD upload code 2025-07-08
-
-// function clkUploadTasksToLocalStorage(){
-//   console.log("CLICKED - stub for file upload")
-
-//   var fileInput = document.getElementById("uploadCSV"),
-
-//   readFile = function () {
-//       var reader = new FileReader();
-//       reader.onload = function () {
-
-
-// //        convertCSVtoJSON(reader.result);
-
-//       convertCSVtoJSON (reader.result);
-
-
-
-
-//         // document.getElementById('uploadCSVOutput').innerHTML = reader.result;
-//       };
-//       // start reading the file. When it is done, calls the onload event defined above.
-//       reader.readAsBinaryString(fileInput.files[0]);
-
-//   };
-
-// fileInput.addEventListener('change', readFile);
-
-// }
-
-//Convert CSV to OBJECT -- original replaced 2025-07-08
-// function convertCSVtoJSON(uploadedCSV) {
-
-//   //lop off any trailing or starting whitespace
-//   csv = uploadedCSV.trim();
-
-//   //check for special characters
-//   let string = ''
-//   let quoteFlag = 0
-//   for (let character of csv) {
-//     //console.log("TASKFLOW character: ", character);
-//     if (character === '"' && quoteFlag === 0) {
-//         quoteFlag = 1
-//     }
-//     else if (character === '"' && quoteFlag == 1) quoteFlag = 0
-//     if (character === ',' && quoteFlag === 0) character = '|'
-//     if (character !== '"') string += character
-//   }
-
-
-//   //prep
-//   let lines = csv.split('\n'),
-//       headers,
-//       output = [];
-
-//   //console.log("TASKFLOW headers: ", headers);
-//   //console.log("TASKFLOW lines: ", lines);
-
-//   //iterate over lines...
-//   lines.forEach((line, i) => {
-
-//       //...break line into tab-separated parts
-//       // let parts = line.split(/\t+/);
-//       let parts = line.split(',');
-
-//       //...if not the headers line, push to output. By this time
-//      //we have the headers logged, so just match the value to
-//      //header of the same index
-//       if (i) {
-//           let obj = {};
-//           parts.forEach((part, i) => obj[headers[i]] = part);
-//           output.push(obj);
-
-//       //...else if headers line, log headers
-//       } else
-//           headers = parts;
-//   })
-
-//   //done
-//   //console.log("TASKFLOW convert CSV to Object: ",output);
-
-//   // Store the uploaded data into local storage replacing data object
-//   localStorage.setItem("data",JSON.stringify(output));
-//   console.log("TASKFLOW convert data: ",data);
-//   document. location. reload()
-
-//   return output;
-
-
-// }
-
 
 //new upload code 2025-07-08
 function clkUploadTasksToLocalStorage() {
