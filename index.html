@@ -22,50 +22,59 @@
                     <span id="idTaskflowAppTitle">Taskflow</span><span id="idTaskflowTodaySubTitle"></span>
                 </p>
 
-                <!--- drop boxes --->
-                <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading1" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">High Impact</span><br><br>
+                <div id="idContentWrapper">
+                    <div id="idTaskListContainer">
+                        <!--- drop boxes --->
+                        <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
+                            ondragleave="dragLeave(event)">
+                            <div title="Double-click to rename">
+                                <span id="heading1" onclick="listenForDoubleClick(this);"
+                                    onblur="this.contentEditable=false;">High Impact</span><br><br>
+                            </div>
+                            <div id="dropbox1"></div>
+                        </div><!--end div1-->
+
+
+                        <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
+                            ondragleave="dragLeave(event)">
+                            <div title="Double-click to rename">
+                                <span id="heading2" onclick="listenForDoubleClick(this);"
+                                    onblur="this.contentEditable=false;">Low
+                                    Impact</span> <br><br>
+                            </div>
+                            <div id="dropbox2"></div>
+                        </div><!--end div2-->
+
+
+                        <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
+                            ondragleave="dragLeave(event)">
+                            <div title="Double-click to rename">
+                                <span id="heading3" onclick="listenForDoubleClick(this);"
+                                    onblur="this.contentEditable=false;">Delegate</span>
+                                <br><br>
+                            </div>
+                            <div id="dropbox3"></div>
+                        </div> <!--end div3-->
+
+
+                        <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
+                            ondragleave="dragLeave(event)">
+                            <div title="Double-click to rename">
+                                <span id="heading4" onclick="listenForDoubleClick(this);"
+                                    onblur="this.contentEditable=false;">Ice Box</span>
+                                <br><br>
+                            </div>
+                            <div id="dropbox4"></div>
+                        </div> <!-- end div4-->
                     </div>
-                    <div id="dropbox1"></div>
-                </div><!--end div1-->
-
-
-                <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading2" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">Low
-                            Impact</span> <br><br>
-                    </div>
-                    <div id="dropbox2"></div>
-                </div><!--end div2-->
-
-
-                <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading3" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">Delegate</span>
-                        <br><br>
-                    </div>
-                    <div id="dropbox3"></div>
-                </div> <!--end div3-->
-
-
-                <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                    <div title="Double-click to rename">
-                        <span id="heading4" onclick="listenForDoubleClick(this);"
-                            onblur="this.contentEditable=false;">Ice Box</span>
-                        <br><br>
-                    </div>
-                    <div id="dropbox4"></div>
-                </div> <!-- end div4-->
+                </div>
 
 
                 <!-- Input Section -->
                 <div id="idInputSection">
                     <form id="form">
-                        <input type="text" name="post" id="input" value="+add" placeholder="Add a new task" onclick="post.select()">
+                        <input type="text" name="post" id="input" value="+add" placeholder="Add a new task"
+                            onclick="post.select()">
                         <div id="idErrorMessage"></div>
                         <button id="btnSubmit" type="submit">Post</button>
                     </form>
@@ -79,7 +88,8 @@
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
                             <!-- <input id="uploadCSV" type="file" onclick="clkUploadTasksToLocalStorage()" /> -->
-                            <input id="uploadCSV" type="file" style="position: fixed; top: -100em" onclick="clkUploadTasksToLocalStorage()" />
+                            <input id="uploadCSV" type="file" style="position: fixed; top: -100em"
+                                onclick="clkUploadTasksToLocalStorage()" />
                         </label>
                     </span>
 
@@ -96,7 +106,8 @@
 
                     <span class="material-icons" title="Settings" onclick="clkSettings()">settings</span>
 
-                    <span class="material-icons" title="Toggle Light/Dark Theme" onclick="toggleTheme()">brightness_4</span>
+                    <span class="material-icons" title="Toggle Light/Dark Theme"
+                        onclick="toggleTheme()">brightness_4</span>
 
 
                 </div> <!-- end div icon bar -->

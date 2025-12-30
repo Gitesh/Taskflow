@@ -272,6 +272,55 @@ body.view-dashboard {
   .view-matrix .container,
   .view-dashboard .container {
     max-width: calc(100vw - 1rem);
+    height: calc(100vh - 1rem);
+    width: calc(100vw - 1rem);
+  }
+
+  /* Stack Kanban columns vertically */
+  .view-kanban #idTaskListContainer {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .view-kanban .clsDropArea {
+    width: auto;
+    min-width: 0;
+    margin: 10px 0;
+  }
+
+  /* Stack Matrix columns vertically */
+  .view-matrix #idTaskListContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, auto);
+    overflow-y: auto;
+  }
+
+  /* Adjust footer layout for mobile to stack items */
+  .view-kanban #idContainerFront,
+  .view-matrix #idContainerFront,
+  .view-dashboard #idContainerFront {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto auto auto;
+    grid-template-areas:
+      "content"
+      "title"
+      "input"
+      "icons";
+  }
+
+  .view-kanban #idInputSection,
+  .view-matrix #idInputSection,
+  .view-dashboard #idInputSection {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .view-kanban #divIconBar,
+  .view-matrix #divIconBar,
+  .view-dashboard #divIconBar {
+    justify-self: center;
+    padding: 10px;
   }
 }
 
