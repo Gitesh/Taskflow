@@ -103,17 +103,20 @@
                         onclick="setView('view-matrix')">grid_view</span>
                     <span class="material-icons" title="Dashboard View"
                         onclick="setView('view-dashboard')">space_dashboard</span>
-                    &nbsp;|&nbsp;
+
+                    <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
+
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
-                            <!-- <input id="uploadCSV" type="file" onclick="clkUploadTasksToLocalStorage()" /> -->
                             <input id="uploadCSV" type="file" style="position: fixed; top: -100em"
                                 onclick="clkUploadTasksToLocalStorage()" />
                         </label>
                     </span>
 
                     <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
+
+                    <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
                     <span class="material-icons" title="Toggle background animation"
                         onclick="clkToggleBackgroundAnimation()">animation</span>

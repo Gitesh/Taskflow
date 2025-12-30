@@ -355,7 +355,7 @@ body.view-dashboard {
 .view-kanban #idTaskflowAppTitle,
 .view-matrix #idTaskflowAppTitle,
 .view-dashboard #idTaskflowAppTitle {
-  font-size: 14px;
+  /* font-size: 14px; */
   padding: 5px;
   opacity: 0.8;
 }
@@ -363,7 +363,7 @@ body.view-dashboard {
 .view-kanban #idTaskflowTodaySubTitle,
 .view-matrix #idTaskflowTodaySubTitle,
 .view-dashboard #idTaskflowTodaySubTitle {
-  font-size: 14px;
+  /* font-size: 14px; */
   padding: 5px;
   opacity: 0.8;
 }
@@ -717,6 +717,10 @@ body.view-dashboard {
 
 /* Span for the hover edit icons revealed when a task is hovered */
 
+.clsMaterialIconBarDivider {
+  color: var(--color-text-secondary);
+}
+
 .clsTaskCardHoverIcons {
   display: block;
   background: ghostwhite;
@@ -767,6 +771,11 @@ i.material-icons {
 /* icons menu on front of card */
 #divIconBar {
   min-height: 48px;
+  align-items: center;
+  align-self: center;
+  display: flex;
+  padding: 10px;
+  justify-content: center;
   /*same size as hover icons to avoid jitter */
 
 }
