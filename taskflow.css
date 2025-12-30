@@ -144,7 +144,10 @@ body {
   max-width: 500px;
   /* Default/Standard View Width */
   min-width: 250px;
-  transition: max-width 0.6s cubic-bezier(0.25, 1, 0.5, 1), width 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: max-width 1.0s cubic-bezier(0.25, 1, 0.5, 1),
+    width 1.0s cubic-bezier(0.25, 1, 0.5, 1),
+    height 1.0s cubic-bezier(0.25, 1, 0.5, 1),
+    margin 1.0s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* Responsive Container Widths - New Views expand to fill screen */
@@ -166,7 +169,8 @@ body {
 body.view-kanban,
 body.view-matrix,
 body.view-dashboard {
-  padding: 0px 24px 0px 0px;
+  padding: 0;
+  /* Symmetric padding is better for centering with margin: auto */
 }
 
 /* Kanban View: Full Viewport with Even Border */
@@ -534,8 +538,8 @@ body.view-dashboard {
 
 /* FLIP CARD */
 
-.is-flipped {
-  /*style for .card when it is flipped */
+.clsTaskCardAll.is-flipped {
+  /* Specific to small task cards */
   transform: translateX(-100%) rotateY(-180deg);
 }
 
@@ -598,8 +602,17 @@ body.view-dashboard {
 /* FLIP whole container */
 
 .clsContainerAll.is-flipped {
-  /*style for .card when it is flipped */
+  /* Only the inner container should perform the 3D rotation */
   transform: translateX(-100%) rotateY(-180deg);
+}
+
+/* Force standard dimensions when flipped from any view */
+.container.is-flipped {
+  max-width: 500px !important;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0 auto !important;
+  /* Ensure it stays centered during the resize transition */
 }
 
 .clsContainerAll.is-flipped .clsContainerFront {
@@ -614,7 +627,7 @@ body.view-dashboard {
 .clsContainerAll {
   width: 100%;
   height: 100%;
-  transition: transform 1.3s;
+  transition: transform 1.0s cubic-bezier(0.25, 1, 0.5, 1);
   perspective: 333px;
   transform-style: preserve-3d;
   transform-origin: center right;
@@ -637,7 +650,8 @@ body.view-dashboard {
   top: 0px;
   width: auto;
   height: auto;
-  transform: translateZ(-1px) rotateY(180deg);
+  transform: rotateY(180deg);
+  /* Removed translateZ to avoid mirroring issues */
 }
 
 
@@ -795,7 +809,14 @@ i.material-icons {
   /*same size as hover icons to avoid jitter */
   align-content: center;
   /* position: absolute; */
+  /* left: 50%; */
+  transform: translateX(-50%);
+  gap: 15px;
+  justify-content: center;
   font-size: xx-large;
+  margin-left: auto;
+  margin-right: auto;
+
 }
 
 
@@ -1167,6 +1188,7 @@ input:hover {
   color: var(--color-text-on-card-back);
   transition: all 0.2s ease;
   font-size: 24px;
+  display: block;
 }
 
 .clsTaskCardBackFlipButton .material-icons:hover {

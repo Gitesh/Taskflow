@@ -753,7 +753,7 @@ function clkFlipToCountDownTimer() {
   console.log("TASKFLOW: clkFlipToCountDownTimer");
 
   document.getElementById("idContainerAll").classList.toggle("is-flipped");
-
+  document.getElementById("container").classList.toggle("is-flipped");
 
 }
 
