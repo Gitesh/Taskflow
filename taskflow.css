@@ -140,7 +140,7 @@ body {
 .container {
   width: 100%;
   height: auto;
-  min-height: 500px;
+  min-height: auto;
   max-width: 500px;
   /* Default/Standard View Width */
   min-width: 250px;
@@ -597,10 +597,18 @@ body.view-dashboard {
 
 /* FLIP whole container */
 
-.clsContainerAll .is-flipped {
+.clsContainerAll.is-flipped {
   /*style for .card when it is flipped */
   transform: translateX(-100%) rotateY(-180deg);
+}
 
+.clsContainerAll.is-flipped .clsContainerFront {
+  visibility: hidden;
+  position: absolute;
+}
+
+.clsContainerAll.is-flipped .clsContainerBack {
+  position: relative;
 }
 
 .clsContainerAll {
@@ -638,6 +646,7 @@ body.view-dashboard {
   backface-visibility: hidden;
   /* hide the face */
   transform: translateZ(0px);
+  min-height: 500px;
 }
 
 
@@ -785,7 +794,7 @@ i.material-icons {
   min-height: 48px;
   /*same size as hover icons to avoid jitter */
   align-content: center;
-  position: absolute;
+  /* position: absolute; */
   font-size: xx-large;
 }
 
