@@ -67,6 +67,10 @@
   --shadow-sm: 5px 15px 20px -20px #514;
   --shadow-md: 4px 3px 7px 2px rgba(0, 0, 0, 0.25);
   --shadow-hover: 1px 10px 20px 0px rgba(218, 215, 206, 0.8);
+
+  /* Toast Glass Theme */
+  --toast-glass-base: rgba(255, 255, 255, 0.4);
+  --toast-border: rgba(255, 255, 255, 0.5);
 }
 
 /* Dark Mode */
@@ -107,6 +111,10 @@
   --shadow-sm: 1px 10px 20px -20px rgba(0, 0, 0, 0.5);
   --shadow-md: 4px 3px 7px 2px rgba(0, 0, 0, 0.6);
   --shadow-hover: 1px 10px 20px 0px rgba(0, 0, 0, 0.4);
+
+  /* Toast Glass Theme (Dark) */
+  --toast-glass-base: rgba(0, 0, 0, 0.4);
+  --toast-border: rgba(255, 255, 255, 0.2);
 }
 
 /*==================================*/
@@ -895,30 +903,70 @@ input:hover {
 
 #toast-container {
   position: fixed;
-  top: 20px;
-  bottom: 20px;
+  bottom: 100px;
   right: 20px;
-  z-index: 1000;
+  z-index: 10000;
+  /* Ensure it stays above everything */
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  pointer-events: none;
+  /* Let clicks pass through container gaps */
+}
+
+.toast-error {
+  --toast-accent: rgb(255, 68, 68);
+  --toast-bg: rgba(255, 68, 68, 0.45);
+}
+
+.toast-success {
+  --toast-accent: rgb(0, 200, 81);
+  --toast-bg: rgba(0, 200, 81, 0.45);
+}
+
+.toast-info {
+  --toast-accent: rgb(51, 181, 229);
+  --toast-bg: rgba(51, 181, 229, 0.45);
+}
+
+.toast-warning {
+  --toast-accent: rgb(255, 187, 51);
+  --toast-bg: rgba(255, 187, 51, 0.45);
+}
+
+.toast-light {
+  --toast-accent: rgb(65, 65, 65);
+  --toast-bg: rgba(255, 255, 255, 0.45);
 }
 
 .toast {
-  min-width: 250px;
-  padding: 15px 20px;
-  border-radius: 8px;
-  background-color: #333;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  animation: slideIn 0.3s ease-out forwards;
+  position: relative;
+  min-width: 300px;
+  max-width: 450px;
+  border-radius: var(--radius-md);
+  /* The "Glass" Layer: base tint + status faint overlay */
+  background: linear-gradient(135deg, var(--toast-glass-base), var(--toast-bg));
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+
+  /* The "Shine" Border */
+  border: 1px solid var(--toast-border);
+
+  /* Readability: use theme text but add a tiny shadow for pop on blur */
+  color: var(--color-text-primary);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+
+  /* The "Glow" Shadow: reflects status color lightly */
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3),
+    0 0 15px -5px var(--toast-accent);
+
+  overflow: hidden;
+  pointer-events: auto;
+  cursor: pointer;
+  /* Indicate the entire toast is clickable */
   opacity: 0;
-  transform: translateX(100%);
-  font-size: 14px;
-  font-family: 'Lucida Sans', sans-serif;
+  transform: translateX(50px);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .toast.show {
@@ -927,49 +975,64 @@ input:hover {
 }
 
 .toast.hide {
-  animation: slideOut 0.3s ease-in forwards;
+  opacity: 0;
+  transform: translateX(100px);
+  transition: opacity 0.3s ease, transform 0.3s ease-in;
 }
 
-.toast-error {
-  background-color: #ff4444;
-  border-left: 5px solid #cc0000;
+.toast-content {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.toast-success {
-  background-color: #00C851;
-  border-left: 5px solid #007E33;
+.toast-content span {
+  font-weight: 500;
 }
 
-.toast-info {
-  background-color: #33b5e5;
-  border-left: 5px solid #0099CC;
+.toast-progress-container {
+  height: 4px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  position: absolute;
+  bottom: 0;
 }
 
-@keyframes slideIn {
+.toast-progress-bar {
+  height: 100%;
+  width: 100%;
+  background: var(--toast-accent, linear-gradient(to right, #5DBDB6, #51BCE8));
+  transform-origin: right;
+  /* Shrink towards the right (Left to Right animation) */
+  animation: toastProgress var(--toast-duration) linear forwards;
+}
+
+@keyframes toastProgress {
   from {
-    transform: translateX(100%);
-    opacity: 0;
+    transform: scaleX(1);
   }
 
   to {
-    transform: translateX(0);
-    opacity: 1;
+    transform: scaleX(0);
   }
 }
 
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
+/* Status variants (subtle left accent) */
+/* Moved above .toast rule */
 
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
+.toast::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  /* Move accent to the right */
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--toast-accent);
 }
 
-/*==================================*/
 /* View Layouts */
 /*==================================*/
 

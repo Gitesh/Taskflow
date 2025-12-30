@@ -381,11 +381,24 @@ function showToast(message, type = 'info') {
 
   // Create toast element
   const toast = document.createElement('div');
+  const duration = 4000; // 4 seconds
   toast.className = `toast toast-${type}`;
+  toast.style.setProperty('--toast-duration', `${duration}ms`);
+
   toast.innerHTML = `
-    <span>${message}</span>
-    <span class="material-icons" style="font-size: 18px; cursor: pointer;" onclick="this.parentElement.remove()">close</span>
+    <div class="toast-content">
+      <span>${message}</span>
+      <span class="material-icons" style="font-size: 18px;">close</span>
+    </div>
+    <div class="toast-progress-container">
+      <div class="toast-progress-bar"></div>
+    </div>
   `;
+
+  // Allow clicking anywhere on the toast to dismiss it
+  toast.onclick = function () {
+    this.remove();
+  };
 
   // Add to container
   container.appendChild(toast);
@@ -395,7 +408,7 @@ function showToast(message, type = 'info') {
     toast.classList.add('show');
   }, 10);
 
-  // Auto remove after 3 seconds
+  // Auto remove after duration
   setTimeout(() => {
     toast.classList.remove('show');
     toast.classList.add('hide');
@@ -404,7 +417,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
       toast.remove();
     }, 300);
-  }, 1000);
+  }, duration);
 }
 
 
@@ -1310,7 +1323,11 @@ function clkExportTasksToJSON() {
 ////////
 
 function clkFilterPendingTasks() {
-  alert("stub for pending tasks");
+  showToast("INFO:Stub for pending tasks", "info");
+  showToast("WARNING: Stub for pending tasks", "warning");
+  showToast("ERROR: Stub for pending tasks", "error");
+  showToast("SUCCESS: Stub for pending tasks", "success");
+  showToast("LIGHT: Stub for pending tasks", "light");
 };
 
 
