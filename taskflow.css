@@ -166,7 +166,7 @@ body {
 body.view-kanban,
 body.view-matrix,
 body.view-dashboard {
-  padding: 0;
+  padding: 0px 24px 0px 0px;
 }
 
 /* Kanban View: Full Viewport with Even Border */

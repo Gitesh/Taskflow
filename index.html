@@ -17,19 +17,21 @@
         <div class="clsContainerAll" id="idContainerAll">
 
             <div class="clsContainerFront" id="idContainerFront">
-                <br>
                 <p>
                     <span id="idTaskflowAppTitle">Taskflow</span><span id="idTaskflowTodaySubTitle"></span>
                 </p>
 
                 <div id="idContentWrapper">
+                    <!-- Wrapper for Task Lists (Views) -->
                     <div id="idTaskListContainer">
                         <!--- drop boxes --->
                         <div id="div1" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
                             ondragleave="dragLeave(event)">
-                            <div title="Double-click to rename">
+                            <div class="sectionHeader" title="Toggle section">
+                                <button class="clsTwistie" onclick="toggleSection('div1')">▾</button>
                                 <span id="heading1" onclick="listenForDoubleClick(this);"
-                                    onblur="this.contentEditable=false;">High Impact</span><br><br>
+                                    onblur="this.contentEditable=false;">High Impact</span>
+                                <span class="sectionPreview"></span>
                             </div>
                             <div id="dropbox1"></div>
                         </div><!--end div1-->
@@ -37,10 +39,11 @@
 
                         <div id="div2" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
                             ondragleave="dragLeave(event)">
-                            <div title="Double-click to rename">
+                            <div class="sectionHeader" title="Toggle section">
+                                <button class="clsTwistie" onclick="toggleSection('div2')">▾</button>
                                 <span id="heading2" onclick="listenForDoubleClick(this);"
-                                    onblur="this.contentEditable=false;">Low
-                                    Impact</span> <br><br>
+                                    onblur="this.contentEditable=false;">Low Impact</span>
+                                <span class="sectionPreview"></span>
                             </div>
                             <div id="dropbox2"></div>
                         </div><!--end div2-->
@@ -48,10 +51,11 @@
 
                         <div id="div3" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
                             ondragleave="dragLeave(event)">
-                            <div title="Double-click to rename">
+                            <div class="sectionHeader" title="Toggle section">
+                                <button class="clsTwistie" onclick="toggleSection('div3')">▾</button>
                                 <span id="heading3" onclick="listenForDoubleClick(this);"
                                     onblur="this.contentEditable=false;">Delegate</span>
-                                <br><br>
+                                <span class="sectionPreview"></span>
                             </div>
                             <div id="dropbox3"></div>
                         </div> <!--end div3-->
@@ -59,15 +63,22 @@
 
                         <div id="div4" class="clsDropArea" ondrop="drop(event)" ondragover="allowDrop(event)"
                             ondragleave="dragLeave(event)">
-                            <div title="Double-click to rename">
+                            <div class="sectionHeader" title="Toggle section">
+                                <button class="clsTwistie" onclick="toggleSection('div4')">▾</button>
                                 <span id="heading4" onclick="listenForDoubleClick(this);"
                                     onblur="this.contentEditable=false;">Ice Box</span>
-                                <br><br>
+                                <span class="sectionPreview"></span>
                             </div>
                             <div id="dropbox4"></div>
                         </div> <!-- end div4-->
+                    </div> <!-- end idTaskListContainer -->
+
+                    <!-- Detail Pane (Initially Hidden) -->
+                    <div class="clsDetailPane" id="idDetailPane">
+                        <h3>Task Details</h3>
+                        <p>Select a task to view details.</p>
                     </div>
-                </div>
+                </div> <!-- end idContentWrapper -->
 
 
                 <!-- Input Section -->
@@ -75,7 +86,7 @@
                     <form id="form">
                         <input type="text" name="post" id="input" value="+add" placeholder="Add a new task"
                             onclick="post.select()">
-                        <div id="idErrorMessage"></div>
+                        <!--<div id="idErrorMessage"></div>-->
                         <button id="btnSubmit" type="submit">Post</button>
                     </form>
                 </div>
@@ -84,16 +95,28 @@
 
                 <div id="divIconBar">
 
+                    <!-- View Switcher -->
+                    <span class="material-icons" title="Standard View"
+                        onclick="setView('view-standard')">view_stream</span>
+                    <span class="material-icons" title="Kanban View" onclick="setView('view-kanban')">view_week</span>
+                    <span class="material-icons" title="Eisenhower Matrix"
+                        onclick="setView('view-matrix')">grid_view</span>
+                    <span class="material-icons" title="Dashboard View"
+                        onclick="setView('view-dashboard')">space_dashboard</span>
+
+                    <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
+
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
-                            <!-- <input id="uploadCSV" type="file" onclick="clkUploadTasksToLocalStorage()" /> -->
                             <input id="uploadCSV" type="file" style="position: fixed; top: -100em"
                                 onclick="clkUploadTasksToLocalStorage()" />
                         </label>
                     </span>
 
                     <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
+
+                    <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
                     <span class="material-icons" title="Toggle background animation"
                         onclick="clkToggleBackgroundAnimation()">animation</span>
@@ -108,7 +131,10 @@
 
                     <span class="material-icons" title="Toggle Light/Dark Theme"
                         onclick="toggleTheme()">brightness_4</span>
-
+                    <span class="material-icons" id="btnPreviewMode" title="Toggle task preview"
+                        onclick="togglePreviewMode()">view_sidebar</span>
+                    <span class="material-icons" id="btnCollapseAll" title="Collapse/Expand all sections"
+                        onclick="toggleCollapseAll()">expand_less</span>
 
                 </div> <!-- end div icon bar -->
 
@@ -167,7 +193,7 @@
         </div><!--end div clsContainerAll-->
 
         <!--version-->
-        <p class="clsVersionText">V2025-12-30_1119</p>
+        <p class="clsVersionText">V2025-12-27_2218</p>
     </section>
 
 
