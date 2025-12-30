@@ -612,6 +612,8 @@ body.view-dashboard {
   width: 100% !important;
   height: auto !important;
   margin: 0 auto !important;
+  overflow: visible !important;
+  /* Prevent clipping of 3D rotation during transition */
   /* Ensure it stays centered during the resize transition */
 }
 
