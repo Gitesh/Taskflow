@@ -265,64 +265,6 @@ body.view-dashboard {
 
 /* Specific adjustments if needed, but the above covers the 'grow to width of browser' requirement */
 
-@media (max-width: 768px) {
-
-  /* On mobile, use less margin */
-  .view-kanban .container,
-  .view-matrix .container,
-  .view-dashboard .container {
-    max-width: calc(100vw - 1rem);
-    height: calc(100vh - 1rem);
-    width: calc(100vw - 1rem);
-  }
-
-  /* Stack Kanban columns vertically */
-  .view-kanban #idTaskListContainer {
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .view-kanban .clsDropArea {
-    width: auto;
-    min-width: 0;
-    margin: 10px 0;
-  }
-
-  /* Stack Matrix columns vertically */
-  .view-matrix #idTaskListContainer {
-    grid-template-columns: 1fr;
-    grid-template-rows: repeat(4, auto);
-    overflow-y: auto;
-  }
-
-  /* Adjust footer layout for mobile to stack items */
-  .view-kanban #idContainerFront,
-  .view-matrix #idContainerFront,
-  .view-dashboard #idContainerFront {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto auto auto;
-    grid-template-areas:
-      "content"
-      "title"
-      "input"
-      "icons";
-  }
-
-  .view-kanban #idInputSection,
-  .view-matrix #idInputSection,
-  .view-dashboard #idInputSection {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .view-kanban #divIconBar,
-  .view-matrix #divIconBar,
-  .view-dashboard #divIconBar {
-    justify-self: center;
-    padding: 10px;
-  }
-}
 
 /* Header/Title Positioning - Reset for Standard, Defined for others */
 /* Grid definition below covers layout */
@@ -912,6 +854,7 @@ input:hover {
 
 #toast-container {
   position: fixed;
+  top: 20px;
   bottom: 20px;
   right: 20px;
   z-index: 1000;
@@ -1479,4 +1422,101 @@ input:hover {
 /* Prevent children from interfering with drag events */
 .clsTaskCardWrapper.dragging * {
   pointer-events: none;
+}
+
+/* Ensure task containers allow internal scrolling on mobile if content overflows */
+.view-kanban #idTaskListContainer,
+.view-matrix #idTaskListContainer,
+.view-dashboard #idTaskListContainer {
+  min-height: 0;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+
+  /* On mobile, use less margin and full viewport height */
+  .view-kanban .container,
+  .view-matrix .container,
+  .view-dashboard .container {
+    max-width: calc(100vw - 1rem);
+    height: calc(100vh - 1rem);
+    width: calc(100vw - 1rem);
+  }
+
+  /* Stack Kanban columns vertically */
+  .view-kanban #idTaskListContainer {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .view-kanban .clsDropArea {
+    width: auto;
+    min-width: 0;
+    margin: 10px 0;
+  }
+
+  /* Stack Matrix columns vertically */
+  .view-matrix #idTaskListContainer {
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(4, auto);
+    overflow-y: auto;
+  }
+
+  /* Adjust footer layout for mobile to stack items in the requested order: */
+  /* Title -> Content -> Input -> Icons */
+  .view-kanban #idContainerFront,
+  .view-matrix #idContainerFront,
+  .view-dashboard #idContainerFront {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-areas:
+      "title"
+      "content"
+      "input"
+      "icons";
+  }
+
+  .view-kanban #idContainerFront>p,
+  .view-matrix #idContainerFront>p,
+  .view-dashboard #idContainerFront>p {
+    grid-area: title;
+    justify-self: center;
+    align-self: start;
+    padding-left: 0;
+    padding-top: 10px;
+    padding-bottom: 5px;
+    margin: 0;
+    /* Override any desktop margins */
+  }
+
+  .view-kanban #idInputSection,
+  .view-matrix #idInputSection,
+  .view-dashboard #idInputSection {
+    grid-area: input;
+    min-width: 0;
+    width: 100%;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .view-kanban #divIconBar,
+  .view-matrix #divIconBar,
+  .view-dashboard #divIconBar {
+    grid-area: icons;
+    justify-content: center;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .view-kanban #idContentWrapper,
+  .view-matrix #idContentWrapper,
+  .view-dashboard #idContentWrapper {
+    grid-area: content;
+    overflow-y: auto;
+    /* Ensure content area itself can scroll if needed */
+  }
 }

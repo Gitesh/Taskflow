@@ -1550,118 +1550,6 @@ function clkPlayAudio(sound) {
 };
 
 
-
-
-
-
-//-------------------------------------------------------------------------
-// DOCUMENTATION
-//-------------------------------------------------------------------------
-
-// Fieldnames
-//        - Task_Title = captures the OUTCOME you want to achieve from completing a task
-//        - task_detail = captures the NEXT realistic step in the task
-//        - date_due = when you need to DELETE it by
-//        - date_captured = auto populated at date of task creation, used for analytics
-//        - task_tag = this is the PROJECT label, used to filter all tasks by project
-
-
-// Source credits
-// [audio loops] https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/
-
-
-// Variables and Constants
-
-// JS Functions
-
-
-// CSS
-
-
-
-//-------------------------------------------------------------------------
-//
-// TO DO - ironic because soon I'll be able to us the app when it's stable
-//
-//-------------------------------------------------------------------------
-
-// ----REFACTOR CODE----
-// [ ] Refactor Vars with Let{} blocks https://www.freecodecamp.org/news/var-let-and-const-whats-the-difference/
-//        - var variables can be updated and re-declared within its scope;
-//        - let variables can be updated but not re-declared;
-//        - const variables can neither be updated nor re-declared.
-
-
-// [ ] Workflow - should activate enter task detail after entering new task heading
-
-// ----DATA SCHEMA----
-// [/] Rename title to Task_Title
-// [ ] Also use capitals for all headings
-
-
-// ----CSV DOWNLOAD/UPLOAD----
-// [ ] bug in csv export / import - commas within a field are treated as delimiters
-// [ ] Fix bug when spreadsheet is uploaded with " it adds quotes to the whole field.
-// https://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript-which-contains-comma-in-data
-
-
-// ----LOCAL STORAGE TIPS----
-// Store variables using the Web Storage API, there are only 4 operations
-//
-//https://code-boxx.com/connect-database-javascript/
-//
-// 1. CREATE a data object:
-//          var user = {
-//            name : "John Doe",
-//            email : "john@doe.com",
-//            gender : "Doe"
-//            };
-//
-// 2. STORE Saves data into the local storage. Note JSON ENcode:
-//            localStorage.setItem(KEY, VALUE)
-//    example:
-//            localStorage.setItem("User", JSON.stringify(user));
-//
-// 3. RETRIEVE from local storage. Note JSON DEcode:
-//
-//          user = localStorage.getItem("User");
-//          user = JSON.parse(user);
-//          console.log(user);
-//
-//    Example:
-//           localStorage.getItem(KEY)
-//
-// 4. DELETE remove data from the local storage
-//
-//            localStorage.removeItem(KEY)
-//
-//    Destroy data object
-//            localStorage.clear()
-
-
-//----MAIN APP----
-// [ ] Add search bar to filter tasks by title/detail/tags
-// [ ] Add sort options - by due date, created date, title alphabetically
-// [ ] Add bulk actions - delete all completed tasks, export selected tasks
-// [/] Make sections collapsible to hide/show tasks within each section
-
-
-// ----TASK FRONT----
-// [/] show total number of tasks
-// [ ] separate deleted tasks and tasks marked 'completed'.
-// [ ] Toggle edit icon when in edit task mode
-// [ ] Show age of tasks on card - to help reprioritise each day.
-// [ ] Colour cards based on due date - red overdue, orange due today, yellow due this week, green later
-// [ ] Add drag and drop reordering of tasks within each section
-
-
-
-// ----TASK BACK FORM----
-// [ ] output all fields on task back
-//------------------
-// Dashboard Detail Pane Interaction
-//------------------
-
 function selectTaskForDashboard(card) {
   // Only active in dashboard view
   if (!document.body.classList.contains('view-dashboard')) return;
@@ -1736,18 +1624,31 @@ if (taskListContainer) {
     }
   });
 }
-// [ ] Add last edited date
-// [/] css card flip elements on back face clicks still active. FIXED add z plane to back
-// [ ] Add to calendar button - export to ics file for due date
-// [ ] Add subtasks field - with checkbox to mark complete
-// [ ] Add recurring task option - daily, weekly, monthly
-// [ ] Add reminder option - alert at due date/time
 
-// ----TIMELINE------
-// [ ] toggle completed tasks from the timeline to reopen (and remove from the timeline)
-// [ ] include only completed tasks in the historical timline view
-// [ ] show timeline graph of tasks completed per day/week/month
-// [ ] show average time to complete tasks
 
-// ----POMODORO----
-// [/] Activate sound icons to show which are playing
+
+
+
+//-------------------------------------------------------------------------
+// DOCUMENTATION
+//-------------------------------------------------------------------------
+
+// Fieldnames
+//        - Task_Title = captures the OUTCOME you want to achieve from completing a task
+//        - task_detail = captures the NEXT realistic step in the task
+//        - date_due = when you need to DELETE it by
+//        - date_captured = auto populated at date of task creation, used for analytics
+//        - task_tag = this is the PROJECT label, used to filter all tasks by project
+
+
+// Source credits
+// [audio loops] https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/
+
+
+// Variables and Constants
+
+// JS Functions
+
+
+// CSS
+
