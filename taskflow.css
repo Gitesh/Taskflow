@@ -58,6 +58,7 @@
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
   --color-text-light: #aaaaaa;
+  --color-output-text: rgb(18, 107, 107);
   --color-border: #DFE2E8;
 
   --color-primary: rgb(81, 29, 47);
@@ -81,12 +82,15 @@
   --color-bg-card: #1a2332;
   --color-bg-card-hover: #253447;
   --color-bg-card-back: #2a4a6e;
+
   /* card back border / hover tokens (dark) */
   --color-bg-card-back-border: #17324a;
   --color-bg-card-back-hover: #335b86;
   --color-bg-card-back-border-hover: rgb(255, 100, 150);
+
   /* colors for content on the card back */
   --color-text-on-card-back: #e4eaf0;
+
   /* input tokens (dark) */
   --color-input-bg: #223344;
   --color-input-text: #e4e4e7;
@@ -103,6 +107,7 @@
   --color-text-primary: #e4e4e7;
   --color-text-secondary: #a1a1aa;
   --color-text-light: #71717a;
+  --color-output-text: cyan;
   --color-border: #3f3f46;
 
   --color-primary: rgb(150, 80, 110);
@@ -935,7 +940,8 @@ input:hover {
 }
 
 .toast-light {
-  --toast-accent: rgb(65, 65, 65);
+  /* --toast-accent: rgb(65, 65, 65); */
+  --toast-accent: var(--color-accent);
   --toast-bg: rgba(255, 255, 255, 0.45);
 }
 
@@ -967,6 +973,36 @@ input:hover {
   opacity: 0;
   transform: translateX(50px);
   transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Pause animations on hover */
+.toast:hover,
+.toast:hover .toast-progress-bar {
+  animation-play-state: paused !important;
+}
+
+/* End-of-life flashing effect */
+.toast.is-ending {
+  animation: toastFlash 0.5s ease-in-out infinite;
+}
+
+.toast.is-ending::before {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+@keyframes toastFlash {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
 }
 
 .toast.show {
@@ -1031,6 +1067,95 @@ input:hover {
   bottom: 0;
   width: 4px;
   background: var(--toast-accent);
+}
+
+/*==================================*/
+/*   ---Help / Settings Modal---    */
+/*==================================*/
+
+#idHelpModal {
+  max-width: 900px;
+  width: 90%;
+  border: 1px solid var(--toast-border);
+  border-radius: var(--radius-lg);
+  /* background: var(--toast-glass-base); */
+  background: var(--color-bg-input-focus);
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+  -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+  color: var(--color-output-text);
+  padding: 30px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  font-family: monospace;
+  font-style: oblique;
+
+
+  opacity: 0.7;
+}
+
+#idHelpModal::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.help-column h3 {
+  margin-top: 0;
+  color: var(--color-accent);
+  border-bottom: 1px solid var(--toast-border);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-style: normal;
+}
+
+.help-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+.help-column li {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.help-column li code {
+  /* background: rgba(255, 255, 255, 0.1); */
+  /* background: var(--color-bg-input-focus); */
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-style: normal;
+  font-weight: bold;
+  font-family: monospace;
+  font-size: small;
+  /* color: var(--color-accent); */
+  color: #ffffff
+}
+
+.help-footer {
+  margin-top: 30px;
+  text-align: center;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 0.8rem;
+  opacity: 0.7;
+  border-top: 1px solid var(--toast-border);
+  padding-top: 15px;
+}
+
+@media (max-width: 768px) {
+  .help-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
 }
 
 /* View Layouts */
@@ -1579,8 +1704,7 @@ input:hover {
   .view-dashboard #idContainerFront {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto auto;
-    grid-template-areas:
-      "title"
+    grid-template-areas: "title"
       "content"
       "input"
       "icons";

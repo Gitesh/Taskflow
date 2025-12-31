@@ -73,68 +73,79 @@ window.addEventListener("keydown", function (event) {
 ////
 
 function clkSettings() {
-  var myDialog = document.createElement("dialog");
-  document.body.appendChild(myDialog)
-  myDialog.setAttribute("id", "dialog");
-  myDialog.setAttribute("onclick", "this.close(); this.remove()");
-  myDialog.setAttribute("onkeydown", "if (event.key === 'Escape' || event.key === '?') this.close(); this.remove();");
+  const existing = document.getElementById("idHelpModal");
+  if (existing) {
+    existing.close();
+    existing.remove();
+  }
 
-  myDialog.append("[CTRL + SHIFT + A] Add a new task");
-  myDialog.appendChild(document.createElement("p"));
+  const myDialog = document.createElement("dialog");
+  myDialog.id = "idHelpModal";
+  document.body.appendChild(myDialog);
 
+  // Close on Escape or click outside
+  myDialog.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      myDialog.close();
+      myDialog.remove();
+    }
+  });
 
-  myDialog.append("[CTRL + SHIFT + F] Flip to timer");
-  myDialog.appendChild(document.createElement("p"));
+  myDialog.addEventListener('click', (e) => {
+    if (e.target === myDialog) {
+      myDialog.close();
+      myDialog.remove();
+    }
+  });
 
-  myDialog.append("[CTRL + SHIFT + B] Toggle background animation");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.append("[CTRL + SHIFT + P] Filter Pending Tasks");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.append("[CTRL + SHIFT + U] Upload saved file");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.append("[CTRL + SHIFT + C] Collapse/Expand all sections");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.append("[CTRL + SHIFT + V] Toggle task preview");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.append("Double click section headers to rename them.");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.appendChild(document.createElement("hr"));
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.append("COMMAND PALETTE - Press / to activate:");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/flip - Toggle timer view");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/bg or /background - Toggle background animation");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/pending - Filter pending tasks");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/export - Export tasks");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/collapse or /collapse-all - Collapse all sections");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/expand or /expand-all - Expand all sections");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/preview or /toggle-preview - Toggle task preview");
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("/help or /settings - Show this dialog");
-  myDialog.appendChild(document.createElement("p"));
-
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.appendChild(document.createElement("hr"));
-  myDialog.appendChild(document.createElement("p"));
-  myDialog.append("Press any key to close");
-
-  myDialog.style.cssText = "padding: 20px; font-family: sans-serif; background: black; color: cyan; opacity: 0.7; text-align:left";
+  myDialog.innerHTML = `
+    <div class="help-grid">
+      <div class="help-column">
+        <h3>Keyboard Shortcuts</h3>
+        <ul>
+          <li><code>CTRL+SHIFT+A</code> Add new task</li>
+          <li><code>CTRL+SHIFT+F</code> Flip to timer</li>
+          <li><code>CTRL+SHIFT+B</code> Toggle BG animation</li>
+          <li><code>CTRL+SHIFT+P</code> Filter Pending</li>
+          <li><code>CTRL+SHIFT+U</code> Upload file</li>
+          <li><code>CTRL+SHIFT+C</code> Collapse/Expand all</li>
+          <li><code>CTRL+SHIFT+V</code> Toggle task preview</li>
+        </ul>
+      </div>
+      
+      <div class="help-column">
+        <h3>Command List</h3>
+        <ul>
+          <li><code>/flip</code> Toggle timer view</li>
+          <li><code>/bg</code> or <code>/background</code> Toggle BG</li>
+          <li><code>/pending</code> Filter pending tasks</li>
+          <li><code>/export</code> Open export modal</li>
+          <li><code>/collapse</code> Collapse sections</li>
+          <li><code>/expand</code> Expand sections</li>
+          <li><code>/preview</code> Toggle task preview</li>
+          <li><code>/dark</code> or <code>/light</code> Change theme</li>
+          <li><code>/help</code> or <code>/settings</code> This dialog</li>
+        </ul>
+      </div>
+      
+      <div class="help-column">
+        <h3>General Tips</h3>
+        <ul>
+          <li><strong>Rename Sections</strong>: Double click a header to rename it.</li>
+          <li><strong>Drag & Drop</strong>: Move tasks between sections freely.</li>
+          <li><strong>Task Preview</strong>: Hover or use shortcut to see details.</li>
+          <li><strong>Pomodoro</strong>: Flip the card to access the focus timer.</li>
+          <li><strong>Audio Loops</strong>: Try the soundscapes on the timer side.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="help-footer">
+      Press ESC or click outside to close
+    </div>
+  `;
 
   myDialog.showModal();
-};
+}
 function clkShowExportModal() {
   var myDialog = document.createElement("dialog");
   document.body.appendChild(myDialog);
@@ -246,6 +257,7 @@ function processCommand(command) {
       break;
 
     case '/settings':
+    case '/?':
     case '/help':
       clkSettings();
       break;
@@ -281,7 +293,7 @@ function processCommand(command) {
 
 
     default:
-      showToast(`Unknown command: ${cmd}. Try /help for available commands.`, "error");
+      showToast(`Unknown command: <br>/test/+<br> ${cmd}. <br><br> Try /help for available commands.`, "error");
       break;
   }
 
@@ -408,16 +420,46 @@ function showToast(message, type = 'info') {
     toast.classList.add('show');
   }, 10);
 
-  // Auto remove after duration
-  setTimeout(() => {
-    toast.classList.remove('show');
-    toast.classList.add('hide');
+  // Auto remove after duration with pause/resume support
+  let remainingTime = duration;
+  let startTime;
+  let timeoutId;
+  let flashTimeoutId;
+  let isEnding = false;
 
-    // Remove from DOM after animation
-    setTimeout(() => {
-      toast.remove();
-    }, 300);
-  }, duration);
+  function startTimer() {
+    startTime = Date.now();
+
+    // Final removal timeout
+    timeoutId = setTimeout(() => {
+      toast.classList.remove('show');
+      toast.classList.add('hide');
+      setTimeout(() => toast.remove(), 300);
+    }, remainingTime);
+
+    // Flashing threshold (at 50% of total duration)
+    // If we haven't reached the 50% mark yet, schedule it
+    const finishThreshold = duration * 0.5;
+    if (!isEnding && remainingTime > finishThreshold) {
+      flashTimeoutId = setTimeout(() => {
+        isEnding = true;
+        toast.classList.add('is-ending');
+      }, remainingTime - finishThreshold);
+    }
+  }
+
+  function pauseTimer() {
+    clearTimeout(timeoutId);
+    clearTimeout(flashTimeoutId);
+    remainingTime -= Date.now() - startTime;
+  }
+
+  // Handle Pause on Hover
+  toast.onmouseenter = pauseTimer;
+  toast.onmouseleave = startTimer;
+
+  // Initial Start
+  startTimer();
 }
 
 
