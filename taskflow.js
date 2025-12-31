@@ -83,7 +83,7 @@ function clkSettings() {
   myDialog.id = "idHelpModal";
   document.body.appendChild(myDialog);
 
-  // Close on Escape or click outside
+  // Close on Escape or clicking anywhere
   myDialog.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       myDialog.close();
@@ -91,11 +91,9 @@ function clkSettings() {
     }
   });
 
-  myDialog.addEventListener('click', (e) => {
-    if (e.target === myDialog) {
-      myDialog.close();
-      myDialog.remove();
-    }
+  myDialog.addEventListener('click', () => {
+    myDialog.close();
+    myDialog.remove();
   });
 
   myDialog.innerHTML = `
@@ -124,7 +122,7 @@ function clkSettings() {
           <li><code>/expand</code> Expand sections</li>
           <li><code>/preview</code> Toggle task preview</li>
           <li><code>/dark</code> or <code>/light</code> Change theme</li>
-          <li><code>/help</code> or <code>/settings</code> This dialog</li>
+          <li><code>/help</code> or <code>/settings</code> or <code>/?</code> This dialog</li>
         </ul>
       </div>
       
@@ -140,7 +138,8 @@ function clkSettings() {
       </div>
     </div>
     <div class="help-footer">
-      Press ESC or click outside to close
+      <button class="help-btn-close">Close</button>
+      <p>Press the space-bar or click to return</p>
     </div>
   `;
 
@@ -1711,3 +1710,37 @@ if (taskListContainer) {
 
 // CSS
 
+
+//-------------------------------------------------------------------------
+// TITLE TILT AND GLINT ANIMATION
+//-------------------------------------------------------------------------
+
+/**
+ * Add click event listeners to title elements for tilt and glint animation
+ */
+function addTitleAnimation() {
+  const titleElements = [
+    document.getElementById('idTaskflowAppTitle'),
+    document.getElementById('idTaskflowTodaySubTitle')
+  ];
+
+  titleElements.forEach(element => {
+    if (!element) return;
+
+    element.addEventListener('click', function () {
+      // Add animation class
+      this.classList.add('tilt-glint-active');
+
+      // Remove class after animation completes
+      const handleAnimationEnd = () => {
+        this.classList.remove('tilt-glint-active');
+        this.removeEventListener('animationend', handleAnimationEnd);
+      };
+
+      this.addEventListener('animationend', handleAnimationEnd);
+    });
+  });
+}
+
+// Initialize title animation when page loads
+addTitleAnimation();

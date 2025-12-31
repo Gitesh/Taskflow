@@ -151,7 +151,7 @@ body {
 }
 
 .container {
-  width: 100%;
+  width: 90%;
   height: auto;
   min-height: auto;
   max-width: 500px;
@@ -171,7 +171,7 @@ body {
 /* Dashboard Expanded Style */
 .view-dashboard .container {
   max-width: none;
-  width: calc(100vw - 4rem);
+  width: calc(90vw - 4rem);
   height: calc(100vh - 4rem);
   margin: 0;
   overflow: hidden;
@@ -189,7 +189,7 @@ body.view-dashboard {
 /* Kanban View: Full Viewport with Even Border */
 .view-kanban .container {
   max-width: none;
-  width: 96vw;
+  width: 90vw;
   /* Explicit viewport width with gap */
   height: 96vh;
   margin: 0;
