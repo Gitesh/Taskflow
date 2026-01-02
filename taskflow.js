@@ -29,6 +29,7 @@ window.addEventListener("keydown", function (event) {
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
+  if (event.ctrlKey && event.key === 'S') clkToggleSectionContainer();
 
   // Collapse/Expand All shortcut: Ctrl+Shift+C
   if (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'c')) {
@@ -803,14 +804,19 @@ function clkFlipTaskCardToTask(e) {
 
 
 function clkFlipToCountDownTimer() {
+  const containerAll = document.getElementById("idContainerAll");
+  containerAll.classList.toggle("is-flipped");
+
+  // Scroll to top smoothly after a tiny delay to ensure the flip has started
+  setTimeout(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, 100); // 100ms delay is enough — adjust to 0 if you want instant
 
   console.log("TASKFLOW: clkFlipToCountDownTimer");
-
-  document.getElementById("idContainerAll").classList.toggle("is-flipped");
-  document.getElementById("container").classList.toggle("is-flipped");
-
 }
-
 
 
 
@@ -1248,7 +1254,7 @@ function clkToggleBackgroundAnimation() {
   ////
 
   var setJSAnimatedBackgroundOnOff = document.getElementsByTagName("Canvas")[0];
-
+  
   if (setJSAnimatedBackgroundOnOff.style.display === "none") {
 
     setJSAnimatedBackgroundOnOff.style.display = "block";  // make visible JS background
@@ -1260,12 +1266,28 @@ function clkToggleBackgroundAnimation() {
     s.href = 'animated_background/shapes.css';
     document.getElementsByTagName('head')[0].appendChild(s);
 
+
   } else {
     setJSAnimatedBackgroundOnOff.style.display = "none";  // remove javascript background
 
     document.querySelector('link[href$="shapes.css"]').remove() // remove css background
-
+    // container.classList.add('background-enabled');
+  
   }
+
+};
+
+//////
+// hide container and leave sections
+/////
+function clkToggleSectionContainer() {
+  var container = document.querySelector('.clsContainerAll');
+
+  if (container.classList.contains('background-enabled')) {
+        container.classList.remove('background-enabled');
+    } else {
+          container.classList.add('background-enabled');
+  };
 
 };
 

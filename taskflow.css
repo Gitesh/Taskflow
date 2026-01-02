@@ -126,7 +126,7 @@
 /* Ensure body doesn't scroll horizontally when container expands */
 body {
   overflow-x: hidden;
-  width: 100vw;
+  /* width: 100vw; */
 }
 
 /* Base Styles */
@@ -212,8 +212,6 @@ body.view-dashboard {
   flex: 1;
   min-height: 0;
 }
-
-/* (Removed duplicate rule for .view-kanban .clsDropArea - definition exists below around line 980) */
 
 
 /* Matrix View: Constraint height */
@@ -614,29 +612,57 @@ body.view-dashboard {
 
 /* FLIP whole container */
 
-.clsContainerAll.is-flipped {
+/* .clsContainerAll.is-flipped { */
   /* Only the inner container should perform the 3D rotation */
+  /* transform: translateX(-100%) rotateY(-180deg); */
+  /* background: none; */
+ 
+/* } */
+
+
+
+/* Force narrow, centered timer when flipped — regardless of current view */
+.clsContainerAll.is-flipped {
+  max-width: 500px !important;
+  width: 90% !important;
+  margin: 0 auto !important;
   transform: translateX(-100%) rotateY(-180deg);
+  transition: max-width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+              width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+              margin 0.6s ease;
+  background: none;
 }
 
+
+
+
 /* Force standard dimensions when flipped from any view */
-.container.is-flipped {
-  max-width: 500px !important;
-  width: 100% !important;
+.container .is-flipped {
+  /* max-width: 500px !important; */
+  /* width: 100% !important; */
   height: auto !important;
   margin: 0 auto !important;
   overflow: visible !important;
+  
   /* Prevent clipping of 3D rotation during transition */
   /* Ensure it stays centered during the resize transition */
+  
 }
 
 .clsContainerAll.is-flipped .clsContainerFront {
   visibility: hidden;
   position: absolute;
+ 
 }
 
 .clsContainerAll.is-flipped .clsContainerBack {
   position: relative;
+  /* box-shadow: none; */
+  /* display: flex; */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 .clsContainerAll {
@@ -666,7 +692,6 @@ body.view-dashboard {
   width: auto;
   height: auto;
   transform: rotateY(180deg);
-  /* Removed translateZ to avoid mirroring issues */
 }
 
 
@@ -825,7 +850,7 @@ i.material-icons {
   align-content: center;
   /* position: absolute; */
   /* left: 50%; */
-  transform: translateX(-50%);
+  /* transform: translateX(-50%); */
   gap: 15px;
   justify-content: center;
   font-size: xx-large;
@@ -833,6 +858,25 @@ i.material-icons {
   margin-right: auto;
 
 }
+
+
+
+.clsContainerAll.background-enabled {
+  /* background-image: url('images/Taskflow App Store Image.png'); Example background image - adjust path as needed */
+  /* animation: backgroundAnimation 10s infinite; Example animation - customize as desired */
+  background: none;
+}
+
+/* @keyframes backgroundAnimation { */
+  /* Define your animation here */
+  /* 0% { background-position: 0 0; } */
+  /* 100% { background-position: 100% 0; } */
+/* } */
+
+
+
+
+
 
 
 .clsPomodoroContainer {
@@ -847,6 +891,7 @@ i.material-icons {
 .clsContainerAll.is-flipped .clsPomodoroContainer {
   height: 599px;
   overflow: hidden;
+  
 }
 
 /*----------------*/
@@ -1393,6 +1438,11 @@ input:hover {
 }
 
 
+
+
+
+
+
 /*==================================*/
 /* Task Card Back Styling (2x2 Grid) */
 /*==================================*/
@@ -1765,4 +1815,23 @@ input:hover {
     max-height: 300px;
     overflow-y: auto;
   }
+}
+
+
+
+
+/* Default: no animated background */
+.clsContainAll canvas {
+  display: none;
+}
+
+/* When animation is ON */
+.clsContainAll.bg-animated canvas {
+  display: block;
+}
+
+/* Optional: CSS background animation */
+.clsContainAll.bg-animated {
+  background: url("animated_background/shapes.css");
+  /* or animation classes */
 }
