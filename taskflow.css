@@ -623,7 +623,7 @@ body.view-dashboard {
 
 /* Force narrow, centered timer when flipped — regardless of current view */
 .clsContainerAll.is-flipped {
-  max-width: 500px !important;
+    max-width: 500px !important;
   width: 90% !important;
   margin: 0 auto !important;
   transform: translateX(-100%) rotateY(-180deg);
@@ -960,7 +960,7 @@ input:hover {
 #toast-container {
   position: fixed;
   bottom: 100px;
-  right: 20px;
+  /* right: 20px; */
   z-index: 10000;
   /* Ensure it stays above everything */
   display: flex;
@@ -1003,8 +1003,8 @@ input:hover {
   border-radius: var(--radius-md);
   /* The "Glass" Layer: base tint + status faint overlay */
   background: linear-gradient(135deg, var(--toast-glass-base), var(--toast-bg));
-  backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
   -webkit-backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
+  backdrop-filter: blur(40px) saturate(200%) brightness(1.1);
 
   /* The "Shine" Border */
   border: 1px solid var(--toast-border);
@@ -1024,6 +1024,7 @@ input:hover {
   opacity: 0;
   transform: translateX(50px);
   transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  /* transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.04, 0.8, 0.2, 0.97); */
 }
 
 /* Pause animations on hover */
