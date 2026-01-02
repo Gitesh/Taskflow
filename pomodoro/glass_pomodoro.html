@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Taskflow Timer • Pomodoro</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"/>
+  <!-- VanillaTilt for tilt/glare effect -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: #0f0f1a;
+      color: #e0e0ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+    }
+
+    /* Background orbs for depth */
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      z-index: -2;
+    }
+    body::before {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #8b5cf6, #3b82f6);
+      top: -150px;
+      left: -100px;
+    }
+    body::after {
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, #ec4899, #a78bfa);
+      bottom: -150px;
+      right: -100px;
+    }
+
+    .container {
+      width: 380px;
+      padding: 2.5rem 2rem;
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Tilt/glare effect data attributes handled by VanillaTilt */
+    .container[data-tilt] {
+      transition: transform 0.4s ease-out;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 500;
+      margin-bottom: 1.8rem;
+      color: #e0e0ff;
+      letter-spacing: 1px;
+    }
+
+    /* Breathing animation wrapper */
+    .timer-wrapper {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .breathing-circle {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(139,92,246,0.4), rgba(59,130,246,0.2) 70%, transparent 90%);
+      opacity: 0.6;
+      animation: breathe 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes breathe {
+      0%, 100%   { transform: scale(0.92); opacity: 0.5; }
+      25%        { transform: scale(1.08); opacity: 0.85; }
+      50%        { transform: scale(1.12); opacity: 0.95; }
+      75%        { transform: scale(1.05); opacity: 0.75; }
+    }
+
+    #timer {
+      position: relative;
+      font-size: 4.8rem;
+      font-weight: 300;
+      letter-spacing: -2px;
+      z-index: 2;
+      color: #f0f0ff;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .status {
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      opacity: 0.8;
+      min-height: 1.5em;
+    }
+
+    .settings {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin: 1.5rem 0 2rem;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    label {
+      opacity: 0.9;
+    }
+
+    input[type="number"] {
+      width: 80px;
+      padding: 0.5rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      color: #e0e0ff;
+      font-size: 1.1rem;
+      text-align: center;
+      appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      appearance: none;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    button {
+      padding: 0.8rem 1.8rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: rgba(255,255,255,0.12);
+      color: white;
+      backdrop-filter: blur(4px);
+    }
+
+    button:hover {
+      background: rgba(255,255,255,0.22);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    #start {
+      background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    }
+
+    #reset {
+      background: rgba(255,255,255,0.08);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" data-tilt data-tilt-glare data-tilt-max-glare="0.4" data-tilt-scale="1.05" data-tilt-perspective="800">
+    <h1>Taskflow Timer</h1>
+
+    <div class="timer-wrapper">
+      <div class="breathing-circle"></div>
+      <div id="timer">25:00</div>
+    </div>
+
+    <div class="status" id="status">Work session</div>
+
+    <div class="settings">
+      <div class="setting-row">
+        <label for="session-length">Work (min)</label>
+        <input type="number" id="session-length" value="25" min="1" max="60">
+      </div>
+      <div class="setting-row">
+        <label for="break-length">Break (min)</label>
+        <input type="number" id="break-length" value="5" min="1" max="30">
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="reset">Reset</button>
+    </div>
+  </div>
+
+  <script>
+    let timerInterval = null;
+    let timeLeft = 25 * 60;
+    let isRunning = false;
+    let isBreak = false;
+
+    const timerDisplay = document.getElementById('timer');
+    const statusDisplay = document.getElementById('status');
+    const startBtn = document.getElementById('start');
+    const resetBtn = document.getElementById('reset');
+    const sessionInput = document.getElementById('session-length');
+    const breakInput = document.getElementById('break-length');
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    function updateDisplay() {
+      timerDisplay.textContent = formatTime(timeLeft);
+      statusDisplay.textContent = isBreak ? "Break time — breathe" : "Focus time";
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      startBtn.textContent = "Running...";
+      startBtn.disabled = true;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.textContent = "Start";
+          startBtn.disabled = false;
+
+          // Switch mode
+          if (isBreak) {
+            isBreak = false;
+            timeLeft = sessionInput.value * 60;
+            alert("Back to work!");
+          } else {
+            isBreak = true;
+            timeLeft = breakInput.value * 60;
+            alert("Time for a break!");
+          }
+          updateDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      isBreak = false;
+      timeLeft = sessionInput.value * 60;
+      startBtn.textContent = "Start";
+      startBtn.disabled = false;
+      updateDisplay();
+    }
+
+    // Sync inputs when not running
+    function updateFromInputs() {
+      if (!isRunning) {
+        timeLeft = isBreak ? breakInput.value * 60 : sessionInput.value * 60;
+        updateDisplay();
+      }
+    }
+
+    sessionInput.addEventListener('change', updateFromInputs);
+    breakInput.addEventListener('change', updateFromInputs);
+
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    // Initial display
+    updateDisplay();
+
+    // Initialize tilt effect
+    VanillaTilt.init(document.querySelectorAll("[data-tilt]"));
+  </script>
+</body>
+</html>

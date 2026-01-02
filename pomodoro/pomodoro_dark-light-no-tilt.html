@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Taskflow Timer • Pomodoro</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"/>
+  <style>
+    :root {
+      --base-hue: 57; /* Yellow base for #ffe635 ≈ hsl(57, 100%, 60%) */
+      --bg-gradient-light: linear-gradient(135deg, hsl(var(--base-hue), 80%, 65%), hsl(calc(var(--base-hue) + 30), 80%, 70%), hsl(calc(var(--base-hue) - 30), 90%, 75%));
+      --container-bg-light: rgba(255, 255, 255, 0.25);
+      --text-color-light: #333;
+      --timer-color-light: #111;
+      --status-color-light: #444;
+      --track-bg-light: rgba(0,0,0,0.1);
+      --track-fill-light: hsl(var(--base-hue), 90%, 60%);
+      --thumb-shadow-light: 0 4px 12px rgba(255, 230, 53, 0.5);
+      --button-bg-light: rgba(255,255,255,0.4);
+      --start-gradient-light: linear-gradient(90deg, hsl(calc(var(--base-hue) + 20), 90%, 65%), hsl(calc(var(--base-hue) - 20), 90%, 65%));
+      --breathing-bg-light: radial-gradient(circle at 30% 30%, hsla(calc(var(--base-hue) + 20), 90%, 70%, 0.4), hsla(calc(var(--base-hue) - 20), 90%, 60%, 0.2) 70%, transparent 90%);
+    }
+
+    [data-theme="dark"] {
+      --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      --container-bg: rgba(20, 20, 40, 0.4);
+      --text-color: #e0e0ff;
+      --timer-color: #f0f0ff;
+      --status-color: #d0d0ff;
+      --track-bg: rgba(255,255,255,0.1);
+      --track-fill: hsl(var(--base-hue), 70%, 60%);
+      --thumb-shadow: 0 4px 16px hsla(var(--base-hue), 80%, 60%, 0.6);
+      --button-bg: rgba(255,255,255,0.15);
+      --start-gradient: linear-gradient(90deg, hsl(calc(var(--base-hue) + 40), 70%, 55%), hsl(calc(var(--base-hue) - 40), 70%, 55%));
+      --breathing-bg: radial-gradient(circle at 30% 30%, hsla(calc(var(--base-hue) + 40), 70%, 60%, 0.4), hsla(calc(var(--base-hue) - 40), 70%, 50%, 0.2) 70%, transparent 90%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: var(--bg-gradient-light);
+      color: var(--text-color-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.8s ease;
+    }
+
+    [data-theme="dark"] body {
+      background: var(--bg-gradient);
+      color: var(--text-color);
+    }
+
+    /* Random glassmorphism orbs - seeded variation */
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.35;
+      z-index: -1;
+    }
+    body::before {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, hsla(327, 80%, 60%, 0.4), transparent);
+      top: -100px;
+      left: -150px;
+    }
+    body::after {
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, hsla(57, 90%, 65%, 0.3), transparent);
+      bottom: -200px;
+      right: -100px;
+    }
+
+    .container {
+      height: 70vh;
+      width: 100%;
+      max-width: 420px;
+      padding: 2rem 1.5rem;
+      border-radius: 20px;
+      background: var(--container-bg-light);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    [data-theme="dark"] .container {
+      background: var(--container-bg);
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 500;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.6rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.2);
+    }
+
+    [data-theme="dark"] .theme-toggle {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .timer-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      margin: 0 auto;
+      flex-shrink: 0;
+    }
+
+    .breathing-circle {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: var(--breathing-bg-light);
+      opacity: 0.6;
+      animation: breathe 7s ease-in-out infinite;
+    }
+
+    [data-theme="dark"] .breathing-circle {
+      background: var(--breathing-bg);
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(0.92); opacity: 0.5; }
+      50% { transform: scale(1.12); opacity: 0.9; }
+    }
+
+    #timer {
+      position: relative;
+      font-size: 4.5rem;
+      font-weight: 300;
+      letter-spacing: -2px;
+      z-index: 2;
+      color: var(--timer-color-light);
+      text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    [data-theme="dark"] #timer {
+      color: var(--timer-color);
+    }
+
+    .status {
+      font-size: 1.1rem;
+      text-align: center;
+      margin-top: 0.5rem;
+      opacity: 0.9;
+      color: var(--status-color-light);
+    }
+
+    [data-theme="dark"] .status {
+      color: var(--status-color);
+    }
+
+    .settings {
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+      margin: 1rem 0;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    label {
+      font-weight: 500;
+      font-size: 1rem;
+    }
+
+    .slider-container {
+      position: relative;
+      width: 180px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 8px;
+      background: var(--track-bg-light);
+      outline: none;
+      cursor: pointer;
+    }
+
+    [data-theme="dark"] input[type="range"] {
+      background: var(--track-bg);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: var(--thumb-shadow-light);
+      border: 2px solid rgba(255,255,255,0.9);
+      transition: transform 0.2s;
+    }
+
+    [data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
+      box-shadow: var(--thumb-shadow);
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    input[type="range"]::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: 10px;
+      border-radius: 8px;
+      background: var(--track-fill-light);
+      width: var(--value-percent, 0%);
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
+      transition: width 0.2s ease;
+    }
+
+    [data-theme="dark"] input[type="range"]::before {
+      background: var(--track-fill);
+    }
+
+    .value-display {
+      position: absolute;
+      right: -60px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 50px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.2rem;
+      background: rgba(255,255,255,0.3);
+      padding: 8px 12px;
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+    }
+
+    [data-theme="dark"] .value-display {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: auto;
+      padding-top: 1rem;
+    }
+
+    button {
+      padding: 0.9rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      background: var(--button-bg-light);
+      color: var(--text-color-light);
+      backdrop-filter: blur(4px);
+      transition: all 0.3s;
+    }
+
+    [data-theme="dark"] button {
+      background: var(--button-bg);
+      color: var(--text-color);
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+    }
+
+    #start {
+      background: var(--start-gradient-light);
+      color: white;
+    }
+
+    [data-theme="dark"] #start {
+      background: var(--start-gradient);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Taskflow Timer</h1>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark/light mode">
+        ☀️
+      </button>
+    </header>
+
+    <div class="timer-wrapper">
+      <div class="breathing-circle"></div>
+      <div id="timer">25:00</div>
+    </div>
+
+    <div class="status" id="status">Focus time</div>
+
+    <div class="settings">
+      <div class="setting-row">
+        <label>Work (min)</label>
+        <div class="slider-container">
+          <input type="range" id="session-slider" min="1" max="60" value="25">
+          <div class="value-display" id="session-value">25</div>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label>Break (min)</label>
+        <div class="slider-container">
+          <input type="range" id="break-slider" min="1" max="30" value="5">
+          <div class="value-display" id="break-value">5</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="reset">Reset</button>
+    </div>
+  </div>
+
+  <audio id="end-sound" src="https://cdn.freesound.org/previews/420/42095_512385-lq.mp3"></audio>
+
+  <script>
+    const endSound = document.getElementById('end-sound');
+    function playEndSound() {
+      endSound.currentTime = 0;
+      endSound.play().catch(() => {});
+    }
+
+    let timerInterval = null;
+    let timeLeft = 25 * 60;
+    let isRunning = false;
+    let isBreak = false;
+
+    const timerDisplay = document.getElementById('timer');
+    const statusDisplay = document.getElementById('status');
+    const startBtn = document.getElementById('start');
+    const resetBtn = document.getElementById('reset');
+    const sessionSlider = document.getElementById('session-slider');
+    const breakSlider = document.getElementById('break-slider');
+    const sessionValue = document.getElementById('session-value');
+    const breakValue = document.getElementById('break-value');
+    const themeToggle = document.getElementById('theme-toggle');
+    const html = document.documentElement;
+
+    // Theme handling
+    if (localStorage.getItem('theme') === 'dark' || 
+        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      html.setAttribute('data-theme', 'dark');
+      themeToggle.textContent = '🌙';
+    } else {
+      themeToggle.textContent = '☀️';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      if (html.getAttribute('data-theme') === 'dark') {
+        html.removeAttribute('data-theme');
+        themeToggle.textContent = '☀️';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        themeToggle.textContent = '🌙';
+        localStorage.setItem('theme', 'dark');
+      }
+    });
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    function updateDisplay() {
+      timerDisplay.textContent = formatTime(timeLeft);
+      statusDisplay.textContent = isBreak ? "Break time — breathe & relax" : "Focus time";
+      document.title = `${formatTime(timeLeft)} - Taskflow Timer`;
+    }
+
+    function updateSliderVisual(slider, valueDisplay) {
+      const value = slider.value;
+      const min = slider.min;
+      const max = slider.max;
+      const percent = (value - min) / (max - min) * 100;
+      valueDisplay.textContent = value;
+      slider.style.setProperty('--value-percent', `${percent}%`);
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      startBtn.textContent = "Running...";
+      startBtn.disabled = true;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.textContent = "Start";
+          startBtn.disabled = false;
+          playEndSound();
+          isBreak = !isBreak;
+          timeLeft = isBreak ? parseInt(breakSlider.value) * 60 : parseInt(sessionSlider.value) * 60;
+          updateDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      isBreak = false;
+      timeLeft = parseInt(sessionSlider.value) * 60;
+      startBtn.textContent = "Start";
+      startBtn.disabled = false;
+      updateDisplay();
+    }
+
+    function updateFromSliders() {
+      if (!isRunning) {
+        timeLeft = isBreak ? parseInt(breakSlider.value) * 60 : parseInt(sessionSlider.value) * 60;
+        updateDisplay();
+      }
+    }
+
+    sessionSlider.addEventListener('input', () => {
+      updateSliderVisual(sessionSlider, sessionValue);
+      updateFromSliders();
+    });
+
+    breakSlider.addEventListener('input', () => {
+      updateSliderVisual(breakSlider, breakValue);
+      updateFromSliders();
+    });
+
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    // Initial
+    updateSliderVisual(sessionSlider, sessionValue);
+    updateSliderVisual(breakSlider, breakValue);
+    updateDisplay();
+  </script>
+</body>
+</html>

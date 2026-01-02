@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Taskflow Timer • Pomodoro</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.0/vanilla-tilt.min.js"></script>
+
+  <style>
+    :root {
+      /* Light mode - Sunrise theme */
+      --bg-gradient: linear-gradient(135deg, #ff9a56 0%, #ff6b6b 50%, #feca57 100%);
+      --orb1: radial-gradient(circle, #ff9f43, #ff6348);
+      --orb2: radial-gradient(circle, #ff7b9c, #ffb4b4);
+      --container-bg: linear-gradient(145deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+      --text-color: #3d2c1e;
+      --timer-color: #2d1b0f;
+      --status-color: #5c3a21;
+      --input-bg: rgba(255,255,255,0.2);
+      --input-border: rgba(255,255,255,0.3);
+      --button-bg: rgba(255,255,255,0.25);
+      --start-gradient: linear-gradient(90deg, #ff7b9c, #ff9f43);
+      --breathing-bg: radial-gradient(circle at 30% 30%, rgba(255,140,0,0.4), rgba(255,100,100,0.2) 70%, transparent 90%);
+      --track-fill: linear-gradient(90deg, #ff9f43, #ff6b6b);
+      --thumb-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        /* Dark mode - Sunset theme */
+        --bg-gradient: linear-gradient(135deg, #240046 0%, #5b2c6f 50%, #9d4edd 100%);
+        --orb1: radial-gradient(circle, #7b2cbf, #3a0ca3);
+        --orb2: radial-gradient(circle, #c77dff, #e0aaff);
+        --container-bg: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+        --text-color: #e0d4ff;
+        --timer-color: #f0e6ff;
+        --status-color: #d4c4ff;
+        --input-bg: rgba(255,255,255,0.06);
+        --input-border: rgba(255,255,255,0.15);
+        --button-bg: rgba(255,255,255,0.12);
+        --start-gradient: linear-gradient(90deg, #9d4edd, #c77dff);
+        --breathing-bg: radial-gradient(circle at 30% 30%, rgba(157,78,221,0.4), rgba(199,125,255,0.2) 70%, transparent 90%);
+        --track-fill: linear-gradient(90deg, #c77dff, #9d4edd);
+        --thumb-shadow: 0 4px 16px rgba(157, 78, 221, 0.5);
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: var(--bg-gradient);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      transition: background 1s ease;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.3;
+      z-index: -1;
+    }
+    body::before {
+      width: 450px;
+      height: 450px;
+      background: var(--orb1);
+      top: -150px;
+      left: -100px;
+    }
+    body::after {
+      width: 500px;
+      height: 500px;
+      background: var(--orb2);
+      bottom: -150px;
+      right: -100px;
+    }
+
+    .container {
+      width: 380px;
+      padding: 2.5rem 2rem;
+      border-radius: 28px;
+      background: var(--container-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      font-weight: 500;
+      margin-bottom: 1.8rem;
+      letter-spacing: 1px;
+    }
+
+    .timer-wrapper {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .breathing-circle {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: var(--breathing-bg);
+      opacity: 0.6;
+      animation: breathe 7s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(0.92); opacity: 0.5; }
+      25%      { transform: scale(1.08); opacity: 0.85; }
+      50%      { transform: scale(1.12); opacity: 0.95; }
+      75%      { transform: scale(1.05); opacity: 0.75; }
+    }
+
+    #timer {
+      position: relative;
+      font-size: 4.8rem;
+      font-weight: 300;
+      letter-spacing: -2px;
+      z-index: 2;
+      color: var(--timer-color);
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .status {
+      font-size: 1.1rem;
+      margin-top: 0.5rem;
+      opacity: 0.9;
+      min-height: 1.5em;
+      color: var(--status-color);
+    }
+
+    .settings {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+      margin: 1.8rem 0 2rem;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    label {
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    /* Enhanced Slider Styles */
+    .slider-container {
+      width: 180px;
+      position: relative;
+      height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+      outline: none;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    /* Track fill */
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: var(--thumb-shadow);
+      border: 3px solid rgba(255,255,255,0.8);
+      transition: all 0.2s ease;
+    }
+
+    input[type="range"]:hover::-webkit-slider-thumb,
+    input[type="range"]:focus::-webkit-slider-thumb {
+      transform: scale(1.15);
+      box-shadow: 0 6px 20px rgba(255,107,107,0.6); /* matches theme */
+    }
+
+    /* Firefox */
+    input[type="range"]::-moz-range-thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      box-shadow: var(--thumb-shadow);
+      border: 3px solid rgba(255,255,255,0.8);
+      transition: all 0.2s ease;
+    }
+
+    input[type="range"]:hover::-moz-range-thumb {
+      transform: scale(1.15);
+    }
+
+    /* Filled progress */
+    input[type="range"]::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: 10px;
+      border-radius: 8px;
+      background: var(--track-fill);
+      width: var(--value-percent, 0%);
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1;
+      transition: width 0.2s ease;
+    }
+
+    .value-display {
+      position: absolute;
+      right: -56px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 50px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.1rem;
+      background: rgba(255,255,255,0.2);
+      padding: 6px 10px;
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    button {
+      padding: 0.8rem 1.8rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      background: var(--button-bg);
+      color: var(--text-color);
+      backdrop-filter: blur(4px);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #start {
+      background: var(--start-gradient);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" data-tilt data-tilt-glare data-tilt-max-glare="0.4" data-tilt-scale="1.05" data-tilt-perspective="800">
+    <h1>Taskflow Timer</h1>
+
+    <div class="timer-wrapper">
+      <div class="breathing-circle"></div>
+      <div id="timer">25:00</div>
+    </div>
+
+    <div class="status" id="status">Focus time</div>
+
+    <div class="settings">
+      <div class="setting-row">
+        <label>Work (min)</label>
+        <div class="slider-container">
+          <input type="range" id="session-slider" min="1" max="60" value="25">
+          <div class="value-display" id="session-value">25</div>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label>Break (min)</label>
+        <div class="slider-container">
+          <input type="range" id="break-slider" min="1" max="30" value="5">
+          <div class="value-display" id="break-value">5</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="start">Start</button>
+      <button id="reset">Reset</button>
+    </div>
+  </div>
+
+  <audio id="end-sound" src="https://cdn.freesound.org/previews/420/42095_512385-lq.mp3"></audio>
+
+  <script>
+    const endSound = document.getElementById('end-sound');
+
+    function playEndSound() {
+      endSound.currentTime = 0;
+      endSound.play().catch(() => {});
+    }
+
+    let timerInterval = null;
+    let timeLeft = 25 * 60;
+    let isRunning = false;
+    let isBreak = false;
+
+    const timerDisplay = document.getElementById('timer');
+    const statusDisplay = document.getElementById('status');
+    const startBtn = document.getElementById('start');
+    const resetBtn = document.getElementById('reset');
+    const sessionSlider = document.getElementById('session-slider');
+    const breakSlider = document.getElementById('break-slider');
+    const sessionValue = document.getElementById('session-value');
+    const breakValue = document.getElementById('break-value');
+
+    function formatTime(seconds) {
+      const min = Math.floor(seconds / 60);
+      const sec = seconds % 60;
+      return `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    function updateDisplay() {
+      timerDisplay.textContent = formatTime(timeLeft);
+      statusDisplay.textContent = isBreak ? "Break time — breathe & relax" : "Focus time";
+      document.title = `${formatTime(timeLeft)} - Taskflow Timer`;
+    }
+
+    function updateSliderVisual(slider, valueDisplay) {
+      const value = slider.value;
+      const min = slider.min;
+      const max = slider.max;
+      const percent = (value - min) / (max - min) * 100;
+      
+      valueDisplay.textContent = value;
+      // Update the ::before pseudo-element width
+      slider.style.setProperty('--value-percent', `${percent}%`);
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      isRunning = true;
+      startBtn.textContent = "Running...";
+      startBtn.disabled = true;
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateDisplay();
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.textContent = "Start";
+          startBtn.disabled = false;
+
+          playEndSound();
+
+          if (isBreak) {
+            isBreak = false;
+            timeLeft = parseInt(sessionSlider.value) * 60;
+          } else {
+            isBreak = true;
+            timeLeft = parseInt(breakSlider.value) * 60;
+          }
+          updateDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      isRunning = false;
+      isBreak = false;
+      timeLeft = parseInt(sessionSlider.value) * 60;
+      startBtn.textContent = "Start";
+      startBtn.disabled = false;
+      updateDisplay();
+    }
+
+    function updateFromSliders() {
+      if (!isRunning) {
+        timeLeft = isBreak ? parseInt(breakSlider.value) * 60 : parseInt(sessionSlider.value) * 60;
+        updateDisplay();
+      }
+    }
+
+    // Real-time slider updates
+    sessionSlider.addEventListener('input', () => {
+      updateSliderVisual(sessionSlider, sessionValue);
+      updateFromSliders();
+    });
+
+    breakSlider.addEventListener('input', () => {
+      updateSliderVisual(breakSlider, breakValue);
+      updateFromSliders();
+    });
+
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+
+    // Initial setup
+    updateSliderVisual(sessionSlider, sessionValue);
+    updateSliderVisual(breakSlider, breakValue);
+    updateDisplay();
+
+    VanillaTilt.init(document.querySelectorAll("[data-tilt]"));
+  </script>
+</body>
+</html>
