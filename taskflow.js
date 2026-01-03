@@ -940,7 +940,7 @@ function updateSectionPreview(sectionId) {
       if (firstCardTitle) firstTitle = firstCardTitle.textContent.trim();
     }
     if (firstTitle) {
-      previewEl.textContent = `${firstTitle} (${count})`;
+      previewEl.textContent = `(${count}) ${firstTitle}`;
     } else {
       previewEl.textContent = `(${count})`;
     }
@@ -1814,29 +1814,26 @@ if (taskListContainer) {
 /**
  * Add click event listeners to title elements for tilt and glint animation
  */
-function addTitleAnimation() {
-  const titleElements = [
+function addGlintOnClick() {
+  const titles = [
     document.getElementById('idTaskflowAppTitle'),
     document.getElementById('idTaskflowTodaySubTitle')
   ];
 
-  titleElements.forEach(element => {
-    if (!element) return;
-
-    element.addEventListener('click', function () {
-      // Add animation class
-      this.classList.add('tilt-glint-active');
-
-      // Remove class after animation completes
-      const handleAnimationEnd = () => {
-        this.classList.remove('tilt-glint-active');
-        this.removeEventListener('animationend', handleAnimationEnd);
-      };
-
-      this.addEventListener('animationend', handleAnimationEnd);
+  titles.forEach(title => {
+    if (!title) return;
+    title.addEventListener('click', function() {
+      // Remove class first to allow re-trigger
+      this.classList.remove('glint-active');
+      
+      // Force reflow to restart animation
+      void this.offsetWidth;
+      this.classList.add('glint-active');
     });
   });
 }
 
-// Initialize title animation when page loads
-addTitleAnimation();
+// Call it on load
+addGlintOnClick();
+
+
