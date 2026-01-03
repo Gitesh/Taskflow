@@ -1189,61 +1189,125 @@ function dragEnd(ev) {
 // edit front of card
 //-------------------
 
+// function clkCardEditTitleOrDetail(e) {
+
+//   var editTitle = e.parentElement.previousElementSibling.previousElementSibling;
+//   var editDetail = e.parentElement.previousElementSibling;
+//   //  alert(editTitle +" "+ editDetail);
+
+//   editTitle.setAttribute("contenteditable", "true");
+//   editDetail.setAttribute("contenteditable", "true");
+
+//   editTitle.setAttribute("class", "clsTaskCardTitleEdit");
+//   editDetail.setAttribute("class", "clsTaskCardDetailEdit");
+
+//   //document.body.setAttribute('contenteditable', 'true');
+//   document.onkeydown = function (event) {
+
+//     if (event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
+
+//     {
+//       //document.body.setAttribute('contenteditable', 'false');
+//       editTitle.setAttribute("contenteditable", "false");
+//       editDetail.setAttribute("contenteditable", "false");
+
+//       editTitle.setAttribute("class", "clsTaskCardTitle");
+//       editDetail.setAttribute("class", "clsTaskCardDetail");
+
+//       var cardID = editTitle.parentElement.parentElement.parentElement.id; //get the index id from the parent div
+
+//       data[cardID].Task_Title = editTitle.innerHTML;
+//       data[cardID].task_detail = editDetail.innerHTML;
+
+//       // data.push({
+//       //     //title: data["Task_Title"]=editTitle.innerHTML,
+//       //     //task_detail:data["task_detail"]=editDetail.innerHTML,
+//       //     title: data[cardID].Task_Title=editTitle.innerHTML,
+//       //     task_detail:data[cardID].task_detail=editDetail.innerHTML,
+
+//       //     date_due: "17/07/2022",
+//       //     date_captured: "16/07/2022", 
+//       //     task_tag:"career",
+//       //   });
+
+//       localStorage.setItem("data", JSON.stringify(data));
+
+//       console.log("TASKFLOW: ", data);
+
+
+//       // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
+
+//       //createPost(); //eventually want to replace the ID instead of adding/deleting
+
+//     }
+//   }
+// }
+
+// Updated 2026-01-03_0041 
+
 function clkCardEditTitleOrDetail(e) {
+  // Get the editable elements
+  const editTitle = e.parentElement.previousElementSibling.previousElementSibling;
+  const editDetail = e.parentElement.previousElementSibling;
 
-  var editTitle = e.parentElement.previousElementSibling.previousElementSibling;
-  var editDetail = e.parentElement.previousElementSibling;
-  //  alert(editTitle +" "+ editDetail);
-
+  // Enable editing
   editTitle.setAttribute("contenteditable", "true");
   editDetail.setAttribute("contenteditable", "true");
 
   editTitle.setAttribute("class", "clsTaskCardTitleEdit");
   editDetail.setAttribute("class", "clsTaskCardDetailEdit");
 
-  //document.body.setAttribute('contenteditable', 'true');
+  // Focus the title so user can start typing immediately
+  editTitle.focus();
+
+  // Get the card ID once (for saving later)
+  const cardID = editTitle.parentElement.parentElement.parentElement.id;
+
+  // Save function (we'll call this from multiple places)
+  const saveAndExit = () => {
+    editTitle.setAttribute("contenteditable", "false");
+    editDetail.setAttribute("contenteditable", "false");
+
+    editTitle.setAttribute("class", "clsTaskCardTitle");
+    editDetail.setAttribute("class", "clsTaskCardDetail");
+
+    // Save changes to data
+    data[cardID].Task_Title = editTitle.innerHTML.trim();
+    data[cardID].task_detail = editDetail.innerHTML.trim();
+
+    localStorage.setItem("data", JSON.stringify(data));
+    console.log("TASKFLOW: Saved task", cardID, data[cardID]);
+
+    // Clean up event listeners
+    document.onkeydown = null;
+    document.removeEventListener("click", handleClickOutside);
+  };
+
+  // Handle keyboard shortcuts (Ctrl+Enter or Escape)
   document.onkeydown = function (event) {
-
-    if (event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
-
-    {
-      //document.body.setAttribute('contenteditable', 'false');
-      editTitle.setAttribute("contenteditable", "false");
-      editDetail.setAttribute("contenteditable", "false");
-
-      editTitle.setAttribute("class", "clsTaskCardTitle");
-      editDetail.setAttribute("class", "clsTaskCardDetail");
-
-      var cardID = editTitle.parentElement.parentElement.parentElement.id; //get the index id from the parent div
-
-      data[cardID].Task_Title = editTitle.innerHTML;
-      data[cardID].task_detail = editDetail.innerHTML;
-
-      // data.push({
-      //     //title: data["Task_Title"]=editTitle.innerHTML,
-      //     //task_detail:data["task_detail"]=editDetail.innerHTML,
-      //     title: data[cardID].Task_Title=editTitle.innerHTML,
-      //     task_detail:data[cardID].task_detail=editDetail.innerHTML,
-
-      //     date_due: "17/07/2022",
-      //     date_captured: "16/07/2022", 
-      //     task_tag:"career",
-      //   });
-
-      localStorage.setItem("data", JSON.stringify(data));
-
-      console.log("TASKFLOW: ", data);
-
-
-      // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
-
-      //createPost(); //eventually want to replace the ID instead of adding/deleting
-
+    if ((event.ctrlKey && event.key === "Enter") || event.key === "Escape") {
+      event.preventDefault(); // Prevent unwanted behavior
+      saveAndExit();
     }
-  }
+  };
+
+  // Handle click outside the card to save and exit
+  const handleClickOutside = (event) => {
+    // Check if the click happened inside the title or detail area
+    const isClickInside = 
+      editTitle.contains(event.target) || 
+      editDetail.contains(event.target);
+
+    if (!isClickInside) {
+      saveAndExit();
+    }
+  };
+
+  // Add the click listener to the whole document (after a tiny delay to avoid immediate trigger)
+  setTimeout(() => {
+    document.addEventListener("click", handleClickOutside);
+  }, 0);
 }
-
-
 
 
 

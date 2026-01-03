@@ -756,8 +756,8 @@ body.view-dashboard {
   max-width: 40%;
   border-color: var(--color-bg-card-back);
   border-style: dotted;
-  border-width: 1px;
-  padding: 5px;
+  border-width: 4px;
+  padding: 2px;
 }
 
 .clsTaskCardDetailEdit {
@@ -766,8 +766,8 @@ body.view-dashboard {
   text-align: left;
   border-color: var(--color-bg-card-back);
   border-style: dotted;
-  border-width: 1px;
-  padding: 5px;
+  border-width: 4px;
+  padding: 2px;
 }
 
 
