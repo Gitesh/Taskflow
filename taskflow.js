@@ -1246,69 +1246,79 @@ function dragEnd(ev) {
 // Updated 2026-01-03_0041 
 
 function clkCardEditTitleOrDetail(e) {
-  // Get the editable elements
   const editTitle = e.parentElement.previousElementSibling.previousElementSibling;
   const editDetail = e.parentElement.previousElementSibling;
+
+  // Store original values BEFORE editing (critical!)
+  const originalTitle = editTitle.innerHTML;
+  const originalDetail = editDetail.innerHTML;
 
   // Enable editing
   editTitle.setAttribute("contenteditable", "true");
   editDetail.setAttribute("contenteditable", "true");
-
   editTitle.setAttribute("class", "clsTaskCardTitleEdit");
   editDetail.setAttribute("class", "clsTaskCardDetailEdit");
 
-  // Focus the title so user can start typing immediately
   editTitle.focus();
 
-  // Get the card ID once (for saving later)
   const cardID = editTitle.parentElement.parentElement.parentElement.id;
 
-  // Save function (we'll call this from multiple places)
+  // Save function (Ctrl+Enter or click outside)
   const saveAndExit = () => {
     editTitle.setAttribute("contenteditable", "false");
     editDetail.setAttribute("contenteditable", "false");
-
     editTitle.setAttribute("class", "clsTaskCardTitle");
     editDetail.setAttribute("class", "clsTaskCardDetail");
 
-    // Save changes to data
     data[cardID].Task_Title = editTitle.innerHTML.trim();
     data[cardID].task_detail = editDetail.innerHTML.trim();
 
     localStorage.setItem("data", JSON.stringify(data));
-    console.log("TASKFLOW: Saved task", cardID, data[cardID]);
+    console.log("TASKFLOW: Saved task", cardID);
 
-    // Clean up event listeners
     document.onkeydown = null;
     document.removeEventListener("click", handleClickOutside);
   };
 
-  // Handle keyboard shortcuts (Ctrl+Enter or Escape)
+  // Discard function (Escape)
+  const discardAndExit = () => {
+    editTitle.innerHTML = originalTitle;
+    editDetail.innerHTML = originalDetail;
+
+    editTitle.setAttribute("contenteditable", "false");
+    editDetail.setAttribute("contenteditable", "false");
+    editTitle.setAttribute("class", "clsTaskCardTitle");
+    editDetail.setAttribute("class", "clsTaskCardDetail");
+
+    console.log("TASKFLOW: Changes discarded for task", cardID);
+
+    document.onkeydown = null;
+    document.removeEventListener("click", handleClickOutside);
+  };
+
+  // Keyboard handling
   document.onkeydown = function (event) {
-    if ((event.ctrlKey && event.key === "Enter") || event.key === "Escape") {
-      event.preventDefault(); // Prevent unwanted behavior
+    if (event.ctrlKey && event.key === "Enter") {
+      event.preventDefault();
       saveAndExit();
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      discardAndExit();
     }
   };
 
-  // Handle click outside the card to save and exit
+  // Click outside = save (you can change this to discardAndExit() if preferred)
   const handleClickOutside = (event) => {
-    // Check if the click happened inside the title or detail area
-    const isClickInside = 
-      editTitle.contains(event.target) || 
-      editDetail.contains(event.target);
-
+    const isClickInside = editTitle.contains(event.target) || editDetail.contains(event.target);
     if (!isClickInside) {
-      saveAndExit();
+      saveAndExit();  // ← Change to discardAndExit() if you want discard on click outside
     }
   };
 
-  // Add the click listener to the whole document (after a tiny delay to avoid immediate trigger)
   setTimeout(() => {
     document.addEventListener("click", handleClickOutside);
   }, 0);
 }
-
 
 
 function clkToggleBackgroundAnimation() {
