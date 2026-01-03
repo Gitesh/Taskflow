@@ -959,7 +959,7 @@ input:hover {
 
 #toast-container {
   position: fixed;
-  bottom: 100px;
+  bottom: 150px;
   /* right: 20px; */
   z-index: 10000;
   /* Ensure it stays above everything */
@@ -1817,8 +1817,6 @@ input:hover {
     overflow-y: auto;
   }
 }
-
-
 
 
 /* Default: no animated background */
