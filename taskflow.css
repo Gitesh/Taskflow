@@ -804,6 +804,7 @@ span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
 
 .clsTaskCardTitleEdit {
   color: var(--color-text-primary);
+  font-family: var(--font-family-task-title);
   font-size: var(--font-size-base);
   font-weight: bold;
   text-align: left;
@@ -816,7 +817,9 @@ span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
 
 .clsTaskCardDetailEdit {
   color: var(--color-text-primary);
-  font-size: 12px;
+  font-family: var(--font-family-task-detail);
+  font-size: var(--font-size-base);
+  /* font-size: 12px; */
   text-align: left;
   border-color: var(--color-bg-card-back);
   border-style: dotted;

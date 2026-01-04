@@ -25,11 +25,34 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 // --START-- Shortcut keys
 window.addEventListener("keydown", function (event) {
 
-  if (event.key === '+') { event.preventDefault(); document.getElementById('input').click() };
+  // if (event.key === '+') { event.preventDefault(); document.getElementById('input').click() };
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
   if (event.ctrlKey && event.key === 'S') clkToggleSectionContainer();
+  if (event.ctrlKey && event.key === '!') setView('view-standard');
+  if (event.ctrlKey && event.key === '"') setView('view-kanban');
+  if (event.ctrlKey && event.key === '£') setView('view-matrix');
+  if (event.ctrlKey && event.key === '$') setView('view-dashboard');
+  if (event.ctrlKey && event.key === 'T') toggleTheme();
+
+  // Add New Task shortcut: Ctrl+Shift+A
+  if (event.ctrlKey && event.shiftKey && (event.key === '+' || event.key === 'A' || event.key === 'a')) {
+    event.preventDefault();
+    input.value = '';
+    input.focus();
+    showToast('Add a new task', 'info');
+  }
+  // Upload File shortcut: Ctrl+Shift+U
+  if (event.ctrlKey && event.shiftKey && (event.key === 'U' || event.key === 'u')) {
+    event.preventDefault();
+    clkImportTasksFromLocalFile();
+    showToast('Import tasks from file', 'info');
+  }
+  
+
+
+
 
   // Collapse/Expand All shortcut: Ctrl+Shift+C
   if (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'c')) {
