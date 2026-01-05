@@ -25,7 +25,7 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 // --START-- Shortcut keys
 window.addEventListener("keydown", function (event) {
 
-  // if (event.key === '+') { event.preventDefault(); document.getElementById('input').click() };
+  if (event.key === '+') { event.preventDefault(); document.getElementById('input').click() };
   if (event.ctrlKey && event.key === 'F') clkFlipToCountDownTimer();
   if (event.ctrlKey && event.key === 'B') clkToggleBackgroundAnimation();
   if (event.ctrlKey && event.key === 'P') clkFilterPendingTasks();
@@ -316,7 +316,7 @@ function processCommand(command) {
 
 
     default:
-      showToast(`Unknown command: <br>/test/+<br> ${cmd}. <br><br> Try /help for available commands.`, "error");
+      showToast(`Unknown command: <br><br> ${cmd}. <br><br> Use /help to show available commands.`, "error");
       break;
   }
 
