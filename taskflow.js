@@ -1494,9 +1494,7 @@ function clkFilterPendingTasks() {
 
 
 ////////
-//
 // Upload CSV into local storage
-//
 ////////
 
 //new upload code 2025-07-08
@@ -1726,64 +1724,132 @@ function clkPlayAudio(sound) {
 
 };
 
+// Old function to be removed after testing
+// /**
+//  * Updates the dashboard detail pane with task information.
+//  * @deprecated 2026-01-05 Use updated selectTaskForDashboard function for security and maintainability.
+//  */
+
+// function selectTaskForDashboard(card) {
+//   // Only active in dashboard view
+//   if (!document.body.classList.contains('view-dashboard')) return;
+
+//   const detailPane = document.getElementById('idDetailPane');
+//   if (!detailPane) return;
+
+//   // Clear previous content
+//   detailPane.innerHTML = '';
+
+//   const title = card.querySelector('.clsTaskCardTitle').textContent;
+
+//   // Safe text content retrieval
+//   const detailEl = card.querySelector('.clsTaskCardDetail');
+//   const detail = detailEl ? detailEl.textContent : '';
+
+//   const dateEl = card.querySelector('.clsTaskInfo');
+//   const date = dateEl ? dateEl.textContent : '';
+
+//   const tagEl = card.querySelector('.clsTaskTag');
+//   const tag = tagEl ? tagEl.textContent : '';
+
+//   const sectionHeader = card.closest('.clsDropArea').querySelector('.sectionHeader');
+//   const status = sectionHeader ? sectionHeader.textContent.trim() : 'Unknown';
+
+//   // Highlight active card
+//   document.querySelectorAll('.clsTaskCardWrapper.active').forEach(el => el.classList.remove('active'));
+//   card.closest('.clsTaskCardWrapper').classList.add('active');
+
+//   // Build Detail Pane Content
+//   const html = `
+//     <h3>${title}</h3>
+//     <div style="margin-bottom: 20px;">
+//         <span class="clsTaskTag" style="font-size: 1.1em">${tag}</span>
+//         <span style="float: right; color: var(--color-text-secondary)">${date}</span>
+//     </div>
+//     <div style="background: var(--color-bg-container); padding: 15px; border-radius: var(--radius-md); min-height: 200px;">
+//         <p style="white-space: pre-wrap;">${detail || 'No details provided.'}</p>
+//     </div>
+//     <br>
+//     <p><strong>Status:</strong> ${status}</p>
+//     <div style="margin-top: 20px; text-align: right;">
+//          <button class="btnEditDetails" style="cursor:pointer; padding: 8px 16px; border: none; background: var(--color-primary); color: white; border-radius: 4px;">Edit Task</button>
+//     </div>
+//   `;
+
+//   detailPane.innerHTML = html;
+
+//   // Attach edit handler
+//   const editIcon = card.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
+//   if (editIcon) {
+//     const btn = detailPane.querySelector('.btnEditDetails');
+//     if (btn) btn.onclick = function () {
+//       editIcon.click();
+//     };
+//   }
+// }
+
+
+////
+// 2026-01-05 Updates the dashboard detail pane with task information.
+// Cleaned for security and maintainability.
+///
 
 function selectTaskForDashboard(card) {
-  // Only active in dashboard view
   if (!document.body.classList.contains('view-dashboard')) return;
 
   const detailPane = document.getElementById('idDetailPane');
   if (!detailPane) return;
 
-  // Clear previous content
-  detailPane.innerHTML = '';
-
-  const title = card.querySelector('.clsTaskCardTitle').textContent;
-
-  // Safe text content retrieval
-  const detailEl = card.querySelector('.clsTaskCardDetail');
-  const detail = detailEl ? detailEl.textContent : '';
-
-  const dateEl = card.querySelector('.clsTaskInfo');
-  const date = dateEl ? dateEl.textContent : '';
-
-  const tagEl = card.querySelector('.clsTaskTag');
-  const tag = tagEl ? tagEl.textContent : '';
-
-  const sectionHeader = card.closest('.clsDropArea').querySelector('.sectionHeader');
+  // 1. Data Extraction (Safe)
+  const title = card.querySelector('.clsTaskCardTitle')?.textContent || 'Untitled Task';
+  const detail = card.querySelector('.clsTaskCardDetail')?.textContent || 'No details provided.';
+  const date = card.querySelector('.clsTaskInfo')?.textContent || '';
+  const tag = card.querySelector('.clsTaskTag')?.textContent || '';
+  
+  // Find status from the nearest section header
+  const sectionHeader = card.closest('.clsDropArea')?.querySelector('.sectionHeader');
   const status = sectionHeader ? sectionHeader.textContent.trim() : 'Unknown';
 
-  // Highlight active card
-  document.querySelectorAll('.clsTaskCardWrapper.active').forEach(el => el.classList.remove('active'));
-  card.closest('.clsTaskCardWrapper').classList.add('active');
+  // 2. UI Updates: Highlight active card
+  const activeClass = 'active';
+  document.querySelector(`.clsTaskCardWrapper.${activeClass}`)?.classList.remove(activeClass);
+  card.closest('.clsTaskCardWrapper')?.classList.add(activeClass);
 
-  // Build Detail Pane Content
-  const html = `
-    <h3>${title}</h3>
-    <div style="margin-bottom: 20px;">
-        <span class="clsTaskTag" style="font-size: 1.1em">${tag}</span>
-        <span style="float: right; color: var(--color-text-secondary)">${date}</span>
+  // 3. Build Content Safely
+  // We set the structure first, then use textContent to inject data
+  detailPane.innerHTML = `
+    <h3 class="pane-title"></h3>
+    <div class="pane-meta">
+        <span class="clsTaskTag pane-tag"></span>
+        <span class="pane-date"></span>
     </div>
-    <div style="background: var(--color-bg-container); padding: 15px; border-radius: var(--radius-md); min-height: 200px;">
-        <p style="white-space: pre-wrap;">${detail || 'No details provided.'}</p>
+    <div class="pane-description-box">
+        <p class="pane-description"></p>
     </div>
-    <br>
-    <p><strong>Status:</strong> ${status}</p>
-    <div style="margin-top: 20px; text-align: right;">
-         <button class="btnEditDetails" style="cursor:pointer; padding: 8px 16px; border: none; background: var(--color-primary); color: white; border-radius: 4px;">Edit Task</button>
+    <p><strong>Status:</strong> <span class="pane-status"></span></p>
+    <div class="pane-actions">
+         <button class="btnEditDetails btn-primary">Edit Task</button>
     </div>
   `;
 
-  detailPane.innerHTML = html;
+  // Inject text safely to prevent XSS
+  detailPane.querySelector('.pane-title').textContent = title;
+  detailPane.querySelector('.pane-tag').textContent = tag;
+  detailPane.querySelector('.pane-date').textContent = date;
+  detailPane.querySelector('.pane-description').textContent = detail;
+  detailPane.querySelector('.pane-status').textContent = status;
 
-  // Attach edit handler
+  // 4. Edit Handler logic
   const editIcon = card.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
-  if (editIcon) {
-    const btn = detailPane.querySelector('.btnEditDetails');
-    if (btn) btn.onclick = function () {
-      editIcon.click();
-    };
+  const editBtn = detailPane.querySelector('.btnEditDetails');
+  
+  if (editIcon && editBtn) {
+    editBtn.onclick = () => editIcon.click();
   }
 }
+
+
+
 
 // Attach click listeners to cards global or via delegation
 // We can use the existing drag/drop or global click handler

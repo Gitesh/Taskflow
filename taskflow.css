@@ -1894,3 +1894,70 @@ input:hover {
 
 
 
+/* Container spacing and typography */
+.pane-title {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+/* Meta info row (Tag and Date) */
+.pane-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pane-tag {
+  font-size: 1.1em;
+}
+
+.pane-date {
+  color: var(--color-text-secondary);
+}
+
+/* Description Box */
+.pane-description-box {
+  background: var(--color-bg-container);
+  padding: 15px;
+  border-radius: var(--radius-md);
+  min-height: 200px;
+  border: 1px solid rgba(0,0,0,0.05); /* Optional subtle border */
+}
+
+.pane-description {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* Footer / Actions */
+.pane-status {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.pane-actions {
+  margin-top: 20px;
+  text-align: right;
+}
+
+/* Styled Button */
+.btn-primary {
+  cursor: pointer;
+  padding: 8px 16px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Active Card Highlight */
+.clsTaskCardWrapper.active {
+  outline: 2px solid var(--color-primary);
+  background-color: var(--color-bg-container);
+}
