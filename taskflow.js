@@ -46,13 +46,10 @@ window.addEventListener("keydown", function (event) {
   // Upload File shortcut: Ctrl+Shift+U
   if (event.ctrlKey && event.shiftKey && (event.key === 'U' || event.key === 'u')) {
     event.preventDefault();
-    clkImportTasksFromLocalFile();
+    // clkImportTasksFromLocalFile();
+    clkUploadTasksToLocalStorage();
     showToast('Import tasks from file', 'info');
   }
-
-
-
-
 
   // Collapse/Expand All shortcut: Ctrl+Shift+C
   if (event.ctrlKey && event.shiftKey && (event.key === 'C' || event.key === 'c')) {
@@ -66,6 +63,12 @@ window.addEventListener("keydown", function (event) {
     event.preventDefault();
     togglePreviewMode();
     showToast('Toggled task preview', 'info');
+  }
+
+  // Toggle tag visibility: Ctrl+Shift+G
+  if (event.ctrlKey && event.shiftKey && (event.key === 'G' || event.key === 'g')) {
+    event.preventDefault();
+    clkToggleTagVisibility();
   }
 
   // Check if user is editing text
@@ -132,6 +135,7 @@ function clkSettings() {
           <li><code>CTRL+SHIFT+U</code> Upload file</li>
           <li><code>CTRL+SHIFT+C</code> Collapse/Expand all</li>
           <li><code>CTRL+SHIFT+V</code> Toggle task preview</li>
+          <li><code>CTRL+SHIFT+T</code> Toggle tag visibility</li>
         </ul>
       </div>
       
@@ -145,6 +149,7 @@ function clkSettings() {
           <li><code>/collapse</code> Collapse sections</li>
           <li><code>/expand</code> Expand sections</li>
           <li><code>/preview</code> Toggle task preview</li>
+          <li><code>/tags</code> Toggle tag visibility</li>
           <li><code>/dark</code> or <code>/light</code> Change theme</li>
           <li><code>/help</code> or <code>/settings</code> or <code>/?</code> This dialog</li>
         </ul>
@@ -304,6 +309,10 @@ function processCommand(command) {
     case '/toggle-preview':
       togglePreviewMode();
       showToast('Toggled task preview', 'success');
+      break;
+    case '/tags':
+    case '/toggle-tags':
+      clkToggleTagVisibility();
       break;
 
     case '/dark':
@@ -1339,61 +1348,6 @@ function dragEnd(ev) {
 //-------------------
 // edit front of card
 //-------------------
-
-// function clkCardEditTitleOrDetail(e) {
-
-//   var editTitle = e.parentElement.previousElementSibling.previousElementSibling;
-//   var editDetail = e.parentElement.previousElementSibling;
-//   //  alert(editTitle +" "+ editDetail);
-
-//   editTitle.setAttribute("contenteditable", "true");
-//   editDetail.setAttribute("contenteditable", "true");
-
-//   editTitle.setAttribute("class", "clsTaskCardTitleEdit");
-//   editDetail.setAttribute("class", "clsTaskCardDetailEdit");
-
-//   //document.body.setAttribute('contenteditable', 'true');
-//   document.onkeydown = function (event) {
-
-//     if (event.ctrlKey && event.key === 'Enter' || event.key === 'Escape')  // CTRL+Enter pressed or Esc pressed
-
-//     {
-//       //document.body.setAttribute('contenteditable', 'false');
-//       editTitle.setAttribute("contenteditable", "false");
-//       editDetail.setAttribute("contenteditable", "false");
-
-//       editTitle.setAttribute("class", "clsTaskCardTitle");
-//       editDetail.setAttribute("class", "clsTaskCardDetail");
-
-//       var cardID = editTitle.parentElement.parentElement.parentElement.id; //get the index id from the parent div
-
-//       data[cardID].Task_Title = editTitle.innerHTML;
-//       data[cardID].task_detail = editDetail.innerHTML;
-
-//       // data.push({
-//       //     //title: data["Task_Title"]=editTitle.innerHTML,
-//       //     //task_detail:data["task_detail"]=editDetail.innerHTML,
-//       //     title: data[cardID].Task_Title=editTitle.innerHTML,
-//       //     task_detail:data[cardID].task_detail=editDetail.innerHTML,
-
-//       //     date_due: "17/07/2022",
-//       //     date_captured: "16/07/2022", 
-//       //     task_tag:"career",
-//       //   });
-
-//       localStorage.setItem("data", JSON.stringify(data));
-
-//       console.log("TASKFLOW: ", data);
-
-
-//       // editTitle.parentElement.parentElement.remove() //eventually want to replace the ID instead of adding/deleting
-
-//       //createPost(); //eventually want to replace the ID instead of adding/deleting
-
-//     }
-//   }
-// }
-
 // Updated 2026-01-03_0041 
 
 function clkCardEditTitleOrDetail(e) {
@@ -1507,6 +1461,27 @@ function clkToggleBackgroundAnimation() {
   }
 
 };
+
+function clkToggleTagVisibility() {
+  document.body.classList.toggle('hide-tags');
+  const isHidden = document.body.classList.contains('hide-tags');
+  localStorage.setItem('hideTags', isHidden);
+
+  const btn = document.getElementById('btnToggleTags');
+  if (btn) btn.classList.toggle('active', isHidden);
+
+  showToast(isHidden ? "Tags hidden" : "Tags visible", "info");
+}
+
+// Initialize tag visibility on load
+(function () {
+  const isHidden = localStorage.getItem('hideTags') === 'true';
+  if (isHidden) {
+    document.body.classList.add('hide-tags');
+    const btn = document.getElementById('btnToggleTags');
+    if (btn) btn.classList.add('active');
+  }
+})();
 
 //////
 // hide container and leave sections

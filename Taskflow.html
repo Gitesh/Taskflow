@@ -95,7 +95,7 @@
 
                 <div id="divIconBar">
 
-                    <!-- View Switcher -->
+                    <!-- Start View Switcher -->
                     <span class="material-icons" title="Standard View"
                         onclick="setView('view-standard')">view_stream</span>
                     <span class="material-icons" title="Kanban View" onclick="setView('view-kanban')">view_week</span>
@@ -105,9 +105,11 @@
                         onclick="setView('view-dashboard')">space_dashboard</span>
                     <span class="material-icons" title="Focus timer"
                         onclick="clkFlipToCountDownTimer()">hourglass_top</span>
+                    <!-- End View Switcher -->
 
                     <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
+                    <!-- Start Import or Export CSV / JSON -->
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
@@ -117,9 +119,11 @@
                     </span>
 
                     <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
+                    <!-- End Import or Export CSV / JSON -->
 
                     <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
+                    <!-- Start Settings Toggles -->
                     <span class="material-icons" title="Toggle background animation"
                         onclick="clkToggleBackgroundAnimation()">animation</span>
 
@@ -133,14 +137,21 @@
 
                     <span class="material-icons" title="Toggle Light/Dark Theme"
                         onclick="toggleTheme()">brightness_4</span>
+
+                    <span class="material-icons" id="btnToggleTags" title="Toggle Tag Visibility"
+                        onclick="clkToggleTagVisibility()">local_offer</span>
+
                     <span class="material-icons" id="btnClearFilter" title="Clear Tag Filter"
                         style="display:none; color: var(--color-accent);"
                         onclick="clkClearTagFilter()">filter_alt_off</span>
 
                     <span class="material-icons" id="btnPreviewMode" title="Toggle task preview"
                         onclick="togglePreviewMode()">view_sidebar</span>
+
                     <span class="material-icons" id="btnCollapseAll" title="Collapse/Expand all sections"
                         onclick="toggleCollapseAll()">expand_less</span>
+
+                    <!-- End Settings Toggles -->
 
                 </div> <!-- end div icon bar -->
 
