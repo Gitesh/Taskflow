@@ -19,7 +19,9 @@ document.getElementById("idTaskflowTodaySubTitle").innerHTML = strToday;
 
 
 ////
-// check for shortcut keys
+// Check if user presses a shortcut key
+// - Don't forget to add the shortcut key to the help dialog
+// - Also add via a command to the /command pallette 
 ////
 
 // --START-- Shortcut keys
@@ -34,7 +36,7 @@ window.addEventListener("keydown", function (event) {
   if (event.ctrlKey && event.key === '"') setView('view-kanban');
   if (event.ctrlKey && event.key === '£') setView('view-matrix');
   if (event.ctrlKey && event.key === '$') setView('view-dashboard');
-  if (event.ctrlKey && event.key === 'T') toggleTheme();
+  if (event.ctrlKey && event.key === 'L') toggleTheme();
 
   // Add New Task shortcut: Ctrl+Shift+A
   if (event.ctrlKey && event.shiftKey && (event.key === '+' || event.key === 'A' || event.key === 'a')) {
@@ -128,15 +130,27 @@ function clkSettings() {
       <div class="help-column">
         <h3>Keyboard Shortcuts</h3>
         <ul>
-          <li><code>CTRL+SHIFT+A</code> Add new task</li>
-          <li><code>CTRL+SHIFT+F</code> Flip to timer</li>
-          <li><code>CTRL+SHIFT+B</code> Toggle BG animation</li>
-          <li><code>CTRL+SHIFT+P</code> Filter Pending</li>
-          <li><code>CTRL+SHIFT+U</code> Upload file</li>
-          <li><code>CTRL+SHIFT+C</code> Collapse/Expand all</li>
-          <li><code>CTRL+SHIFT+V</code> Toggle task preview</li>
-          <li><code>CTRL+SHIFT+T</code> Toggle tag visibility</li>
-        </ul>
+          <h2> Functionality </h2>
+            <li><code>CTRL+SHIFT+A</code> Add new task</li>
+            <li><code>CTRL+SHIFT+F</code> Flip to timer</li>
+            <li><code>CTRL+SHIFT+U</code> Upload file</li>
+            <li><code>CTRL+SHIFT+P</code> Filter pending</li>
+            <li><code>CTRL+SHIFT+C</code> Collapse/expand sections</li>
+            <li><code>CTRL+SHIFT+V</code> Task preview</li>
+
+          <h2> Aesthetic Toggles</h2>
+            <li><code>CTRL+SHIFT+B</code> Background animation</li>
+            <li><code>CTRL+SHIFT+S</code> Section visibility</li>
+            <li><code>CTRL+SHIFT+L</code> Dark/Light theme</li>
+            <li><code>CTRL+SHIFT+G</code> Tag visibility</li>
+
+          <h2> Views </h2>
+            <li><code>CTRL+SHIFT+1</code> Standard view</li>
+            <li><code>CTRL+SHIFT+2</code> Kanban view</li>
+            <li><code>CTRL+SHIFT+3</code> Matrix view</li>
+            <li><code>CTRL+SHIFT+4</code> Dashboard view</li>
+
+          </ul>
       </div>
       
       <div class="help-column">
