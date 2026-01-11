@@ -48,6 +48,11 @@
   /* colors for content on the card back */
   --color-text-on-card-back: #ffffff;
 
+
+  /* scrollbar tokens */
+  --color-scrollbar: #efefefef;
+
+
   /* input tokens */
   --color-input-bg: #ffffff;
   --color-input-text: #333333;
@@ -100,6 +105,9 @@
 
   /* colors for content on the card back */
   --color-text-on-card-back: #e4eaf0;
+
+  /* scrollbar tokens (dark) */
+  --color-scrollbar: #55555555;
 
   /* input tokens (dark) */
   --color-input-bg: #223344;
@@ -306,7 +314,7 @@ body.view-dashboard {
 
   /* Scrollbar styling */
   scrollbar-width: thin;
-  scrollbar-color: var(--color-accent) transparent;
+  scrollbar-color: var(--color-scrollbar) transparent;
 }
 
 .view-matrix .clsDropArea>div[id^="dropbox"]::-webkit-scrollbar {
@@ -314,7 +322,7 @@ body.view-dashboard {
 }
 
 .view-matrix .clsDropArea>div[id^="dropbox"]::-webkit-scrollbar-thumb {
-  background-color: var(--color-accent);
+  background-color: var(--color-scrollbar);
   border-radius: 4px;
 }
 
@@ -1379,8 +1387,11 @@ input:hover {
   overflow-y: auto;
   padding-right: 2px;
   scrollbar-width: thin;
-  scrollbar-color: var(--color-accent) transparent;
+  scrollbar-color: var(--color-scrollbar) transparent;
 }
+
+
+
 
 .view-kanban #idInputSection {
   order: -1;
