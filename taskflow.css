@@ -207,9 +207,9 @@ body.view-dashboard {
 /* Kanban View: Full Viewport with Even Border */
 .view-kanban .container {
   max-width: none;
-  width: 90vw;
+  width: 95vw;
   /* Explicit viewport width with gap */
-  height: 96vh;
+  height: 95vh;
   margin: 0;
   /* Flexbox on body handles centering */
   padding: 0;
@@ -231,7 +231,7 @@ body.view-dashboard {
   min-height: 0;
 }
 
-/* KANBAN SPECIFIC TAG LAYOUT */
+/* Kanban specific tag layout */
 .view-kanban .clsTaskCard {
   flex-wrap: wrap;
   align-content: flex-start;
