@@ -49,7 +49,7 @@ window.addEventListener("keydown", function (event) {
     clkImportTasksFromLocalFile();
     showToast('Import tasks from file', 'info');
   }
-  
+
 
 
 
@@ -487,10 +487,106 @@ function showToast(message, type = 'info') {
 
 
 //------
-//store input field into a new object called data
+// V2 Data Model & Helpers
 //------
 
-//create empty data object to store tasks
+const TaskModel = {
+  create: (input) => {
+    // Extract tags from description
+    const tags = extractTagsFromText(input.description || "");
+
+    // Map section to priority if not provided, or vice versa
+    let priority = input.priority || 4;
+    if (input.section) {
+      const match = input.section.match(/div(\d)/);
+      if (match) priority = parseInt(match[1]);
+    }
+    // Clamp priority 1-4
+    priority = Math.max(1, Math.min(4, priority));
+
+    return {
+      id: input.id || Date.now().toString(),
+      title: input.title || "Untitled Task",
+      description: input.description || "",
+      notes: input.notes || "",
+      date_due: input.date_due || null,
+      date_captured: input.date_captured || new Date().toISOString(),
+      date_updated: new Date().toISOString(),
+      date_closed: input.date_closed || null,
+      status: input.status || "Pending", // Pending, In Progress, Completed, Cancelled, Deleted
+      status_attrib: input.status_attrib || "",
+      tags: tags, // Array of strings
+      priority: priority,
+      section: `div${priority}`, // Sync section with priority
+      time_estimate_minutes: input.time_estimate_minutes || 0,
+      time_logged_minutes: input.time_logged_minutes || 0,
+      deleted: input.deleted || false,
+      version: 2,
+      subtasks: input.subtasks || []
+    };
+  }
+};
+
+function extractTagsFromText(text) {
+  if (!text) return [];
+  const matches = text.match(/#[a-z0-9_-]+/gi);
+  if (!matches) return [];
+  // value, index, self for unique
+  return [...new Set(matches.map(tag => tag.substring(1).toLowerCase()))];
+}
+
+function migrateTask(oldTask) {
+  // If already V2, return
+  if (oldTask.version === 2) return oldTask;
+
+  // Combine title/detail if separated, or just map
+  const description = oldTask.task_detail || "";
+
+  // Combine existing csv tags + extracted tags
+  let tags = [];
+  if (oldTask.task_tag) {
+    tags = oldTask.task_tag.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+  }
+  const extracted = extractTagsFromText(description + " " + (oldTask.Task_Title || ""));
+  tags = [...new Set([...tags, ...extracted])];
+
+  // Map Status
+  let status = oldTask.status || "Pending";
+  if (status === "To Do") status = "Pending"; // V1 used "To Do" sometimes in json
+
+  // Determine Priority/Section
+  let section = oldTask.section || "div4";
+  let priority = 4;
+  const match = section.match(/div(\d)/);
+  if (match) priority = parseInt(match[1]);
+
+  return {
+    id: oldTask.id,
+    title: oldTask.Task_Title || "Untitled",
+    description: description,
+    notes: "",
+    date_due: oldTask.date_due || null,
+    date_captured: oldTask.date_captured || new Date().toISOString(),
+    date_updated: new Date().toISOString(),
+    date_closed: oldTask.date_closed || null,
+    status: status,
+    status_attrib: "Migrated",
+    tags: tags,
+    priority: priority,
+    section: `div${priority}`,
+    time_estimate_minutes: 0,
+    time_logged_minutes: 0,
+    deleted: false,
+    version: 2,
+    subtasks: oldTask.subtasks || []
+  };
+}
+
+//------
+// store input field into a new object called data
+//------
+
+// create empty data object to store tasks
 let data = [];
 let settings = {
   sections: {
@@ -502,31 +598,30 @@ let settings = {
 };
 
 //create a function called accept data to store the input in the object named data
+//create a function called accept data to store the input in the object named data
 let acceptData = () => {
 
-  data.push({
-    id: Date.now().toString(), // Unique ID for reliable referencing
-    Task_Title: data["Task_Title"] = input.value,
-    task_detail: data["task_detail"] = "[Click edit to enter task detail]",
-    date_due: "",
-    date_captured: strDate,
-    date_closed: "",
-    task_tag: "career",
-    section: "div4", // Default to Ice Box
-    status: "Pending", // Pending, In Progress, Completed, Cancelled
-    subtasks: [] // Future proofing
-  })
+  // Use V2 Model
+  const newTask = TaskModel.create({
+    id: Date.now().toString(),
+    title: input.value,
+    description: "[Click edit to enter task detail] #tag",
+    priority: 4, // Default to Ice Box
+    status: "Pending"
+  });
 
+  data.push(newTask);
   localStorage.setItem("data", JSON.stringify(data));
 
-  console.log("TASKFLOW acceptData +add: ", data)
-
+  console.log("TASKFLOW acceptData +add: ", data);
   createPost();
 
   // Auto-focus on the task detail of the newly added task
   setTimeout(() => {
+    // We rely on index-based ID for DOM because createPost (in its new form) will still use index for IDs
     const newTaskIndex = data.length - 1;
     const newTaskCard = document.getElementById(newTaskIndex.toString());
+
     if (newTaskCard) {
       const detailSpan = newTaskCard.querySelector('.clsTaskCardDetail');
       const editIcon = newTaskCard.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
@@ -545,193 +640,216 @@ let acceptData = () => {
 //publish the data as a new task
 //------
 let createPost = () => {
-  // Clear all dropboxes
-  document.getElementById("dropbox1").innerHTML = "";
-  document.getElementById("dropbox2").innerHTML = "";
-  document.getElementById("dropbox3").innerHTML = "";
-  document.getElementById("dropbox4").innerHTML = "";
-
-  data.forEach((x, y) => {
-    // Determine target dropbox based on section
-    let targetId = "dropbox4"; // Default
-    if (x.section) {
-      // Map divX to dropboxX
-      targetId = x.section.replace("div", "dropbox");
+  // 0. Migration Check on Load or Update
+  let needsSave = false;
+  data = data.map(t => {
+    if (t.version !== 2) {
+      needsSave = true;
+      return migrateTask(t);
     }
+    return t;
+  });
 
-    let target = document.getElementById(targetId);
-    if (!target) target = document.getElementById("dropbox4"); // Fallback
+  // 1. Sort Data: Priority (1->4), then Due Date
+  data.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    if (!a.date_due) return 1;
+    if (!b.date_due) return -1;
+    return new Date(a.date_due) - new Date(b.date_due);
+  });
 
-    target.innerHTML += `
-    <div id="${y}" data-task-uid="${x.id}" class="clsTaskCardWrapper" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
-        <div class="clsTaskCardAll" > <!-- 3d object  |||| clsTaskCardAll -->
+  if (needsSave) localStorage.setItem("data", JSON.stringify(data));
+
+  // Clear dropboxes
+  ["dropbox1", "dropbox2", "dropbox3", "dropbox4"].forEach(id => {
+    document.getElementById(id).innerHTML = "";
+  });
+
+  data.forEach((task, index) => {
+    // Skip deleted tasks
+    if (task.deleted) return;
+
+    // Filter logic (simple tag filter hook)
+    if (window.currentTagFilter && (!task.tags || !task.tags.includes(window.currentTagFilter))) return;
+
+    // Determine target
+    let targetId = task.section ? task.section.replace("div", "dropbox") : "dropbox4";
+    let target = document.getElementById(targetId) || document.getElementById("dropbox4");
+
+    // Render Card
+    target.innerHTML += renderTaskCard(task, index);
+  });
+
+  // Update previews
+  try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
+};
+
+// Render Individual Task Card HTML
+function renderTaskCard(task, index) {
+  // Format dates
+  const dueDate = task.date_due ? task.date_due.split('T')[0] : 'None';
+  const createdDate = task.date_captured ? task.date_captured.split('T')[0] : 'Unknown';
+  const closedDate = task.date_closed ? task.date_closed.split('T')[0] : 'None';
+  const tagsHtml = renderTags(task.tags);
+  const priority = task.priority || 4;
+
+  // Note: We use 'index' as the DOM ID for drag/drop compatibility with existing functions
+  // Ideally we should move to UID, but that requires updating drag/drop handlers.
+  // For now, index is stable per render.
+
+  return `
+    <div id="${index}" data-task-uid="${task.id}" class="clsTaskCardWrapper priority-${priority}" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+        <div class="clsTaskCardAll"> 
+          
+          <!-- FRONT FACE -->
           <div class="clsTaskCard">
-
-            <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.Task_Title}</span>&nbsp - &nbsp
-            <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${x.task_detail}</span>
+            <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.title}</span>&nbsp - &nbsp
+            <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.description}</span>
 
             <span class="clsTaskCardHoverIcons">
               <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i>
               <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
               <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
             </span>
+            
+            <!-- Quick Tag Pills on Front (Validation) -->
+            <div class="clsFrontTags" style="display: block; margin-top: 5px;">${tagsHtml}</div>
+            
+          </div> 
 
-          </div> <!-- front face clsTaskCard-->
-
-
-
+          <!-- BACK FACE -->
           <div class="clsTaskCardBack">
             <div class="clsTaskCardBackContainer">
               
-              <!-- 3-Row Layout with inline labels and values -->
               <div class="clsTaskCardGridLayout">
                 
-                <!-- Row 1: Due Date and Status -->
-                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'date_due')">
-                  <div class="clsTaskCardBackDisplay" id="display_date_due_${y}">
-                    <span class="clsFieldLabel">Due</span> ${x.date_due ? x.date_due.split('T')[0] : 'None'}
+                <!-- Row 1 -->
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${index}, 'date_due')">
+                  <div class="clsTaskCardBackDisplay" id="display_date_due_${index}">
+                    <span class="clsFieldLabel">Due</span> ${dueDate}
                   </div>
-                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_due_${y}" value="${x.date_due ? x.date_due.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_due', this.value); toggleTaskFieldEdit(null, ${y}, 'date_due');" onblur="toggleTaskFieldEdit(null, ${y}, 'date_due');">
+                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_due_${index}" value="${dueDate !== 'None' ? dueDate : ''}" onchange="updateTaskField(${index}, 'date_due', this.value); toggleTaskFieldEdit(null, ${index}, 'date_due');" onblur="toggleTaskFieldEdit(null, ${index}, 'date_due');">
                 </div>
 
-                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'status');">
-                  <div class="clsTaskCardBackDisplay" id="display_status_${y}">
-                    <span class="clsFieldLabel">Status</span> ${x.status || 'None'}
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${index}, 'status');">
+                  <div class="clsTaskCardBackDisplay" id="display_status_${index}">
+                    <span class="clsFieldLabel">Status</span> ${task.status}
                   </div>
-                  <select class="clsTaskCardBackInput hidden" id="input_status_${y}" onchange="updateTaskField(${y}, 'status', this.value); toggleTaskFieldEdit(null, ${y}, 'status');" onblur="toggleTaskFieldEdit(null, ${y}, 'status');">
-                    <option value="Pending" ${x.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                    <option value="In Progress" ${x.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                    <option value="Completed" ${x.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                    <option value="Cancelled" ${x.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                  <select class="clsTaskCardBackInput hidden" id="input_status_${index}" onchange="updateTaskField(${index}, 'status', this.value); toggleTaskFieldEdit(null, ${index}, 'status');" onblur="toggleTaskFieldEdit(null, ${index}, 'status');">
+                    <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                    <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                    <option value="Cancelled" ${task.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                    <option value="Deleted" ${task.status === 'Deleted' ? 'selected' : ''}>Deleted</option>
                   </select>
                 </div>
 
-                <!-- Row 2: Created Date and Closed Date -->
+                <!-- Row 2 -->
                 <div class="clsTaskCardBackField clsTaskCardBackFieldReadOnly">
-                  <div class="clsTaskCardBackDisplay" id="display_date_captured_${y}">
-                    <span class="clsFieldLabel">Created</span> ${x.date_captured ? x.date_captured.split('T')[0] : 'Unknown'}
+                  <div class="clsTaskCardBackDisplay">
+                    <span class="clsFieldLabel">Created</span> ${createdDate}
                   </div>
                 </div>
 
-                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'date_closed')">
-                  <div class="clsTaskCardBackDisplay" id="display_date_closed_${y}">
-                    <span class="clsFieldLabel">Closed</span> ${x.date_closed ? x.date_closed.split('T')[0] : 'None'}
+                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${index}, 'priority')">
+                  <div class="clsTaskCardBackDisplay" id="display_priority_${index}">
+                    <span class="clsFieldLabel">Impact</span> ${getPriorityLabel(priority)}
                   </div>
-                  <input type="date" class="clsTaskCardBackInput hidden" id="input_date_closed_${y}" value="${x.date_closed ? x.date_closed.split('T')[0] : ''}" onchange="updateTaskField(${y}, 'date_closed', this.value); toggleTaskFieldEdit(null, ${y}, 'date_closed');" onblur="toggleTaskFieldEdit(null, ${y}, 'date_closed');">
+                  <select class="clsTaskCardBackInput hidden" id="input_priority_${index}" onchange="updateTaskField(${index}, 'priority', this.value); toggleTaskFieldEdit(null, ${index}, 'priority');" onblur="toggleTaskFieldEdit(null, ${index}, 'priority');">
+                     <option value="1" ${priority === 1 ? 'selected' : ''}>High (1)</option>
+                     <option value="2" ${priority === 2 ? 'selected' : ''}>Medium (2)</option>
+                     <option value="3" ${priority === 3 ? 'selected' : ''}>Low (3)</option>
+                     <option value="4" ${priority === 4 ? 'selected' : ''}>None (4)</option>
+                  </select>
                 </div>
 
-              </div>
+              </div> <!-- grid -->
 
-              <!-- Row 3: Tags (outside grid) and Flip Button -->
-              
+              <!-- Tags & Return -->
               <div class="clsTaskCardTagsRow">
-                <div class="clsTaskCardBackField" onclick="toggleTaskFieldEdit(event, ${y}, 'task_tag')">
-                  <div class="clsTaskCardBackDisplay" id="display_task_tag_${y}">
-                    <span class="clsFieldLabel">Tags</span> ${x.task_tag || 'None'}
-                  </div>
-                  <input type="text" class="clsTaskCardBackInput hidden" id="input_task_tag_${y}" value="${x.task_tag}" onchange="updateTaskField(${y}, 'task_tag', this.value); toggleTaskFieldEdit(null, ${y}, 'task_tag');" onblur="toggleTaskFieldEdit(null, ${y}, 'task_tag');">
-                </div>
+                 <div class="clsTaskCardBackField"> <!-- Read Only Tags -->
+                    <div class="clsTaskCardBackDisplay">
+                       <span class="clsFieldLabel">Tags</span> 
+                       ${tagsHtml || "None (Add #hashes to desc)"}
+                    </div>
+                 </div>
 
                 <div class="clsTaskCardBackFieldButton">
                   <span class="material-icons" onclick="clkFlipTaskCardToTask(this)" title="Return">keyboard_double_arrow_right</span>
                 </div>
               </div>
 
-            </div> <!-- clsTaskCardBackContainer -->
-          </div> <!-- back face clsTaskCardBack -->
-              </div>
-          </div>
-
-            `;
-    // Ensure tags are rendered as pills on initial render
-    try { updateTaskField(y, 'task_tag', x.task_tag); } catch (err) { /* ignore if DOM not ready */ }
-
-  });
-
-  // After rendering all tasks, update section previews if needed
-  try { updateAllSectionPreviews(); } catch (err) { /* ignore */ }
-
-
+            </div>
+          </div> 
+        </div> <!-- all -->
+    </div>`;
 }
 
-// Helper function to parse, lowercase, and deduplicate tags
-function parseAndDeduplicateTags(tagString) {
-  if (!tagString || tagString.trim() === '') return [];
-  return [...new Set(tagString.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag))];
+function getPriorityLabel(p) {
+  if (p === 1) return "High";
+  if (p === 2) return "Medium";
+  if (p === 3) return "Low";
+  return "Ice Box";
+}
+
+function renderTags(tags) {
+  if (!tags || !Array.isArray(tags) || tags.length === 0) return "";
+  return tags.map(tag => `<span class="clsTag" onclick="clkFilterByTag('${tag}', event)">${tag}</span>`).join('');
+}
+
+// Global Filter State
+window.currentTagFilter = null;
+
+function clkFilterByTag(tag, event) {
+  if (event) event.stopPropagation();
+
+  if (window.currentTagFilter === tag) {
+    clkClearTagFilter();
+  } else {
+    window.currentTagFilter = tag;
+    showToast(`Filtered by #${tag}`, "success");
+    updateFilterIconState();
+    createPost(); // Re-render
+  }
+}
+
+function clkClearTagFilter() {
+  window.currentTagFilter = null;
+  showToast("Filter cleared", "info");
+  updateFilterIconState();
+  createPost();
+}
+
+function updateFilterIconState() {
+  const btn = document.getElementById('btnClearFilter');
+  if (btn) {
+    btn.style.display = window.currentTagFilter ? 'inline-block' : 'none';
+  }
 }
 
 // Function to update single fields from card back
 function updateTaskField(index, field, value) {
+  // Update Data Model
   if (field.startsWith('date_') && value) {
-    // Store as ISO string
     data[index][field] = new Date(value).toISOString();
+  } else if (field === 'priority') {
+    const p = parseInt(value);
+    data[index].priority = p;
+    data[index].section = `div${p}`; // Sync section
+  } else if (field === 'status') {
+    data[index].status = value;
+    if (value === 'Deleted') {
+      data[index].deleted = true;
+    }
   } else {
     data[index][field] = value;
   }
+
   localStorage.setItem("data", JSON.stringify(data));
-
-  // Update the display text while preserving the label
-  const displayEl = document.getElementById(`display_${field}_${index}`);
-  if (displayEl) {
-    // Get or create the label span
-    let labelEl = displayEl.querySelector('.clsFieldLabel');
-
-    // Clear the display element but preserve or recreate the label
-    displayEl.innerHTML = '';
-    if (labelEl) {
-      displayEl.appendChild(labelEl);
-    } else {
-      // Recreate label if it doesn't exist
-      const newLabel = document.createElement('span');
-      newLabel.className = 'clsFieldLabel';
-      // Derive label from field name
-      const labelMap = {
-        'date_due': 'Due',
-        'status': 'Status',
-        'date_closed': 'Closed',
-        'task_tag': 'Tags'
-      };
-      newLabel.textContent = labelMap[field] || field;
-      displayEl.appendChild(newLabel);
-    }
-
-    // Render content based on field type
-    if (field === 'task_tag') {
-      // Parse, deduplicate, and render tags as pills
-      const tags = parseAndDeduplicateTags(value);
-      if (tags.length > 0) {
-        const tagsContainer = document.createElement('div');
-        tagsContainer.className = 'clsTagsContainer';
-        tags.forEach(tag => {
-          const tagPill = document.createElement('span');
-          tagPill.className = 'clsTag';
-          tagPill.textContent = tag;
-          tagPill.onclick = (e) => {
-            e.stopPropagation();
-            toggleTaskFieldEdit(null, index, 'task_tag'); // Exit pill view
-            toggleTaskFieldEdit({ type: 'click' }, index, 'task_tag'); // Enter edit mode
-          };
-          tagsContainer.appendChild(tagPill);
-        });
-        displayEl.appendChild(tagsContainer);
-      } else {
-        const noneText = document.createTextNode(' None');
-        displayEl.appendChild(noneText);
-      }
-    } else {
-      // Render text/date content as before
-      let displayText = '';
-      if (field.startsWith('date_') && value) {
-        displayText = new Date(value).toISOString().split('T')[0];
-      } else if (value) {
-        displayText = value;
-      } else {
-        displayText = 'None';
-      }
-      displayEl.appendChild(document.createTextNode(' ' + displayText));
-    }
-  }
+  createPost(); // Re-render completely to handle Move (priority change) or Tag updates
 }
+
+
 
 // Toggle between display and edit mode for task card back fields
 function toggleTaskFieldEdit(event, index, fieldName) {
@@ -1293,11 +1411,17 @@ function clkCardEditTitleOrDetail(e) {
     editTitle.setAttribute("class", "clsTaskCardTitle");
     editDetail.setAttribute("class", "clsTaskCardDetail");
 
-    data[cardID].Task_Title = editTitle.innerHTML.trim();
-    data[cardID].task_detail = editDetail.innerHTML.trim();
+    // V2 Update Logic
+    data[cardID].title = editTitle.innerHTML.trim();
+    data[cardID].description = editDetail.innerHTML.trim();
+    // Regenerate tags
+    data[cardID].tags = extractTagsFromText(data[cardID].description + " " + data[cardID].title);
 
     localStorage.setItem("data", JSON.stringify(data));
     console.log("TASKFLOW: Saved task", cardID);
+
+    // We must re-render to show updated tags/titles correctly in case of side effects
+    createPost();
 
     document.onkeydown = null;
     document.removeEventListener("click", handleClickOutside);
@@ -1351,7 +1475,7 @@ function clkToggleBackgroundAnimation() {
   ////
 
   var setJSAnimatedBackgroundOnOff = document.getElementsByTagName("Canvas")[0];
-  
+
   if (setJSAnimatedBackgroundOnOff.style.display === "none") {
 
     setJSAnimatedBackgroundOnOff.style.display = "block";  // make visible JS background
@@ -1369,7 +1493,7 @@ function clkToggleBackgroundAnimation() {
 
     document.querySelector('link[href$="shapes.css"]').remove() // remove css background
     // container.classList.add('background-enabled');
-  
+
   }
 
 };
@@ -1381,9 +1505,9 @@ function clkToggleSectionContainer() {
   var container = document.querySelector('.clsContainerAll');
 
   if (container.classList.contains('background-enabled')) {
-        container.classList.remove('background-enabled');
-    } else {
-          container.classList.add('background-enabled');
+    container.classList.remove('background-enabled');
+  } else {
+    container.classList.add('background-enabled');
   };
 
 };
@@ -1805,7 +1929,7 @@ function selectTaskForDashboard(card) {
   const detail = card.querySelector('.clsTaskCardDetail')?.textContent || 'No details provided.';
   const date = card.querySelector('.clsTaskInfo')?.textContent || '';
   const tag = card.querySelector('.clsTaskTag')?.textContent || '';
-  
+
   // Find status from the nearest section header
   const sectionHeader = card.closest('.clsDropArea')?.querySelector('.sectionHeader');
   const status = sectionHeader ? sectionHeader.textContent.trim() : 'Unknown';
@@ -1842,7 +1966,7 @@ function selectTaskForDashboard(card) {
   // 4. Edit Handler logic
   const editIcon = card.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
   const editBtn = detailPane.querySelector('.btnEditDetails');
-  
+
   if (editIcon && editBtn) {
     editBtn.onclick = () => editIcon.click();
   }
@@ -1911,10 +2035,10 @@ function addGlintOnClick() {
 
   titles.forEach(title => {
     if (!title) return;
-    title.addEventListener('click', function() {
+    title.addEventListener('click', function () {
       // Remove class first to allow re-trigger
       this.classList.remove('glint-active');
-      
+
       // Force reflow to restart animation
       void this.offsetWidth;
       this.classList.add('glint-active');

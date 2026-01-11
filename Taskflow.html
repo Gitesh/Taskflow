@@ -133,6 +133,10 @@
 
                     <span class="material-icons" title="Toggle Light/Dark Theme"
                         onclick="toggleTheme()">brightness_4</span>
+                    <span class="material-icons" id="btnClearFilter" title="Clear Tag Filter"
+                        style="display:none; color: var(--color-accent);"
+                        onclick="clkClearTagFilter()">filter_alt_off</span>
+
                     <span class="material-icons" id="btnPreviewMode" title="Toggle task preview"
                         onclick="togglePreviewMode()">view_sidebar</span>
                     <span class="material-icons" id="btnCollapseAll" title="Collapse/Expand all sections"
@@ -183,7 +187,7 @@
                 <p></p>
                 <span class="material-icons" onclick="clkFlipToCountDownTimer()"
                     title="Return">keyboard_double_arrow_left</span>
-                
+
             </div><!--end div clsContainterBack-->
 
         </div><!--end div clsContainerAll-->
@@ -194,6 +198,7 @@
 
 
     <script src="taskflow.js"> </script>
+    <script src="testing/test_runner.js"></script>
     <script src="animated_background/ribbons.js"></script>
     <script> clkToggleBackgroundAnimation()</script> <!--Turn off animated background-->
 
