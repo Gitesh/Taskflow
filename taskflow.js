@@ -384,6 +384,12 @@ function setView(viewName) {
   updateViewIconState(viewName);
 
   showToast(`Switched to ${viewName.replace('view-', '')} view`, 'success');
+
+  //Simmer logo on view refresh
+  document.getElementById('idTaskflowAppTitle').click();
+  setTimeout(() => {
+    document.getElementById('idTaskflowTodaySubTitle').click();
+  }, 500);
 }
 
 function updateViewIconState(activeView) {
@@ -417,10 +423,6 @@ function toggleTheme() {
   const savedTheme = localStorage.getItem('theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
 })();
-
-
-
-
 
 
 
@@ -480,12 +482,12 @@ function showToast(message, type = 'info') {
     timeoutId = setTimeout(() => {
       toast.classList.remove('show');
       toast.classList.add('hide');
-      setTimeout(() => toast.remove(), 300);
+      setTimeout(() => toast.remove(), 500);
     }, remainingTime);
 
-    // Flashing threshold (at 50% of total duration)
-    // If we haven't reached the 50% mark yet, schedule it
-    const finishThreshold = duration * 0.5;
+    // Flashing threshold (at 30% of total duration)
+    // If we haven't reached the 30% mark yet, schedule it
+    const finishThreshold = duration * 0.3;
     if (!isEnding && remainingTime > finishThreshold) {
       flashTimeoutId = setTimeout(() => {
         isEnding = true;
@@ -620,7 +622,6 @@ let settings = {
   }
 };
 
-//create a function called accept data to store the input in the object named data
 //create a function called accept data to store the input in the object named data
 let acceptData = () => {
 
@@ -1440,12 +1441,10 @@ function clkCardEditTitleOrDetail(e) {
   }, 0);
 }
 
-
+////
+// Toggle JS and CSS background
+////
 function clkToggleBackgroundAnimation() {
-
-  ////
-  // Toggle JS and CSS background
-  ////
 
   var setJSAnimatedBackgroundOnOff = document.getElementsByTagName("Canvas")[0];
 
@@ -1680,11 +1679,6 @@ function convertCSVtoJSON(uploadedCSV) {
   const output = [];
 
   for (let i = 1; i < lines.length; i++) {
-    // Regex to split by comma but ignore commas inside quotes
-    // const values = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-    // Fallback if regex fails or simple split needed? No, regex is better for quoted CSV.
-    // Actually, simple regex might miss empty fields. Let's use a robust parser loop.
-
     const rowValues = [];
     let currentVal = '';
     let inQuote = false;
@@ -1717,13 +1711,6 @@ function convertCSVtoJSON(uploadedCSV) {
     for (let k = 0; k < headers.length; k++) {
       let key = headers[k];
       let value = cleanValues[k] || '';
-
-      // Handle arrays (semicolon separated)
-      // Check if it looks like an array we exported? 
-      // We can't know for sure without schema, but for 'subtasks' or tags we might guess.
-      // For now, keep as string unless it clearly contains semicolons? 
-      // User only asked to use semicolons as separators.
-
       obj[key] = value;
     }
 
@@ -1744,56 +1731,6 @@ function convertCSVtoJSON(uploadedCSV) {
 
   return output;
 }
-
-
-
-
-
-// // convert CSV to JSON REPLACED 2025-07-08
-// function clkExportTasksToLocalFile() {
-//   console.log("CLICKED stub for saving tasks");
-
-//   // Use first element to choose the keys and the order
-//   var keys = Object.keys(data[0]);
-
-//   // Build header
-//   var csvContent = keys.map(escapeCsvValue).join(",") + "\n";
-
-//   // Add the rows
-//   data.forEach(function (obj) {
-//     csvContent += keys.map(key => escapeCsvValue(obj[key])).join(",") + "\n";
-//   });
-
-//   console.log(csvContent);
-
-//   //Download the <timestamp>Taskflow.csv file
-//   var hiddenElement = document.createElement('a');
-//   hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-//   hiddenElement.target = '_blank';
-
-//   //provide the name for the CSV file to be downloaded
-//   hiddenElement.download = Date.now() + 'Taskflow.csv';
-//   hiddenElement.click();
-
-//   // Helper function to escape values for CSV
-//   function escapeCsvValue(value) {
-//     if (value === null || value === undefined) {
-//       return '';
-//     }
-//     let stringValue = String(value);
-//     // Check if the value contains a comma, double quote, or newline
-//     if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-//       // Escape double quotes by replacing them with two double quotes
-//       stringValue = stringValue.replace(/"/g, '""');
-//       // Enclose the value in double quotes
-//       return `"${stringValue}"`;
-//     } else {
-//       return stringValue;
-//     }
-//   }
-// }
-
-
 
 
 
@@ -1832,79 +1769,9 @@ function clkPlayAudio(sound) {
     strChildElement.style.color = "grey";
 
     //  console.log("Taskflow child:", strChildElement);
-
-
-
-
-
-
   }
 
 };
-
-// Old function to be removed after testing
-// /**
-//  * Updates the dashboard detail pane with task information.
-//  * @deprecated 2026-01-05 Use updated selectTaskForDashboard function for security and maintainability.
-//  */
-
-// function selectTaskForDashboard(card) {
-//   // Only active in dashboard view
-//   if (!document.body.classList.contains('view-dashboard')) return;
-
-//   const detailPane = document.getElementById('idDetailPane');
-//   if (!detailPane) return;
-
-//   // Clear previous content
-//   detailPane.innerHTML = '';
-
-//   const title = card.querySelector('.clsTaskCardTitle').textContent;
-
-//   // Safe text content retrieval
-//   const detailEl = card.querySelector('.clsTaskCardDetail');
-//   const detail = detailEl ? detailEl.textContent : '';
-
-//   const dateEl = card.querySelector('.clsTaskInfo');
-//   const date = dateEl ? dateEl.textContent : '';
-
-//   const tagEl = card.querySelector('.clsTaskTag');
-//   const tag = tagEl ? tagEl.textContent : '';
-
-//   const sectionHeader = card.closest('.clsDropArea').querySelector('.sectionHeader');
-//   const status = sectionHeader ? sectionHeader.textContent.trim() : 'Unknown';
-
-//   // Highlight active card
-//   document.querySelectorAll('.clsTaskCardWrapper.active').forEach(el => el.classList.remove('active'));
-//   card.closest('.clsTaskCardWrapper').classList.add('active');
-
-//   // Build Detail Pane Content
-//   const html = `
-//     <h3>${title}</h3>
-//     <div style="margin-bottom: 20px;">
-//         <span class="clsTaskTag" style="font-size: 1.1em">${tag}</span>
-//         <span style="float: right; color: var(--color-text-secondary)">${date}</span>
-//     </div>
-//     <div style="background: var(--color-bg-container); padding: 15px; border-radius: var(--radius-md); min-height: 200px;">
-//         <p style="white-space: pre-wrap;">${detail || 'No details provided.'}</p>
-//     </div>
-//     <br>
-//     <p><strong>Status:</strong> ${status}</p>
-//     <div style="margin-top: 20px; text-align: right;">
-//          <button class="btnEditDetails" style="cursor:pointer; padding: 8px 16px; border: none; background: var(--color-primary); color: white; border-radius: 4px;">Edit Task</button>
-//     </div>
-//   `;
-
-//   detailPane.innerHTML = html;
-
-//   // Attach edit handler
-//   const editIcon = card.querySelector('.clsTaskCardHoverIcons i[title="Edit details"]');
-//   if (editIcon) {
-//     const btn = detailPane.querySelector('.btnEditDetails');
-//     if (btn) btn.onclick = function () {
-//       editIcon.click();
-//     };
-//   }
-// }
 
 
 ////
@@ -2015,3 +1882,5 @@ function addGlintOnClick() {
 
 // Call it on load
 addGlintOnClick();
+document.getElementById('idTaskflowAppTitle').click();
+document.getElementById('idTaskflowTodaySubTitle').click();
