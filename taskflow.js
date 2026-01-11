@@ -669,8 +669,12 @@ let createPost = () => {
     // Skip deleted tasks
     if (task.deleted) return;
 
-    // Filter logic (simple tag filter hook)
-    if (window.currentTagFilter && (!task.tags || !task.tags.includes(window.currentTagFilter))) return;
+    // Filter logic (AND: Must have ALL selected tags)
+    if (window.currentTagFilters.size > 0) {
+      if (!task.tags || task.tags.length === 0) return;
+      const hasAllTags = Array.from(window.currentTagFilters).every(filterTag => task.tags.includes(filterTag));
+      if (!hasAllTags) return;
+    }
 
     // Determine target
     let targetId = task.section ? task.section.replace("div", "dropbox") : "dropbox4";
@@ -794,28 +798,34 @@ function getPriorityLabel(p) {
 
 function renderTags(tags) {
   if (!tags || !Array.isArray(tags) || tags.length === 0) return "";
-  return tags.map(tag => `<span class="clsTag" onclick="clkFilterByTag('${tag}', event)">${tag}</span>`).join('');
+  return tags.map(tag => {
+    const isActive = window.currentTagFilters.has(tag) ? 'active' : '';
+    return `<span class="clsTag ${isActive}" onclick="clkFilterByTag('${tag}', event)">${tag}</span>`;
+  }).join('');
 }
 
-// Global Filter State
-window.currentTagFilter = null;
+// Global Filter State (Set of strings)
+window.currentTagFilters = new Set();
 
 function clkFilterByTag(tag, event) {
   if (event) event.stopPropagation();
 
-  if (window.currentTagFilter === tag) {
-    clkClearTagFilter();
+  // Toggle logic
+  if (window.currentTagFilters.has(tag)) {
+    window.currentTagFilters.delete(tag);
+    showToast(`Filter removed: #${tag}`, "info");
   } else {
-    window.currentTagFilter = tag;
-    showToast(`Filtered by #${tag}`, "success");
-    updateFilterIconState();
-    createPost(); // Re-render
+    window.currentTagFilters.add(tag);
+    showToast(`Filter added: #${tag}`, "success");
   }
+
+  updateFilterIconState();
+  createPost(); // Re-render
 }
 
 function clkClearTagFilter() {
-  window.currentTagFilter = null;
-  showToast("Filter cleared", "info");
+  window.currentTagFilters.clear();
+  showToast("Filters cleared", "info");
   updateFilterIconState();
   createPost();
 }
@@ -823,7 +833,7 @@ function clkClearTagFilter() {
 function updateFilterIconState() {
   const btn = document.getElementById('btnClearFilter');
   if (btn) {
-    btn.style.display = window.currentTagFilter ? 'inline-block' : 'none';
+    btn.style.display = window.currentTagFilters.size > 0 ? 'inline-block' : 'none';
   }
 }
 

@@ -38,6 +38,7 @@
   --color-bg-card: #ffffff;
   --color-bg-card-hover: #efefef;
   --color-bg-card-back: #f2dfce;
+
   /* card back border / hover tokens */
   --color-bg-card-back-border: #ffffff;
   --color-bg-card-back-hover: #f2dfce;
@@ -46,6 +47,7 @@
 
   /* colors for content on the card back */
   --color-text-on-card-back: #ffffff;
+
   /* input tokens */
   --color-input-bg: #ffffff;
   --color-input-text: #333333;
@@ -57,6 +59,9 @@
   --color-tag-bg: rgba(232, 0, 78, 0.12);
   --color-tag-text: rgb(81, 29, 47);
   --color-tag-bg-hover: rgba(232, 0, 78, 0.25);
+
+  --color-tag-bg-active: rgb(232, 0, 78);
+  --color-tag-text-active: #ffffff;
 
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
@@ -401,9 +406,12 @@ body.view-dashboard {
   background: var(--color-accent);
 }
 
-span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
-  position: relative; /* Takes the element out of normal flow */
-  top: -2.5vh;       /* Moves it 20px up from its normal position (or parent's top if parent is relative) */
+span#idTaskflowAppTitle,
+span#idTaskflowTodaySubTitle {
+  position: relative;
+  /* Takes the element out of normal flow */
+  top: -2.5vh;
+  /* Moves it 20px up from its normal position (or parent's top if parent is relative) */
   /* left: revert-layer;        Positions it horizontally at 50% of the parent */
   /* transform: translateX(-50%); Centers it horizontally */
   /* z-index: 10;      Ensures it appears above other content */
@@ -418,12 +426,14 @@ span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
 #idTaskflowAppTitle,
 #idTaskflowTodaySubTitle {
   font-weight: bold;
-  color: #ccc; /* Base metallic color */
-  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  color: #ccc;
+  /* Base metallic color */
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
   display: inline-block;
-  cursor: pointer; /* Optional: Hint it's clickable */
+  cursor: pointer;
+  /* Optional: Hint it's clickable */
 }
 
 #idTaskflowAppTitle::before,
@@ -431,27 +441,35 @@ span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
   content: '';
   position: absolute;
   top: 0;
-  left: -150%; /* Start off-screen */
+  left: -150%;
+  /* Start off-screen */
   width: 100%;
   height: 100%;
-  background: linear-gradient(120deg, 
-    transparent 0%, transparent 40%, 
-    rgba(255,255,255,0.9) 50%, 
-    transparent 60%, transparent 100%);
+  background: linear-gradient(120deg,
+      transparent 0%, transparent 40%,
+      rgba(255, 255, 255, 0.9) 50%,
+      transparent 60%, transparent 100%);
   opacity: 0;
-  transition: opacity 0.2s ease; /* Smooth fade-in */
-  
+  transition: opacity 0.2s ease;
+  /* Smooth fade-in */
+
 }
 
 #idTaskflowAppTitle.glint-active::before,
 #idTaskflowTodaySubTitle.glint-active::before {
   opacity: 1;
-  animation: glint-sweep 1s ease-out forwards; /* Trigger animation here */
+  animation: glint-sweep 1s ease-out forwards;
+  /* Trigger animation here */
 }
 
 @keyframes glint-sweep {
-  from { left: -150%; }
-  to { left: 150%; }
+  from {
+    left: -150%;
+  }
+
+  to {
+    left: 150%;
+  }
 }
 
 /* x4 drop areas */
@@ -665,23 +683,23 @@ span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
 /* FLIP whole container */
 
 /* .clsContainerAll.is-flipped { */
-  /* Only the inner container should perform the 3D rotation */
-  /* transform: translateX(-100%) rotateY(-180deg); */
-  /* background: none; */
- 
+/* Only the inner container should perform the 3D rotation */
+/* transform: translateX(-100%) rotateY(-180deg); */
+/* background: none; */
+
 /* } */
 
 
 
 /* Force narrow, centered timer when flipped — regardless of current view */
 .clsContainerAll.is-flipped {
-    max-width: 500px !important;
+  max-width: 500px !important;
   width: 90% !important;
   margin: 0 auto !important;
   transform: translateX(-100%) rotateY(-180deg);
   transition: max-width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-              width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-              margin 0.6s ease;
+    width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+    margin 0.6s ease;
   background: none;
 }
 
@@ -695,16 +713,16 @@ span#idTaskflowAppTitle, span#idTaskflowTodaySubTitle{
   height: auto !important;
   margin: 0 auto !important;
   overflow: visible !important;
-  
+
   /* Prevent clipping of 3D rotation during transition */
   /* Ensure it stays centered during the resize transition */
-  
+
 }
 
 .clsContainerAll.is-flipped .clsContainerFront {
   visibility: hidden;
   position: absolute;
- 
+
 }
 
 .clsContainerAll.is-flipped .clsContainerBack {
@@ -925,9 +943,9 @@ i.material-icons {
 }
 
 /* @keyframes backgroundAnimation { */
-  /* Define your animation here */
-  /* 0% { background-position: 0 0; } */
-  /* 100% { background-position: 100% 0; } */
+/* Define your animation here */
+/* 0% { background-position: 0 0; } */
+/* 100% { background-position: 100% 0; } */
 /* } */
 
 
@@ -948,7 +966,7 @@ i.material-icons {
 .clsContainerAll.is-flipped .clsPomodoroContainer {
   height: 599px;
   overflow: hidden;
-  
+
 }
 
 /*----------------*/
@@ -1016,7 +1034,7 @@ input:hover {
 
 #toast-container {
   position: fixed;
-  bottom: 150px;
+  top: 50px;
   /* right: 20px; */
   z-index: 10000;
   /* Ensure it stays above everything */
@@ -1688,7 +1706,7 @@ input:hover {
   display: inline-block;
   background-color: var(--color-tag-bg);
   color: var(--color-tag-text);
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 16px;
   font-size: 11px;
   font-weight: bold;
@@ -1698,6 +1716,7 @@ input:hover {
   user-select: none;
   transition: background-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
+  margin: 1px 1px;
 }
 
 .clsTag:hover {
@@ -1705,6 +1724,11 @@ input:hover {
   color: var(--color-text-on-card-back);
 }
 
+.clsTag.active {
+  background-color: var(--color-tag-bg-active);
+  color: var(--color-tag-text-active);
+  font-weight: bold;
+}
 
 
 /* 2025-12-28 - Theme-aware 3D Dragging Cues */
@@ -2049,23 +2073,24 @@ input:hover {
     width: 95vw;
     max-height: 90vh;
   }
-  
+
   .tag-cloud-header {
     flex-direction: column;
     gap: 10px;
     align-items: stretch;
   }
-  
+
   .tag-cloud-controls {
     justify-content: center;
   }
-  
+
   .tag-cloud-body {
     padding: 15px;
   }
-  
+
   .tag-cloud-tag {
-    font-size: 14px !important; /* Override dynamic sizing on mobile */
+    font-size: 14px !important;
+    /* Override dynamic sizing on mobile */
   }
 }
 
@@ -2112,5 +2137,3 @@ input:hover {
 [data-theme="dark"] .tag-cloud-footer {
   background: #333;
 }
-
-
