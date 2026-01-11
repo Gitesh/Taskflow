@@ -961,8 +961,6 @@ function clkFlipTaskCardToTask(e) {
 // Flip container
 //
 ////////
-
-
 function clkFlipToCountDownTimer() {
   const containerAll = document.getElementById("idContainerAll");
   containerAll.classList.toggle("is-flipped");
@@ -978,9 +976,6 @@ function clkFlipToCountDownTimer() {
   console.log("TASKFLOW: clkFlipToCountDownTimer");
 }
 
-
-
-//immediately invoked function expression to reload tasks
 
 //immediately invoked function expression to reload tasks
 (() => {
@@ -1978,33 +1973,6 @@ if (taskListContainer) {
 }
 
 
-
-
-
-//-------------------------------------------------------------------------
-// DOCUMENTATION
-//-------------------------------------------------------------------------
-
-// Fieldnames
-//        - Task_Title = captures the OUTCOME you want to achieve from completing a task
-//        - task_detail = captures the NEXT realistic step in the task
-//        - date_due = when you need to DELETE it by
-//        - date_captured = auto populated at date of task creation, used for analytics
-//        - task_tag = this is the PROJECT label, used to filter all tasks by project
-
-
-// Source credits
-// [audio loops] https://joeweaver.me/codepenassets/freecodecamp/challenges/build-a-pomodoro-clock/
-
-
-// Variables and Constants
-
-// JS Functions
-
-
-// CSS
-
-
 //-------------------------------------------------------------------------
 // TITLE TILT AND GLINT ANIMATION
 //-------------------------------------------------------------------------
@@ -2033,5 +2001,3 @@ function addGlintOnClick() {
 
 // Call it on load
 addGlintOnClick();
-
-
