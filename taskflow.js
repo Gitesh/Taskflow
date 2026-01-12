@@ -737,6 +737,7 @@ function renderTaskCard(task, index) {
             <span class="clsTaskCardHoverIcons">
               <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i>
               <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
+              <i onclick="clkOpenTaskNotes(${index})" title="Task notes (Markdown)" class="material-icons">description</i>
               <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
             </span>
             
