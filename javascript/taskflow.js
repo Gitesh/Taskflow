@@ -1589,6 +1589,8 @@ function clkExportTasksToJSON() {
   showToast("Tasks exported to JSON successfully!", "success");
 }
 
+/* Note: Notes logic moved to notes_editor.js */
+
 
 
 

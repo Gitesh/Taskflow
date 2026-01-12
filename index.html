@@ -95,7 +95,7 @@
 
                 <div id="divIconBar">
 
-                    <!-- View Switcher -->
+                    <!-- Start View Switcher -->
                     <span class="material-icons" title="Standard View"
                         onclick="setView('view-standard')">view_stream</span>
                     <span class="material-icons" title="Kanban View" onclick="setView('view-kanban')">view_week</span>
@@ -103,9 +103,13 @@
                         onclick="setView('view-matrix')">grid_view</span>
                     <span class="material-icons" title="Dashboard View"
                         onclick="setView('view-dashboard')">space_dashboard</span>
+                    <span class="material-icons" title="Focus timer"
+                        onclick="clkFlipToCountDownTimer()">hourglass_top</span>
+                    <!-- End View Switcher -->
 
                     <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
+                    <!-- Start Import or Export CSV / JSON -->
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
@@ -115,14 +119,16 @@
                     </span>
 
                     <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
+                    <!-- End Import or Export CSV / JSON -->
 
                     <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
+                    <!-- Start Settings Toggles -->
                     <span class="material-icons" title="Toggle background animation"
                         onclick="clkToggleBackgroundAnimation()">animation</span>
 
-                    <span class="material-icons" title="Start countdown timer"
-                        onclick="clkFlipToCountDownTimer()">hourglass_top</span>
+                    <span class="material-icons" title="Toggle section dividers"
+                        onclick="clkToggleSectionContainer()">list_alt</span>
 
                     <span class="material-icons" title="Show pending tasks"
                         onclick="clkFilterPendingTasks()">pending_actions</span>
@@ -131,20 +137,26 @@
 
                     <span class="material-icons" title="Toggle Light/Dark Theme"
                         onclick="toggleTheme()">brightness_4</span>
+
                     <span class="material-icons" id="btnToggleTags" title="Toggle Tag Visibility"
                         onclick="clkToggleTagVisibility()">local_offer</span>
+
+                    <span class="material-icons" id="btnClearFilter" title="Clear Tag Filter"
+                        style="display:none; color: var(--color-accent);"
+                        onclick="clkClearTagFilter()">filter_alt_off</span>
+
                     <span class="material-icons" id="btnPreviewMode" title="Toggle task preview"
                         onclick="togglePreviewMode()">view_sidebar</span>
+
                     <span class="material-icons" id="btnCollapseAll" title="Collapse/Expand all sections"
                         onclick="toggleCollapseAll()">expand_less</span>
+
+                    <!-- End Settings Toggles -->
 
                 </div> <!-- end div icon bar -->
 
 
             </div><!--end div clsContainterFront-->
-
-            <br>
-
 
             <!--this is the back of the container where the pomodoro timer and audio icons are-->
 
@@ -152,14 +164,14 @@
 
                 <!-- START POMODORO -->
                 <div class="clsPomodoroContainer">
-                    <!-- <object type="text/html" data="pomodoro/pomodoro.html" width="100%" height="90%"></object> -->
                     <object type="text/html" data="pomodoro/pomodoro_scratch.html" width="100%" height="100%"></object>
+                    <!-- <object type="text/html" data="pomodoro/pomodoro2.html" width="100%" height="100%"></object> -->
                 </div>
                 <!-- END POMODORO -->
 
 
                 <!-- START ICONS TO PLAY AUDIO LOOPS -->
-                <span clsAudioIconsBar>
+                <span class="clsAudioIconsBar">
                     <audio id="forest" src="audio_loops/forest.mp3" preload="true" type="audio/mpeg" loop></audio>
                     <span class="material-icons" title="Outdoors - creative space"
                         onclick="clkPlayAudio('forest')">forest</span>
@@ -183,22 +195,27 @@
                         onclick="clkPlayAudio('local_cafe')">local_cafe</span>
                 </span>
                 <!-- END ICONS TO PLAY AUDIO LOOPS -->
+                <p></p>
                 <span class="material-icons" onclick="clkFlipToCountDownTimer()"
                     title="Return">keyboard_double_arrow_left</span>
-
 
             </div><!--end div clsContainterBack-->
 
         </div><!--end div clsContainerAll-->
 
         <!--version-->
-        <p class="clsVersionText">V2025-12-27_2218</p>
+        <p class="clsVersionText">V2026-01-02_2358</p>
     </section>
 
 
-    <script src="taskflow.js"> </script>
+    <script src="javascript/taskflow.js"> </script>
+    <script src="javascript/notes_editor.js"></script>
+    <script src="testing/test_runner.js"></script>
     <script src="animated_background/ribbons.js"></script>
     <script> clkToggleBackgroundAnimation()</script> <!--Turn off animated background-->
+    <script> addGlintOnClick();</script> <!--Turn on glint animation-->
+    <script> document.getElementById('idTaskflowAppTitle').click();</script>
+    <script> document.getElementById('idTaskflowTodaySubTitle').click();</script>
 
 
 </body>
