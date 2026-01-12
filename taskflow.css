@@ -785,10 +785,27 @@ span#idTaskflowTodaySubTitle {
   height: 100%;
 }
 
+
+/* flib back from pomodoro animation */
 .clsContainerAll {
   width: 100%;
   height: 100%;
-  transition: transform 1.0s cubic-bezier(0.25, 1, 0.5, 1);
+
+  /* transition: transform 1.0s cubic-bezier(0.25, 1, 0.5, 1); */
+
+
+  /* The spring look*/
+  /* transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.7s cubic-bezier(0.22, 1, 0.36, 1); */
+
+  /* Duration: 0.8s for a snappy but smooth feel */
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Duration: 0.9s anticipation overshoot*/
+  /* transition: transform 0.9s cubic-bezier(0.68, -0.6, 0.32, 1.6),
+    height 0.9s cubic-bezier(0.68, -0.6, 0.32, 1.6); */
+
   perspective: 333px;
   transform-style: preserve-3d;
   transform-origin: center right;
