@@ -430,9 +430,9 @@ function toggleTheme() {
 
 // Toast Notification Function
 function showToast(message, type = 'info') {
-  // Check if a modal dialog is open (dialogs use 'top layer' which obscures body-level fixed elements)
-  const activeModal = document.querySelector('dialog[open]');
-  const parentElement = activeModal || document.body;
+  // Check for open modals to append to (ensures visibility in Top Layer)
+  const openModals = Array.from(document.querySelectorAll('dialog[open]'));
+  const parentElement = openModals.length > 0 ? openModals[openModals.length - 1] : document.body;
 
   let container = parentElement.querySelector(':scope > #toast-container');
 

@@ -2,6 +2,61 @@
 /* Task Notes & Markdown Support */
 /*==================================*/
 
+// --- IndexedDB for Images ---
+const IMAGE_DB_NAME = 'TaskflowImages';
+const IMAGE_STORE_NAME = 'images';
+let imageDB = null;
+
+function initImageDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(IMAGE_DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
+                db.createObjectStore(IMAGE_STORE_NAME);
+            }
+        };
+        request.onsuccess = (e) => {
+            imageDB = e.target.result;
+            resolve(imageDB);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function saveImageToDB(id, blob) {
+    return new Promise((resolve, reject) => {
+        const transaction = imageDB.transaction([IMAGE_STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(IMAGE_STORE_NAME);
+        const request = store.put(blob, id);
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function getImageFromDB(id) {
+    return new Promise((resolve, reject) => {
+        const transaction = imageDB.transaction([IMAGE_STORE_NAME], 'readonly');
+        const store = transaction.objectStore(IMAGE_STORE_NAME);
+        const request = store.get(id);
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// Global fullscreen viewer
+window.openFullscreenImage = (src) => {
+    let overlay = document.getElementById('image-fullscreen-overlay');
+    if (!overlay) {
+        overlay = document.createElement('dialog');
+        overlay.id = 'image-fullscreen-overlay';
+        overlay.onclick = () => overlay.close();
+        document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `<img src="${src}">`;
+    overlay.showModal();
+};
+
 function clkOpenTaskNotes(index) {
     const task = data[index];
     if (!task) return;
@@ -73,6 +128,9 @@ function clkOpenTaskNotes(index) {
   `;
 
     myDialog.showModal();
+    initImageDB().then(() => {
+        updatePreview();
+    });
 
     const textarea = document.getElementById("idNotesTextarea");
     const preview = document.getElementById("idNotesPreview");
@@ -80,10 +138,23 @@ function clkOpenTaskNotes(index) {
     const panePreview = document.getElementById("panePreview");
 
     // Stable Render Function
-    const updatePreview = () => {
+    const updatePreview = async () => {
         const scrollPos = preview.scrollTop;
         preview.innerHTML = parseMarkdown(textarea.value);
         preview.scrollTop = scrollPos;
+        await resolveImages();
+    };
+
+    // New: resolve tf-img:// references
+    const resolveImages = async () => {
+        const images = preview.querySelectorAll('img[data-img-id]');
+        for (const img of images) {
+            const id = img.getAttribute('data-img-id');
+            const blob = await getImageFromDB(id);
+            if (blob) {
+                img.src = URL.createObjectURL(blob);
+            }
+        }
     };
 
     // View Toggles
@@ -109,6 +180,30 @@ function clkOpenTaskNotes(index) {
 
     // Input sync
     textarea.addEventListener("input", updatePreview);
+
+    // Paste handler for screenshots
+    const handlePaste = async (e) => {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (const item of items) {
+            if (item.type.indexOf("image") !== -1) {
+                const blob = item.getAsFile();
+                const id = 'img_' + Date.now();
+                await saveImageToDB(id, blob);
+
+                const mdRef = `![screenshot](tf-img://${id})`;
+                if (lastActiveElement === textarea) {
+                    insertMarkdown(mdRef, "");
+                } else {
+                    // Preview pane paste
+                    document.execCommand('insertText', false, mdRef);
+                }
+                updatePreview();
+            }
+        }
+    };
+
+    textarea.addEventListener("paste", handlePaste);
+    preview.addEventListener("paste", handlePaste);
 
     // Track which pane was last interacted with
     let lastActiveElement = textarea;
@@ -304,6 +399,7 @@ function clkOpenTaskNotes(index) {
                 .replace(/<strike>(.*?)<\/strike>/gi, '~~$1~~')
                 .replace(/<s>(.*?)<\/s>/gi, '~~$1~~')
                 .replace(/<code>(.*?)<\/code>/gi, '`$1`')
+                .replace(/<img.*?data-img-id="(.*?)".*?>/gi, '![screenshot](tf-img://$1)')
                 .replace(/<a.*?href="(.*?)".*?>(.*?)<\/a>/gi, '[$2]($1)')
                 .replace(/&nbsp;/g, ' ')
                 .replace(/<br>/gi, '')
@@ -425,6 +521,7 @@ function parseMarkdown(text) {
             .replace(/-f-/gi, '<span class="note-tag finding" contenteditable="false" onclick="clkNoteTag(\'finding\')">finding</span>')
             .replace(/-d-/gi, '<span class="note-tag documentation" contenteditable="false" onclick="clkNoteTag(\'documentation\')">documentation</span>')
             .replace(/-q-/gi, '<span class="note-tag question" contenteditable="false" onclick="clkNoteTag(\'question\')">question</span>')
+            .replace(/!\[(.*?)\]\(tf-img:\/\/(.*?)\)/g, '<img class="pasted-image" alt="$1" data-img-id="$2" onclick="openFullscreenImage(this.src)">')
             .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
             .replace(/(^|[^"'])(https?:\/\/[^\s\)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
     };
