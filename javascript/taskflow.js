@@ -1560,9 +1560,9 @@ function clkExportTasksToLocalFile() {
   showToast("Tasks exported successfully!", "success");
 };
 
-function clkExportTasksToJSON() {
+async function clkExportTasksToJSON() {
   console.log("Exporting tasks from localStorage to JSON");
-  showToast("Exporting tasks from localStorage to JSON file", "info");
+  showToast("Preparing full backup (including images)...", "info");
 
   var exportData = JSON.parse(localStorage.getItem("data")) || [];
   var exportSettings = JSON.parse(localStorage.getItem("settings")) || {};
@@ -1572,14 +1572,29 @@ function clkExportTasksToJSON() {
     return;
   }
 
+  // Fetch images from IndexedDB
+  let imageBackup = {};
+  if (typeof getAllImagesFromDB === 'function') {
+    try {
+      const images = await getAllImagesFromDB();
+      for (const id in images) {
+        imageBackup[id] = await blobToBase64(images[id]);
+      }
+    } catch (err) {
+      console.error("Failed to export images:", err);
+      showToast("Warning: Some images could not be backed up", "warning");
+    }
+  }
+
   // Create full state object
   var fullState = {
     meta: {
-      version: "2.0",
+      version: "2.1", // Bumped version for image support
       exported_at: new Date().toISOString()
     },
     settings: exportSettings,
-    tasks: exportData
+    tasks: exportData,
+    images: imageBackup
   };
 
   var jsonContent = JSON.stringify(fullState, null, 2);
@@ -1588,9 +1603,9 @@ function clkExportTasksToJSON() {
   hiddenElement.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonContent);
   hiddenElement.target = '_blank';
 
-  hiddenElement.download = Date.now() + '_Taskflow.json';
+  hiddenElement.download = Date.now() + '_Taskflow_Backup.json';
   hiddenElement.click();
-  showToast("Tasks exported to JSON successfully!", "success");
+  showToast("Full backup exported successfully!", "success");
 }
 
 /* Note: Notes logic moved to notes_editor.js */
@@ -1639,12 +1654,29 @@ function clkUploadTasksToLocalStorage() {
       try {
         let json = JSON.parse(content);
 
-        // Handle New Format (Object with tasks/settings)
+        // Handle New Format (Object with tasks/settings/images)
         if (json.tasks && Array.isArray(json.tasks)) {
           localStorage.setItem("data", JSON.stringify(json.tasks));
 
           if (json.settings) {
             localStorage.setItem("settings", JSON.stringify(json.settings));
+          }
+
+          // Restore images to IndexedDB
+          if (json.images && typeof initImageDB === 'function') {
+            initImageDB().then(async () => {
+              for (const id in json.images) {
+                try {
+                  const blob = await fetch(json.images[id]).then(res => res.blob());
+                  await saveImageToDB(id, blob);
+                } catch (err) {
+                  console.error("Failed to restore image:", id, err);
+                }
+              }
+              showToast("Imported Full State (with images) successfully", "success");
+              setTimeout(() => document.location.reload(), 1000);
+            });
+            return; // Exit here as reload happens in then()
           }
 
           showToast("Imported Full State successfully", "success");

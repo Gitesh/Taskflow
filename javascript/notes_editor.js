@@ -7,6 +7,15 @@ const IMAGE_DB_NAME = 'TaskflowImages';
 const IMAGE_STORE_NAME = 'images';
 let imageDB = null;
 
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // This is a data URL
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
 function initImageDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(IMAGE_DB_NAME, 1);
@@ -41,6 +50,36 @@ function getImageFromDB(id) {
         const request = store.get(id);
         request.onsuccess = (e) => resolve(e.target.result);
         request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function getAllImagesFromDB() {
+    return new Promise((resolve, reject) => {
+        if (!imageDB) {
+            initImageDB().then(() => doWork()).catch(reject);
+        } else {
+            doWork();
+        }
+
+        function doWork() {
+            const transaction = imageDB.transaction([IMAGE_STORE_NAME], 'readonly');
+            const store = transaction.objectStore(IMAGE_STORE_NAME);
+            const request = store.getAll();
+            const keyRequest = store.getAllKeys();
+
+            let images = {};
+            request.onsuccess = () => {
+                keyRequest.onsuccess = () => {
+                    const keys = keyRequest.result;
+                    const values = request.result;
+                    keys.forEach((key, i) => {
+                        images[key] = values[i];
+                    });
+                    resolve(images);
+                };
+            };
+            request.onerror = (e) => reject(e.target.error);
+        }
     });
 }
 
