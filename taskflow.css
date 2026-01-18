@@ -2523,6 +2523,42 @@ body.hide-tags .clsFrontTags {
   list-style-type: disc;
 }
 
+#idNotesPreview code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+}
+
+#idNotesPreview a {
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--color-accent);
+  transition: all 0.2s ease;
+}
+
+#idNotesPreview a:hover {
+  border-bottom-style: solid;
+  opacity: 0.8;
+}
+
+/* Edit in Preview Cues */
+#idNotesPreview [contenteditable="true"] {
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+#idNotesPreview [contenteditable="true"]:hover {
+  background-color: rgba(232, 0, 78, 0.05);
+  cursor: text;
+}
+
+#idNotesPreview [contenteditable="true"]:focus {
+  background-color: rgba(232, 0, 78, 0.08);
+  box-shadow: inset 2px 0 0 var(--color-accent);
+}
+
 #idNotesPreview li.is-task {
   list-style-type: none;
   margin-left: -20px;
