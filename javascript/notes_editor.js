@@ -201,7 +201,11 @@ function parseMarkdown(text) {
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/\[ \]/g, '<input type="checkbox">')
-            .replace(/\[x\]/g, '<input type="checkbox" checked>');
+            .replace(/\[x\]/g, '<input type="checkbox" checked>')
+            .replace(/-a-/gi, '<span class="note-tag action" onclick="clkNoteTag(\'action\')">action</span>')
+            .replace(/-f-/gi, '<span class="note-tag finding" onclick="clkNoteTag(\'finding\')">finding</span>')
+            .replace(/-d-/gi, '<span class="note-tag documentation" onclick="clkNoteTag(\'documentation\')">documentation</span>')
+            .replace(/-q-/gi, '<span class="note-tag question" onclick="clkNoteTag(\'question\')">question</span>');
     };
 
     lines.forEach(line => {
@@ -254,3 +258,14 @@ function parseMarkdown(text) {
 
     return htmlResult.join('');
 }
+
+// Global Note Tag Handler
+window.clkNoteTag = function (type) {
+    const messages = {
+        'action': 'Action function coming soon',
+        'finding': 'Finding/Insight details coming soon',
+        'documentation': 'Link to documentation coming soon',
+        'question': 'Question/Blocker details coming soon'
+    };
+    showToast(messages[type] || "Tag clicked", "info");
+};

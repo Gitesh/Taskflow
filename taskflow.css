@@ -506,7 +506,7 @@ body.view-dashboard {
 #idTaskflowAppTitle,
 #idTaskflowTodaySubTitle {
   font-weight: bold;
-  color: #ccc;
+  color: white;
   /* Base metallic color */
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
   position: relative;
@@ -784,8 +784,8 @@ body.view-dashboard {
   transform: translateX(-100%) rotateY(-180deg);
   transition: max-width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
     width 0.6s cubic-bezier(0.25, 1, 0.5, 1),
-    margin 0.6s ease;
-  transform: translateX(-100%) rotateY(-180deg);
+    margin 0.6s ease,
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   background: none;
 }
 
@@ -805,9 +805,7 @@ body.view-dashboard {
 }
 
 .clsContainerAll.is-flipped .clsContainerFront {
-  visibility: hidden;
   position: absolute;
-
 }
 
 .clsContainerAll.is-flipped .clsContainerBack {
@@ -869,9 +867,7 @@ body.view-dashboard {
 
 .clsContainerFront {
   /* Front of Container */
-  /* backface-visibility: hidden; */
-  transform: translateX(-100%) rotateY(-180deg);
-  /* hide the face */
+  backface-visibility: hidden;
   transform: translateZ(0px);
   min-height: 500px;
 }
@@ -1846,6 +1842,49 @@ input:hover {
 
 body.hide-tags .clsFrontTags {
   display: none !important;
+}
+
+/* Notes Editor Markdown Tags */
+.note-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.85em;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 0 4px;
+  transition: all 0.2s ease;
+  user-select: none;
+  border: 1px solid transparent;
+}
+
+.note-tag:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.note-tag:active {
+  transform: translateY(0);
+}
+
+.note-tag.action {
+  background-color: var(--color-accent);
+  color: white;
+}
+
+.note-tag.finding {
+  background-color: #5dade2;
+  color: white;
+}
+
+.note-tag.documentation {
+  background-color: #27ae60;
+  color: white;
+}
+
+.note-tag.question {
+  background-color: #f39c12;
+  color: white;
 }
 
 

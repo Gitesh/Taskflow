@@ -430,13 +430,17 @@ function toggleTheme() {
 
 // Toast Notification Function
 function showToast(message, type = 'info') {
-  let container = document.getElementById('toast-container');
+  // Check if a modal dialog is open (dialogs use 'top layer' which obscures body-level fixed elements)
+  const activeModal = document.querySelector('dialog[open]');
+  const parentElement = activeModal || document.body;
 
-  // Create container if it doesn't exist
+  let container = parentElement.querySelector(':scope > #toast-container');
+
+  // Create container if it doesn't exist under this parent
   if (!container) {
     container = document.createElement('div');
     container.id = 'toast-container';
-    document.body.appendChild(container);
+    parentElement.appendChild(container);
   }
 
   // Create toast element
