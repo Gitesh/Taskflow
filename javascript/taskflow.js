@@ -429,7 +429,7 @@ function toggleTheme() {
 
 
 // Toast Notification Function
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', undoAction = null) {
   // Check for open modals to append to (ensures visibility in Top Layer)
   const openModals = Array.from(document.querySelectorAll('dialog[open]'));
   const parentElement = openModals.length > 0 ? openModals[openModals.length - 1] : document.body;
@@ -452,12 +452,23 @@ function showToast(message, type = 'info') {
   toast.innerHTML = `
     <div class="toast-content">
       <span>${message}</span>
-      <span class="material-icons" style="font-size: 18px;">close</span>
+      ${undoAction ? '<span class="toast-undo" style="color: var(--color-accent); cursor: pointer; font-weight: bold; margin-left: 10px; font-size: 12px; text-decoration: underline;">UNDO</span>' : ''}
+      <span class="material-icons" style="font-size: 18px; cursor: pointer;">close</span>
     </div>
     <div class="toast-progress-container">
       <div class="toast-progress-bar"></div>
     </div>
   `;
+
+  // Handle undo click
+  if (undoAction) {
+    const undoBtn = toast.querySelector('.toast-undo');
+    undoBtn.onclick = (e) => {
+      e.stopPropagation();
+      undoAction();
+      toast.remove();
+    };
+  }
 
   // Allow clicking anywhere on the toast to dismiss it
   toast.onclick = function () {
@@ -566,7 +577,13 @@ function extractTagsFromText(text) {
 
 function migrateTask(oldTask) {
   // If already V2, return
-  if (oldTask.version === 2) return oldTask;
+  // Check for ID on existing V2 tasks
+  if (oldTask.version === 2) {
+    if (!oldTask.id) {
+      oldTask.id = Date.now() + Math.random().toString(16).slice(2);
+    }
+    return oldTask;
+  }
 
   // Combine title/detail if separated, or just map
   const description = oldTask.task_detail || "";
@@ -590,7 +607,7 @@ function migrateTask(oldTask) {
   if (match) priority = parseInt(match[1]);
 
   return {
-    id: oldTask.id,
+    id: oldTask.id || (Date.now() + Math.random().toString(16).slice(2)),
     title: oldTask.Task_Title || "Untitled",
     description: description,
     notes: "",
@@ -730,7 +747,7 @@ function renderTaskCard(task, index) {
   // For now, index is stable per render.
 
   return `
-    <div id="${index}" data-task-uid="${task.id}" class="clsTaskCardWrapper priority-${priority}" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+    <div id="${index}" data-task-uid="${task.id}" class="clsTaskCardWrapper priority-${priority} ${task.isDeleting ? 'is-deleting' : ''}" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
         <div class="clsTaskCardAll"> 
           
           <!-- FRONT FACE -->
@@ -813,7 +830,9 @@ function renderTaskCard(task, index) {
               </div>
 
             </div>
-          </div> 
+          </div> <!-- back -->
+
+          <!-- CONFIRM FACE -->
         </div> <!-- all -->
     </div>`;
 }
@@ -1020,6 +1039,10 @@ function clkFlipToCountDownTimer() {
     });
   }
 
+  // Migration for old data
+  data = data.map(migrateTask);
+  localStorage.setItem("data", JSON.stringify(data));
+
   console.log("json loaded: ", data);
   createPost();
 
@@ -1213,19 +1236,250 @@ function listenForDoubleClick(element) {
 //     e.parentElement.parentElement.remove();
 // };  
 
-function clkCardDeleteTask(e) {
-  //e.parentElement.parentElement.remove(); // Removed visual remove, relying on createPost reflow logic which is cleaner
 
-  // Find index from wrapper ID
-  let wrapper = e.closest('.clsTaskCardWrapper');
-  let id = wrapper.id;
+// Deletion HUD State
+let activeDeletionUid = null;
+let activeDeletionIcon = null;
 
-  data.splice(id, 1);
+function clkCardDeleteTask(element) {
+  console.log("clkCardDeleteTask fired", element);
+  const wrapper = element.closest('.clsTaskCardWrapper');
+  if (!wrapper) {
+    console.error("No wrapper found");
+    return;
+  }
 
-  localStorage.setItem("data", JSON.stringify(data));
+  const uid = wrapper.getAttribute('data-task-uid');
+  console.log("Found UID:", uid);
 
-  createPost(); // Re-render to fix indices
-};
+  if (!uid || uid === "undefined") {
+    console.error("Task UID not found on card or undefined");
+    return;
+  }
+
+  activeDeletionUid = uid;
+  activeDeletionIcon = element;
+
+  // Keep icons visible
+  const iconContainer = element.closest('.clsTaskCardHoverIcons');
+  if (iconContainer) {
+    iconContainer.classList.add('force-visible');
+  }
+
+  // Position HUD
+  const hud = document.getElementById('idDeletionHUD');
+  if (!hud) {
+    console.error("HUD element not found in DOM");
+    return;
+  }
+
+  // 1. Unhide to allow dimension calculation
+  hud.classList.remove('hidden');
+  hud.style.display = 'flex'; // Force flex in case class list isn't enough
+  hud.style.opacity = '0'; // Keep invisible
+
+  const iconRect = element.getBoundingClientRect();
+  const hudWidth = hud.offsetWidth || 180;
+  const hudHeight = hud.offsetHeight || 38;
+
+  // Calculate top/left
+  // Position BELOW the icon (Top = Bottom of Icon + Padding)
+  const top = iconRect.bottom + 8;
+
+  // Center horizontally initially
+  let left = iconRect.left + (iconRect.width / 2) - (hudWidth / 2);
+
+  // Screen Boundary Clamping (Horizontal) - Force it inside viewport
+  const margin = 12;
+  const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+  // 0. Clamp to Task Card (User Request: "stay within the taskCard")
+  // We prioritize the card's right edge so it doesn't stick out.
+  const card = element.closest('.clsTaskCardWrapper') || element.closest('.clsTaskCard');
+  if (card) {
+    const cardRect = card.getBoundingClientRect();
+    // If HUD extends past card right edge, push it left
+    // We leave a small inner margin (e.g. 8px)
+    const cardRightLimit = cardRect.right - 8;
+
+    if (left + hudWidth > cardRightLimit) {
+      left = cardRightLimit - hudWidth;
+    }
+
+    // Also check left edge of card? usually not an issue for delete icon on right
+    if (left < cardRect.left + 8) {
+      left = cardRect.left + 8;
+    }
+  }
+
+  // 1. Clamp Left (Viewport Safety)
+  if (left < margin) {
+    left = margin;
+  }
+
+  // 2. Clamp Right (Viewport Safety)
+  else if (left + hudWidth > viewportWidth - margin) {
+    left = viewportWidth - hudWidth - margin;
+  }
+
+  // Calculate arrow position (relative to HUD)
+  const arrow = hud.querySelector('.hud-arrow');
+  if (arrow) {
+    // Icon center relative to viewport
+    const iconCenter = iconRect.left + (iconRect.width / 2);
+
+    // Calculate where the arrow *should* be relative to the HUD's new left
+    let arrowLeft = iconCenter - left;
+
+    // Clamp arrow inside HUD (with border-radius margin) ensuring it still points to icon vaguely
+    // 12px margin for border radius
+    arrowLeft = Math.max(12, Math.min(hudWidth - 12, arrowLeft));
+
+    arrow.style.left = `${arrowLeft}px`;
+  }
+
+  console.log(`HUD Pos: Left ${left}, Top ${top} (Viewport: ${viewportWidth})`);
+
+  hud.style.left = `${left}px`;
+  hud.style.top = `${top}px`;
+
+  // Show it
+  requestAnimationFrame(() => {
+    hud.style.opacity = '1';
+    hud.style.transform = 'translateY(0) scaleY(1)';
+  });
+
+  // Attach outside click listener
+  setTimeout(() => {
+    document.addEventListener('click', handleHudOutsideClick);
+
+    // Auto-close on mouseleave with grace period
+    hud.addEventListener('mouseleave', handleHudMouseLeave);
+    hud.addEventListener('mouseenter', handleHudMouseEnter);
+  }, 50);
+}
+
+let hudCloseTimer = null;
+
+function handleHudMouseLeave(e) {
+  console.log("HUD mouse leave (starting timer)");
+  hudCloseTimer = setTimeout(() => {
+    hideDeletionHud();
+  }, 600); // 600ms grace period
+}
+
+function handleHudMouseEnter(e) {
+  if (hudCloseTimer) {
+    console.log("HUD mouse enter (clearing timer)");
+    clearTimeout(hudCloseTimer);
+    hudCloseTimer = null;
+  }
+}
+
+function handleHudOutsideClick(e) {
+  const hud = document.getElementById('idDeletionHUD');
+
+  // If clicked element is the HUD or inside it, do nothing (mouseleave handles close)
+  if (hud && hud.contains(e.target)) {
+    return;
+  }
+
+  // If clicked element is the icon that opened it (or inside it), do nothing
+  if (activeDeletionIcon && (e.target === activeDeletionIcon || activeDeletionIcon.contains(e.target))) {
+    return;
+  }
+
+  hideDeletionHud();
+}
+
+function hideDeletionHud() {
+  if (hudCloseTimer) {
+    clearTimeout(hudCloseTimer);
+    hudCloseTimer = null;
+  }
+
+  const hud = document.getElementById('idDeletionHUD');
+  if (hud) {
+    hud.style.opacity = '0';
+    // Slide UP and FLATTEN into icon
+    hud.style.transform = 'translateY(-15px) scaleY(0.4)';
+
+    // Remove listeners
+    hud.removeEventListener('mouseleave', handleHudMouseLeave);
+    hud.removeEventListener('mouseenter', handleHudMouseEnter);
+    document.removeEventListener('click', handleHudOutsideClick);
+
+    // Allow transition to finish before hiding display if needed, 
+    // but pointer-events: none in CSS handles interaction.
+    setTimeout(() => {
+      hud.classList.add('hidden');
+    }, 200);
+  }
+
+  // Remove force-visible from icons
+  if (activeDeletionIcon) {
+    const iconContainer = activeDeletionIcon.closest('.clsTaskCardHoverIcons');
+    if (iconContainer) {
+      iconContainer.classList.remove('force-visible');
+    }
+  }
+
+  activeDeletionUid = null;
+  activeDeletionIcon = null;
+}
+
+
+// HUD Button Handlers (Attached via JS in initialization or onclick in HTML if added)
+// Since we added them closely in HTML without onclick, we can attach them here or add onclick in HTML.
+// Let's use global functions since that's the pattern in this file.
+
+window.clkConfirmKeep = function () {
+  hideDeletionHud();
+}
+
+window.clkConfirmRemove = function () {
+  if (!activeDeletionUid) return;
+
+  const task = data.find(t => t.id === activeDeletionUid);
+  if (task) {
+    task.deleted = true;
+    task.status = 'Deleted';
+    localStorage.setItem("data", JSON.stringify(data));
+    createPost();
+
+    showToast("Task removed", "info", () => {
+      task.deleted = false;
+      task.status = 'Pending';
+      localStorage.setItem("data", JSON.stringify(data));
+      createPost();
+      showToast("Task restored", "success");
+    });
+  }
+  hideDeletionHud();
+}
+
+window.clkConfirmDelete = function () {
+  if (!activeDeletionUid) return;
+
+  // Using simple splice by finding index. 
+  // Filter approach is cleaner but splice mutates in place which matches current pattern.
+  const index = data.findIndex(t => t.id === activeDeletionUid);
+  if (index !== -1) {
+    data.splice(index, 1);
+    localStorage.setItem("data", JSON.stringify(data));
+    createPost();
+    showToast("Task permanently deleted", "warning");
+  }
+  hideDeletionHud();
+}
+
+// Attach listeners to HUD buttons once DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnConfirmKeep')?.addEventListener('click', window.clkConfirmKeep);
+  document.getElementById('btnConfirmRemove')?.addEventListener('click', window.clkConfirmRemove);
+  document.getElementById('btnConfirmDelete')?.addEventListener('click', window.clkConfirmDelete);
+});
+
 
 
 

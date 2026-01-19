@@ -57,7 +57,7 @@
   --color-input-bg: #ffffff;
   --color-input-text: #333333;
   --color-input-border: #5dade2;
-  --color-input-focus-border: #2874a6;
+  --color-input-focus-border: #e8004e;
   --color-input-focus-glow: rgba(93, 173, 226, 0.4);
 
   /* tag tokens (pastel) */
@@ -113,7 +113,7 @@
   --color-input-bg: #223344;
   --color-input-text: #e4e4e7;
   --color-input-border: #2a6ea0;
-  --color-input-focus-border: #5dade2;
+  --color-input-focus-border: rgb(232, 0, 78);
   --color-input-focus-glow: rgba(46, 134, 193, 0.25);
   --color-bg-input-focus: #2d3748;
 
@@ -761,6 +761,125 @@ body.view-dashboard {
   background-color: var(--color-bg-card-back-hover);
 }
 
+/* DELETION CONFIRMATION FLIP */
+
+/* State when the card is flipped to the delete confirmation face */
+/* State when the card is flipped to the delete confirmation face (Vertical Flip) */
+.clsTaskCardWrapper.is-deleting .clsTaskCardAll {
+  transform: rotateX(180deg);
+}
+
+.clsTaskCardConfirm {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  background-color: var(--toast-glass-base);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 1.5px solid var(--color-accent);
+  box-sizing: border-box;
+  transform: rotateX(180deg);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  grid-area: 1 / 1;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+  overflow: hidden;
+}
+
+.clsConfirmContent {
+  width: 100%;
+  padding: 15px;
+  text-align: center;
+}
+
+.clsConfirmTitle {
+  font-weight: bold;
+  font-family: var(--font-family-task-title);
+  color: var(--color-accent);
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.clsConfirmActions {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  animation: confirmPulse 3s infinite ease-in-out;
+}
+
+@keyframes confirmPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.clsConfirmBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 70px;
+}
+
+.clsConfirmBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.clsConfirmBtn .material-icons {
+  font-size: 28px;
+  color: var(--color-text-primary);
+  display: block;
+}
+
+.clsConfirmBtn span {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Specific colors for actions */
+.clsConfirmBtn:nth-child(1) .material-icons {
+  color: #5dade2;
+}
+
+/* Keep - Blue */
+.clsConfirmBtn:nth-child(2) .material-icons {
+  color: var(--color-accent);
+}
+
+/* Remove - Magenta/Accent */
+.clsConfirmBtn:nth-child(3) .material-icons {
+  color: #e74c3c;
+}
+
+/* Delete - Red */
+
+.clsConfirmBtn:nth-child(3):hover {
+  background: rgba(231, 76, 60, 0.15);
+}
+
 /*------------------*/
 /* Container UI styling */
 /*------------------*/
@@ -930,7 +1049,8 @@ body.view-dashboard {
   font-weight: bold;
   text-align: left;
   max-width: 40%;
-  border-color: var(--color-bg-card-back);
+  /* border-color: var(--color-bg-card-back); */
+  border-color: var(--color-input-focus-border);
   border-style: dotted;
   border-width: 4px;
   padding: 2px;
@@ -942,7 +1062,8 @@ body.view-dashboard {
   font-size: var(--font-size-base);
   /* font-size: 12px; */
   text-align: left;
-  border-color: var(--color-bg-card-back);
+  /* border-color: var(--color-bg-card-back); */
+  border-color: var(--color-input-focus-border);
   border-style: dotted;
   border-width: 4px;
   padding: 2px;
@@ -983,8 +1104,9 @@ i.material-icons {
 /* display the icons on hover */
 
 .clsTaskCard:hover .material-icons {
-  display: contents;
-
+  display: inline-block;
+  padding: 4px;
+  /* Ensure hit area */
 }
 
 
@@ -2682,4 +2804,127 @@ hr {
 
 #image-fullscreen-overlay[open] img {
   transform: scale(1);
+}
+
+/* display the icons on hover */
+.clsTaskCard:hover .material-icons,
+.clsTaskCardHoverIcons.force-visible .material-icons {
+  display: inline-block;
+  padding: 4px;
+  /* Ensure hit area */
+}
+
+.clsTaskCardHoverIcons.force-visible {
+  display: block !important;
+  background: ghostwhite;
+  /* Ensure bg persists */
+  z-index: 10002;
+  /* Ensure it stays above other things if needed */
+}
+
+
+/*-----------------------*/
+/* Deletion HUD Context Menu */
+/*-----------------------*/
+
+.clsDeletionHUD {
+  position: fixed;
+  z-index: 10001;
+  /* Above toasts */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+
+  /* Animation Origin: Top Center (since it drops down) */
+  transform-origin: top center;
+
+  transform: translateY(0) scaleY(1);
+  opacity: 1;
+  transition: opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Springy pop */
+}
+
+.clsDeletionHUD.hidden {
+  opacity: 0;
+  /* Start hidden 'inside' the icon (move UP and flatten) */
+  transform: translateY(-15px) scaleY(0.4);
+  pointer-events: none;
+  display: none;
+}
+
+.clsDeletionHUD.show {
+  display: flex;
+}
+
+.btn-hud {
+  background: none;
+  border: none;
+  font-family: var(--font-family);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+}
+
+.btn-keep {
+  color: #a0a0a0;
+}
+
+.btn-keep:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.btn-remove {
+  color: #FFB74D;
+  /* Orange */
+}
+
+.btn-remove:hover {
+  background: rgba(255, 183, 77, 0.15);
+  color: #FF9800;
+}
+
+.btn-delete {
+  color: #EF5350;
+  /* Red */
+}
+
+.btn-delete:hover {
+  background: rgba(239, 83, 80, 0.15);
+  color: #F44336;
+}
+
+.hud-divider {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  user-select: none;
+}
+
+/* Little arrow pointing UP (since HUD is below) */
+.hud-arrow {
+  position: absolute;
+  top: -6px;
+  /* Move to top */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+
+  /* Point UP: Bottom border has color */
+  border-bottom: 6px solid rgba(30, 30, 30, 0.95);
+  border-top: none;
 }
