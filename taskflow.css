@@ -2822,6 +2822,41 @@ hr {
   /* Ensure it stays above other things if needed */
 }
 
+/* Bin View / Deleted Task Styling */
+.clsTaskCardWrapper.task-deleted {
+  opacity: 0.7;
+  filter: grayscale(0.8);
+  border: 1px dashed var(--color-accent);
+}
+
+.clsTaskCardWrapper.task-deleted .clsTaskCardTitle,
+.clsTaskCardWrapper.task-deleted .clsTaskCardDetail {
+  text-decoration: line-through;
+  color: #888;
+}
+
+.clsTaskCardWrapper.task-deleted .material-icons {
+  color: #888;
+}
+
+/* Restore Icon Special Styling */
+.clsTaskCardWrapper.task-deleted .icon-restore {
+  color: #4CAF50 !important;
+  /* Green */
+  font-weight: bold;
+}
+
+.clsTaskCardWrapper.task-deleted .icon-restore:hover {
+  color: #2E7D32 !important;
+  transform: scale(1.2);
+}
+
+/* Bin Active State in Menu */
+.bin-active {
+  color: #e8004e !important;
+  text-shadow: 0 0 10px rgba(232, 0, 78, 0.4);
+}
+
 
 /*-----------------------*/
 /* Deletion HUD Context Menu */

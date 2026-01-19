@@ -102,14 +102,19 @@
                     <span class="material-icons" title="Eisenhower Matrix"
                         onclick="setView('view-matrix')">grid_view</span>
                     <span class="material-icons" title="Dashboard View"
-                        onclick="setView('view-dashboard')">space_dashboard</span>
-                    <span class="material-icons" title="Focus timer"
-                        onclick="clkFlipToCountDownTimer()">hourglass_top</span>
+                        onclick="setView('view-dashboard')">view_timeline</span>
+
                     <!-- End View Switcher -->
 
                     <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 
-                    <!-- Start Import or Export CSV / JSON -->
+                    <!-- Task Backup and Restore -->
+                    <span class="material-icons" id="btnToggleBin" title="Recycle Bin (View Deleted)"
+                        onclick="clkToggleBinView()">auto_delete</span>
+
+                    <span class="material-icons" title="Focus timer"
+                        onclick="clkFlipToCountDownTimer()">hourglass_top</span>
+
                     <span class="material-icons" title="Upload tasks from CSV">
                         <label for="uploadCSV" click="preventDefault()">
                             file_upload
@@ -119,7 +124,7 @@
                     </span>
 
                     <span class="material-icons" title="Export tasks" onclick="clkShowExportModal()">output</span>
-                    <!-- End Import or Export CSV / JSON -->
+                    <!-- Task Backup and Restore -->
 
                     <span class="clsMaterialIconBarDivider">&nbsp;|&nbsp;</span>
 

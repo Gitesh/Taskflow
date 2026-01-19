@@ -4,6 +4,27 @@ let form = document.getElementById("form");
 let input = document.getElementById("input");
 //let msg = document.getElementById("idErrorMessage");
 
+// Bin View State (Global)
+let isBinViewActive = false;
+
+window.clkToggleBinView = function () {
+  isBinViewActive = !isBinViewActive;
+
+  // Toggle icon visual state
+  const btn = document.getElementById('btnToggleBin');
+  if (btn) {
+    if (isBinViewActive) {
+      btn.classList.add('bin-active');
+      showToast("Viewing Recycle Bin", "info");
+    } else {
+      btn.classList.remove('bin-active');
+      showToast("Exited Recycle Bin", "info");
+    }
+  }
+
+  createPost();
+}
+
 strDate = new Date();
 strDate = strDate.toISOString();
 strDay = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -711,8 +732,14 @@ let createPost = () => {
   });
 
   data.forEach((task, index) => {
-    // Skip deleted tasks
-    if (task.deleted) return;
+    // Filter deleted/active based on View Mode
+    // If Bin Mode: Show ONLY deleted
+    // If Normal Mode: Show ONLY non-deleted
+    if (isBinViewActive) {
+      if (!task.deleted) return;
+    } else {
+      if (task.deleted) return;
+    }
 
     // Filter logic (AND: Must have ALL selected tags)
     if (window.currentTagFilters.size > 0) {
@@ -746,8 +773,27 @@ function renderTaskCard(task, index) {
   // Ideally we should move to UID, but that requires updating drag/drop handlers.
   // For now, index is stable per render.
 
+  const isDeleted = task.deleted || false;
+  const deletedClass = isDeleted ? 'task-deleted' : '';
+
+  // Icon Logic: If deleted, show Restore. If not, show normal icons.
+  let actionIcons = '';
+  if (isDeleted) {
+    actionIcons = `
+        <i onclick="clkRestoreTask(this)" title="Restore Task" class="material-icons icon-restore">restore_from_trash</i>
+        <i onclick="clkCardDeleteTask(this)" title="Delete Permanently" class="material-icons">delete_forever</i>
+      `;
+  } else {
+    actionIcons = `
+        <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i>
+        <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
+        <i onclick="clkOpenTaskNotes(${index})" title="Task notes (Markdown)" class="material-icons">description</i>
+        <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
+      `;
+  }
+
   return `
-    <div id="${index}" data-task-uid="${task.id}" class="clsTaskCardWrapper priority-${priority} ${task.isDeleting ? 'is-deleting' : ''}" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+    <div id="${index}" data-task-uid="${task.id}" class="clsTaskCardWrapper priority-${priority} ${task.isDeleting ? 'is-deleting' : ''} ${deletedClass}" draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
         <div class="clsTaskCardAll"> 
           
           <!-- FRONT FACE -->
@@ -756,10 +802,7 @@ function renderTaskCard(task, index) {
             <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.description}</span>
 
             <span class="clsTaskCardHoverIcons">
-              <i onclick="clkCardEditTitleOrDetail(this)" title="Edit details" class="material-icons">edit</i>
-              <i onclick="clkFlipTaskCardToForm(this)" title="Edit attributes" class="material-icons">edit_calendar</i>
-              <i onclick="clkOpenTaskNotes(${index})" title="Task notes (Markdown)" class="material-icons">description</i>
-              <i onclick="clkCardDeleteTask(this)" title="Delete this task" class="material-icons">delete</i>
+              ${actionIcons}
             </span>
             
             <!-- Quick Tag Pills on Front (Validation) -->
@@ -1240,6 +1283,49 @@ function listenForDoubleClick(element) {
 // Deletion HUD State
 let activeDeletionUid = null;
 let activeDeletionIcon = null;
+
+// Bin View State
+
+
+window.clkToggleBinView = function () {
+  isBinViewActive = !isBinViewActive;
+
+  // Toggle icon visual state
+  const btn = document.getElementById('btnToggleBin');
+  if (btn) {
+    if (isBinViewActive) {
+      btn.classList.add('bin-active');
+      showToast("Viewing Recycle Bin", "info");
+    } else {
+      btn.classList.remove('bin-active');
+      showToast("Exited Recycle Bin", "info");
+    }
+  }
+
+  createPost();
+}
+
+/**
+ * Restores a deleted task.
+ */
+window.clkRestoreTask = function (element) {
+  const wrapper = element.closest('.clsTaskCardWrapper');
+  if (!wrapper) return;
+
+  const uid = wrapper.getAttribute('data-task-uid');
+  if (!uid) return;
+
+  const task = data.find(t => t.id === uid);
+  if (task) {
+    task.deleted = false;
+    task.status = "Pending"; // Reset status from Deleted
+    localStorage.setItem("data", JSON.stringify(data));
+
+    // Animate out? Or just re-render
+    createPost();
+    showToast("Task restored", "success");
+  }
+}
 
 function clkCardDeleteTask(element) {
   console.log("clkCardDeleteTask fired", element);
