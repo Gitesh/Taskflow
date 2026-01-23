@@ -1559,12 +1559,7 @@ window.clkConfirmDelete = function () {
   hideDeletionHud();
 }
 
-// Attach listeners to HUD buttons once DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btnConfirmKeep')?.addEventListener('click', window.clkConfirmKeep);
-  document.getElementById('btnConfirmRemove')?.addEventListener('click', window.clkConfirmRemove);
-  document.getElementById('btnConfirmDelete')?.addEventListener('click', window.clkConfirmDelete);
-});
+// HUD buttons now use inline onclick attributes (see Taskflow.html)
 
 
 

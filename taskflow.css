@@ -447,6 +447,15 @@ body.view-dashboard {
   padding-right: 0;
 }
 
+/* Material Icon Bar Divider - Vertical centering */
+.clsMaterialIconBarDivider {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  user-select: none;
+}
+
 .view-standard span#idTaskflowAppTitle,
 .view-standard span#idTaskflowTodaySubTitle {
   position: relative;
@@ -2853,8 +2862,7 @@ hr {
 
 /* Bin Active State in Menu */
 .bin-active {
-  color: #e8004e !important;
-  text-shadow: 0 0 10px rgba(232, 0, 78, 0.4);
+  color: var(--color-accent);
 }
 
 

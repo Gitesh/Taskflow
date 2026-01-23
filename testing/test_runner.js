@@ -92,6 +92,251 @@ const TaskflowTests = {
             console.error("[FAIL]", e.message);
         }
         console.groupEnd();
+    },
+
+    // Test 4: Deletion HUD Elements Exist
+    testDeletionHudExists: () => {
+        console.group("Test 4: Deletion HUD Elements");
+        try {
+            const hud = document.getElementById('idDeletionHUD');
+            if (!hud) throw new Error("HUD element not found");
+
+            const btnKeep = document.getElementById('btnConfirmKeep');
+            const btnRemove = document.getElementById('btnConfirmRemove');
+            const btnDelete = document.getElementById('btnConfirmDelete');
+
+            if (!btnKeep) throw new Error("Keep button not found");
+            if (!btnRemove) throw new Error("Remove button not found");
+            if (!btnDelete) throw new Error("Delete button not found");
+
+            // Check onclick attributes exist (bug fix verification)
+            if (!btnKeep.onclick) throw new Error("Keep button missing onclick handler");
+            if (!btnRemove.onclick) throw new Error("Remove button missing onclick handler");
+            if (!btnDelete.onclick) throw new Error("Delete button missing onclick handler");
+
+            console.log("[PASS] All HUD elements exist with onclick handlers");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 5: Deletion Functions Exist
+    testDeletionFunctionsExist: () => {
+        console.group("Test 5: Deletion Functions");
+        try {
+            if (typeof clkCardDeleteTask !== 'function') throw new Error("clkCardDeleteTask not found");
+            if (typeof window.clkConfirmKeep !== 'function') throw new Error("clkConfirmKeep not found");
+            if (typeof window.clkConfirmRemove !== 'function') throw new Error("clkConfirmRemove not found");
+            if (typeof window.clkConfirmDelete !== 'function') throw new Error("clkConfirmDelete not found");
+            if (typeof hideDeletionHud !== 'function') throw new Error("hideDeletionHud not found");
+
+            console.log("[PASS] All deletion functions exist");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 6: Simulated Keep Button Click
+    testKeepButton: () => {
+        console.group("Test 6: Keep Button Functionality");
+        try {
+            // Create a test task
+            const testTask = TaskModel.create({
+                id: "test_keep_" + Date.now(),
+                title: "Test Keep Task",
+                description: "Testing keep functionality",
+                priority: 1
+            });
+
+            const initialLength = data.length;
+            data.push(testTask);
+
+            // Set active deletion UID
+            activeDeletionUid = testTask.id;
+
+            // Show HUD (simplified - just set it visible for test)
+            const hud = document.getElementById('idDeletionHUD');
+            hud.classList.remove('hidden');
+
+            // Click Keep
+            window.clkConfirmKeep();
+
+            // Verify HUD is hidden
+            if (!hud.classList.contains('hidden') && hud.style.opacity !== '0') {
+                throw new Error("HUD should be hidden after Keep");
+            }
+
+            // Verify task still exists and is not deleted
+            if (data.length !== initialLength + 1) throw new Error("Task was removed instead of kept");
+            if (testTask.deleted) throw new Error("Task should not be marked as deleted");
+
+            // Cleanup
+            data.pop();
+
+            console.log("[PASS] Keep button works correctly");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 7: Simulated Remove (Soft Delete) Button Click
+    testRemoveButton: () => {
+        console.group("Test 7: Remove (Soft Delete) Functionality");
+        try {
+            const testTask = TaskModel.create({
+                id: "test_remove_" + Date.now(),
+                title: "Test Remove Task",
+                description: "Testing soft delete",
+                priority: 2
+            });
+
+            const initialLength = data.length;
+            data.push(testTask);
+
+            activeDeletionUid = testTask.id;
+
+            // Click Remove
+            window.clkConfirmRemove();
+
+            // Verify task is soft deleted (deleted flag set but still in array)
+            if (data.length !== initialLength + 1) throw new Error("Task should still be in array");
+            if (!testTask.deleted) throw new Error("Task should be marked as deleted");
+            if (testTask.status !== 'Deleted') throw new Error("Status should be 'Deleted'");
+
+            // Cleanup
+            data.pop();
+
+            console.log("[PASS] Remove button soft-deletes correctly");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 8: Simulated Delete (Permanent) Button Click
+    testDeleteButton: () => {
+        console.group("Test 8: Delete (Permanent) Functionality");
+        try {
+            const testTask = TaskModel.create({
+                id: "test_delete_" + Date.now(),
+                title: "Test Delete Task",
+                description: "Testing permanent delete",
+                priority: 3
+            });
+
+            const initialLength = data.length;
+            data.push(testTask);
+
+            activeDeletionUid = testTask.id;
+
+            // Click Delete
+            window.clkConfirmDelete();
+
+            // Verify task is permanently removed from array
+            if (data.length !== initialLength) throw new Error("Task should be removed from array");
+
+            const found = data.find(t => t.id === testTask.id);
+            if (found) throw new Error("Task should not exist in data array");
+
+            console.log("[PASS] Delete button permanently removes task");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 9: Multiple Consecutive Deletions (Bug Scenario)
+    testConsecutiveDeletions: () => {
+        console.group("Test 9: Multiple Consecutive Deletions");
+        try {
+            // This tests the bug fix - ensure handlers work after multiple calls
+            const tasks = [];
+            for (let i = 0; i < 3; i++) {
+                tasks.push(TaskModel.create({
+                    id: "test_multi_" + i + "_" + Date.now(),
+                    title: "Multi Test " + i,
+                    priority: 4
+                }));
+                data.push(tasks[i]);
+            }
+
+            // Simulate 3 consecutive deletion attempts
+            for (let i = 0; i < 3; i++) {
+                activeDeletionUid = tasks[i].id;
+
+                // Verify functions still callable
+                if (typeof window.clkConfirmKeep !== 'function') {
+                    throw new Error("clkConfirmKeep undefined after deletion " + i);
+                }
+
+                // Call keep on first, remove on second, delete on third
+                if (i === 0) {
+                    window.clkConfirmKeep();
+                    if (tasks[i].deleted) throw new Error("Task 0 should be kept");
+                } else if (i === 1) {
+                    window.clkConfirmRemove();
+                    if (!tasks[i].deleted) throw new Error("Task 1 should be soft deleted");
+                } else {
+                    window.clkConfirmDelete();
+                    const found = data.find(t => t.id === tasks[i].id);
+                    if (found) throw new Error("Task 2 should be permanently deleted");
+                }
+            }
+
+            // Cleanup - remove test tasks
+            data = data.filter(t => !t.id.startsWith("test_multi_"));
+
+            console.log("[PASS] Multiple consecutive deletions work correctly");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 10: Restore Deleted Task
+    testRestoreTask: () => {
+        console.group("Test 10: Restore Functionality");
+        try {
+            const testTask = TaskModel.create({
+                id: "test_restore_" + Date.now(),
+                title: "Test Restore Task",
+                priority: 1
+            });
+
+            data.push(testTask);
+
+            // Soft delete it first
+            testTask.deleted = true;
+            testTask.status = 'Deleted';
+
+            // Mock wrapper element for restore
+            const mockWrapper = {
+                getAttribute: () => testTask.id,
+                closest: () => mockWrapper
+            };
+
+            // Call restore
+            if (typeof window.clkRestoreTask !== 'function') {
+                throw new Error("clkRestoreTask not found");
+            }
+
+            window.clkRestoreTask(mockWrapper);
+
+            // Verify task is restored
+            if (testTask.deleted) throw new Error("Task should not be deleted after restore");
+            if (testTask.status !== 'Pending') throw new Error("Status should be reset to Pending");
+
+            // Cleanup
+            data.pop();
+
+            console.log("[PASS] Restore functionality works");
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
     }
 };
 
@@ -100,5 +345,26 @@ window.runAutomatedTests = () => {
     TaskflowTests.testV2Schema();
     TaskflowTests.testTagExtraction();
     TaskflowTests.testMigration();
+    TaskflowTests.testDeletionHudExists();
+    TaskflowTests.testDeletionFunctionsExist();
+    TaskflowTests.testKeepButton();
+    TaskflowTests.testRemoveButton();
+    TaskflowTests.testDeleteButton();
+    TaskflowTests.testConsecutiveDeletions();
+    TaskflowTests.testRestoreTask();
     console.log("=== Done ===");
 };
+
+// Helper to run only deletion tests
+window.runDeletionTests = () => {
+    console.log("=== Running Deletion Tests ===");
+    TaskflowTests.testDeletionHudExists();
+    TaskflowTests.testDeletionFunctionsExist();
+    TaskflowTests.testKeepButton();
+    TaskflowTests.testRemoveButton();
+    TaskflowTests.testDeleteButton();
+    TaskflowTests.testConsecutiveDeletions();
+    TaskflowTests.testRestoreTask();
+    console.log("=== Deletion Tests Complete ===");
+};
+
