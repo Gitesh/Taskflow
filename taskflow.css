@@ -235,12 +235,6 @@ body.view-dashboard {
   min-height: 0;
 }
 
-/* Kanban specific tag layout */
-.view-kanban .clsTaskCard {
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 0.75em;
-}
 
 .view-kanban .clsFrontTags {
   width: 100%;
@@ -266,8 +260,9 @@ body.view-dashboard {
 
 /* Matrix View - 2x2 Grid Fitting Viewport */
 
-
-/* MATRIX SPECIFIC TAG LAYOUT */
+/* ---------------------------- */
+/*  MATRIX SPECIFIC TAG LAYOUT  */
+/* -----------------------------*/
 .view-matrix .clsTaskCard {
   justify-content: space-between;
 }
@@ -446,6 +441,22 @@ body.view-dashboard {
   justify-self: center;
   padding-right: 0;
 }
+
+.view-standard .clsFrontTags {
+  /* Stacked vertically (columns), wrap if > 3 */
+  margin-left: auto;
+  display: flex !important;
+  flex-flow: column wrap;
+  gap: 2px;
+  max-height: 75px;
+  /* Approx 3 tags high */
+  align-items: flex-end;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+
+
 
 /* Material Icon Bar Divider - Vertical centering */
 .clsMaterialIconBarDivider {
@@ -1000,8 +1011,56 @@ body.view-dashboard {
   min-height: 500px;
 }
 
+/*-----------------------------------*/
+/*-----------------------------------*/
+/*  TASK CARD FRONT LAYOUT BY VIEW   */
+/*-----------------------------------*/
+/*-----------------------------------*/
 
-/* Standard View Task Card */
+.view-standard .clsTaskCard {
+  position: relative;
+  backface-visibility: hidden;
+  padding: var(--card-padding);
+  border-top: 1px solid var(--color-border);
+  /* border-bottom: 2px solid var(--color-border); */
+  font-size: var(--font-size-base);
+  display: flex;
+  line-height: 1.3;
+  min-height: calc(2 * 0.3em + 2 * var(--card-padding));
+  flex-wrap: column;
+  justify-content: space-between;
+}
+
+/* Kanban specific tag layout */
+.view-kanban .clsTaskCard {
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.75em;
+}
+
+/* Compact Cards and Stacking Fix for Kanban View */
+/* .view-kanban .clsTaskCard {
+  padding: 8px;
+  min-height: 40px;
+  font-size: 12px;
+  line-height: 1.2;
+  justify-content: left;
+} */
+
+
+
+
+
+.view-matrix .clsTaskCard {
+  padding: 8px;
+  min-height: 40px;
+  /* Reduced from default */
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+
+/* Common Task Card Front Layout */
 .clsTaskCard {
   /* Front of task card - task details */
   position: relative;
@@ -1011,13 +1070,13 @@ body.view-dashboard {
   /* border-bottom: 2px solid var(--color-border); */
   font-size: var(--font-size-base);
   display: flex;
+  */
   /* Ensure a minimum height of ~3 lines while allowing growth */
   line-height: 1.3;
   min-height: calc(2 * 0.3em + 2 * var(--card-padding));
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-
 }
 
 .clsTaskCard,
@@ -1578,13 +1637,6 @@ input:hover {
 }
 
 /* Compact Cards and Stacking Fix for Kanban View */
-.view-kanban .clsTaskCard {
-  padding: 8px;
-  min-height: 40px;
-  font-size: 12px;
-  line-height: 1.2;
-  justify-content: left;
-}
 
 .view-kanban .clsTaskCardTitle {
   font-size: 12px;
@@ -1608,13 +1660,6 @@ input:hover {
 
 
 /* Compact Cards for Matrix View */
-.view-matrix .clsTaskCard {
-  padding: 8px;
-  min-height: 40px;
-  /* Reduced from default */
-  font-size: 12px;
-  line-height: 1.2;
-}
 
 .view-matrix .clsTaskCardTitle {
   font-size: 12px;

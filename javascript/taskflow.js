@@ -177,6 +177,7 @@ function clkSettings() {
       <div class="help-column">
         <h3>Command List</h3>
         <ul>
+          <li><code>#searchterm</code> Live filter tasks as you type</li>
           <li><code>/flip</code> Toggle timer view</li>
           <li><code>/bg</code> or <code>/background</code> Toggle BG</li>
           <li><code>/pending</code> Filter pending tasks</li>
@@ -264,18 +265,108 @@ input.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     input.value = '+add'; // Reset text
     input.blur();         // Remove focus
+    // Clear any active live filter
+    clearLiveFilter();
   }
 });
+
+// Live filtering state
+let activeLiveFilter = null;
+
+// Live filter: Activates when typing # in input
+input.addEventListener('input', (e) => {
+  const value = input.value.trim();
+
+  // Check if user is typing a live filter (starts with #)
+  if (value.startsWith('#') && value.length > 1) {
+    const searchTerm = value.substring(1).toLowerCase();
+    activeLiveFilter = searchTerm;
+    applyLiveFilter(searchTerm);
+  } else if (activeLiveFilter !== null) {
+    // Clear filter if # is removed
+    clearLiveFilter();
+  }
+});
+
+function applyLiveFilter(searchTerm) {
+  if (!searchTerm) return;
+
+  // Get all task card wrappers
+  const allCards = document.querySelectorAll('.clsTaskCardWrapper');
+  let matchCount = 0;
+
+  allCards.forEach(card => {
+    const titleEl = card.querySelector('.clsTaskCardTitle');
+    const detailEl = card.querySelector('.clsTaskCardDetail');
+    const tagsEl = card.querySelector('.clsFrontTags');
+
+    const title = titleEl ? titleEl.textContent.toLowerCase() : '';
+    const detail = detailEl ? detailEl.textContent.toLowerCase() : '';
+    const tags = tagsEl ? tagsEl.textContent.toLowerCase() : '';
+
+    // Check if search term matches title, detail, or tags
+    const matches = title.includes(searchTerm) ||
+      detail.includes(searchTerm) ||
+      tags.includes(searchTerm);
+
+    if (matches) {
+      card.style.display = '';
+      card.classList.add('live-filter-match');
+      matchCount++;
+    } else {
+      card.style.display = 'none';
+      card.classList.remove('live-filter-match');
+    }
+  });
+
+  // Show indicator
+  const btn = document.getElementById('btnClearFilter');
+  if (btn) {
+    btn.style.display = 'inline-block';
+    btn.title = `Live Filter: #${searchTerm} (${matchCount} matches)`;
+  }
+
+  console.log(`Live filter active: #${searchTerm} - ${matchCount} matches`);
+}
+
+function clearLiveFilter() {
+  activeLiveFilter = null;
+
+  // Show all cards
+  const allCards = document.querySelectorAll('.clsTaskCardWrapper');
+  allCards.forEach(card => {
+    card.style.display = '';
+    card.classList.remove('live-filter-match');
+  });
+
+  // Hide indicator if no tag filters are active
+  if (window.currentTagFilters.size === 0) {
+    const btn = document.getElementById('btnClearFilter');
+    if (btn) {
+      btn.style.display = 'none';
+      btn.title = 'Clear Tag Filter';
+    }
+  }
+
+  console.log('Live filter cleared');
+}
 
 //create formValidation function - if text box is empty show error
 function formValidation() {
   const inputValue = input.value.trim();
+
+  // Check if this is a live filter (starts with #)
+  if (inputValue.startsWith('#')) {
+    showToast("Type search term after # to filter tasks, or ESC to cancel", "info");
+    return;
+  }
 
   // Check if this is a command (starts with /)
   if (inputValue.startsWith('/')) {
     processCommand(inputValue);
     input.blur();
     input.value = "+add";
+    clearLiveFilter();
     return;
   }
 
@@ -294,6 +385,8 @@ function formValidation() {
     acceptData(); // call the acceptData function
 
     input.blur(input.value = "+add"); //clear the input textbox
+    clearLiveFilter(); // Clear any active live filter when adding a task
+
 
   }
 }
@@ -916,6 +1009,7 @@ function clkFilterByTag(tag, event) {
 
 function clkClearTagFilter() {
   window.currentTagFilters.clear();
+  clearLiveFilter(); // Also clear live filter
   showToast("Filters cleared", "info");
   updateFilterIconState();
   createPost();
