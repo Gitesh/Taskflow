@@ -86,6 +86,13 @@ class ImageStorage {
 
     async saveImage(id, blob, metadata = {}) {
         try {
+            // Handle overloaded signature: saveImage(blob, metadata)
+            if (id instanceof Blob) {
+                metadata = blob || {};
+                blob = id;
+                id = `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            }
+
             if (!this.db) await this.init();
 
             // Compress image if it's large (> 500KB)
@@ -113,7 +120,7 @@ class ImageStorage {
                 };
                 const metaRequest = metaStore.put(metaData);
 
-                transaction.oncomplete = () => resolve();
+                transaction.oncomplete = () => resolve(id);
                 transaction.onerror = (e) => reject(e.target.error);
             });
         } catch (error) {
@@ -295,8 +302,11 @@ class MarkdownParser {
                 .replace(/>/g, "&gt;")
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/<u>(.*?)<\/u>/gi, '<u>$1</u>')
+                .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/gi, '<u>$1</u>')
                 .replace(/~~(.*?)~~/g, '<strike>$1</strike>')
+                .replace(/~(.*?)~/g, '<sub>$1</sub>')
+                .replace(/\^(.*?)\^/g, '<sup>$1</sup>')
+                .replace(/\$(.*?)\$/g, '<span class="md-math">$1</span>')
                 .replace(/`(.*?)`/g, '<code>$1</code>')
                 .replace(/\[ \]/g, '<input type="checkbox" aria-label="Task item">')
                 .replace(/\[x\]/g, '<input type="checkbox" checked aria-label="Completed task">')
@@ -305,9 +315,12 @@ class MarkdownParser {
                 .replace(/-d-/gi, '<span class="note-tag documentation" contenteditable="false" role="button" tabindex="0" aria-label="Documentation tag" onclick="clkNoteTag(\'documentation\')">documentation</span>')
                 .replace(/-q-/gi, '<span class="note-tag question" contenteditable="false" role="button" tabindex="0" aria-label="Question tag" onclick="clkNoteTag(\'question\')">question</span>')
                 .replace(/!\[(.*?)\]\(tf-img:\/\/(.*?)\)/g, '<img class="pasted-image" alt="$1" data-img-id="$2" onclick="openFullscreenImage(this.src)" loading="lazy">')
+                .replace(/\[\^(.*?)\]/g, '<sup class="footnote-ref"><a href="#fn-$1" id="fnref-$1">$1</a></sup>')
                 .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
                 .replace(/(^|[^"'])(https?:\/\/[^\s\)]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
         };
+
+        const footnotes = [];
 
         const parseTable = (lines, startIndex) => {
             const tableLines = [];
@@ -344,6 +357,13 @@ class MarkdownParser {
             const line = lines[i];
             const rawLine = line.trim();
 
+            // Footnote definitions [^1]: Text
+            const fnMatch = line.match(/^\[\^(.*?)\]:\s+(.*)$/);
+            if (fnMatch) {
+                footnotes.push({ id: fnMatch[1], text: fnMatch[2], index: i });
+                continue;
+            }
+
             // Code blocks
             if (rawLine.startsWith('```')) {
                 if (inCodeBlock) {
@@ -359,7 +379,7 @@ class MarkdownParser {
             }
 
             if (inCodeBlock) {
-                htmlResult.push(escapeHtml(line));
+                htmlResult.push(escapeHtml(line) + '\n');
                 continue;
             }
 
@@ -410,15 +430,21 @@ class MarkdownParser {
                 if (inList) { htmlResult.push('</ul>'); inList = false; }
                 htmlResult.push(`<h3 contenteditable="true" data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
             }
-            // Lists & Task Lists
-            else if (rawLine.match(/^[-*]\s/)) {
+            // Lists & Task Lists (Support indentation)
+            else if (line.match(/^(\s*)([-*])\s/)) {
+                const match = line.match(/^(\s*)([-*])\s/);
+                const indent = match[1].length;
+
                 if (!inList) {
                     htmlResult.push('<ul class="markdown-list">');
                     inList = true;
                 }
+
                 const isTask = rawLine.includes('[ ]') || rawLine.includes('[x]');
-                const content = parseInline(rawLine.substring(rawLine.match(/^[-*]\s/)[0].length));
-                htmlResult.push(`<li class="${isTask ? 'task-item' : ''}" contenteditable="true" data-line="${i}">${content}</li>`);
+                const content = parseInline(line.substring(match[0].length));
+                const style = indent > 0 ? `style="margin-left: ${indent * 10}px"` : "";
+
+                htmlResult.push(`<li class="${isTask ? 'task-item' : ''}" contenteditable="true" data-line="${i}" ${style}>${content}</li>`);
             } else {
                 if (inList) {
                     htmlResult.push('</ul>');
@@ -434,6 +460,15 @@ class MarkdownParser {
         if (inList) htmlResult.push('</ul>');
         if (inBlockquote) htmlResult.push('</blockquote>');
         if (inCodeBlock) htmlResult.push('</code></pre>');
+
+        // Render Footnotes at bottom
+        if (footnotes.length > 0) {
+            htmlResult.push('<div class="markdown-footnotes"><hr><ol>');
+            footnotes.forEach(fn => {
+                htmlResult.push(`<li id="fn-${fn.id}">${parseInline(fn.text)} <a href="#fnref-${fn.id}" class="footnote-backref">↩</a></li>`);
+            });
+            htmlResult.push('</ol></div>');
+        }
 
         return htmlResult.join('');
     }
@@ -528,40 +563,196 @@ class TextSelection {
 
 class HtmlToMarkdownConverter {
     constructor() {
-        this.rules = this.initializeRules();
+        // No specific rules setup needed for DOM traversal
     }
 
-    initializeRules() {
-        return [
-            { pattern: /<strong>(.*?)<\/strong>/gi, replacement: '**$1**' },
-            { pattern: /<b>(.*?)<\/b>/gi, replacement: '**$1**' },
-            { pattern: /<em>(.*?)<\/em>/gi, replacement: '*$1*' },
-            { pattern: /<i>(.*?)<\/i>/gi, replacement: '*$1*' },
-            { pattern: /<u>(.*?)<\/u>/gi, replacement: '<u>$1</u>' },
-            { pattern: /<strike>(.*?)<\/strike>/gi, replacement: '~~$1~~' },
-            { pattern: /<s>(.*?)<\/s>/gi, replacement: '~~$1~~' },
-            { pattern: /<code>(.*?)<\/code>/gi, replacement: '`$1`' },
-            { pattern: /<img.*?data-img-id="(.*?)".*?>/gi, replacement: '![screenshot](tf-img://$1)' },
-            { pattern: /<input type="checkbox"[^>]*checked[^>]*>/gi, replacement: '[x] ' }, // Handle checked
-            { pattern: /<input type="checkbox"[^>]*>/gi, replacement: '[ ] ' }, // Handle unchecked
-            { pattern: /<a.*?href="(.*?)".*?>(.*?)<\/a>/gi, replacement: '[$2]($1)' },
-            { pattern: /&nbsp;/g, replacement: ' ' },
-            { pattern: /<br\s*\/?>/gi, replacement: '' }
-        ];
+    convert(html, isFragment = false, skipBlockNewlines = false) {
+        if (!html) return '';
+
+        // Use browser DOM parser
+        const div = document.createElement('div');
+        div.innerHTML = html;
+
+        this.skipBlockNewlines = skipBlockNewlines;
+        let md = this.processNode(div);
+        return isFragment ? md : md.trim();
     }
 
-    convert(html) {
-        let markdown = html;
+    processNode(node) {
+        if (node.nodeType === 3) { // Text node
+            // Escape special markdown characters if needed, mostly context dependent
+            // For now return text content but collapse excessive whitespace
+            return node.textContent; //.replace(/\s+/g, ' '); 
+        }
 
-        // Apply all rules
-        this.rules.forEach(rule => {
-            markdown = markdown.replace(rule.pattern, rule.replacement);
-        });
+        if (node.nodeType !== 1) return ''; // Skip comments etc.
 
-        // Strip remaining HTML tags
-        markdown = markdown.replace(/<\/?[^>]+(>|$)/g, "");
+        let content = '';
 
-        return markdown;
+        // Process children first
+        for (let i = 0; i < node.childNodes.length; i++) {
+            content += this.processNode(node.childNodes[i]);
+        }
+
+        const tagName = node.tagName.toLowerCase();
+
+        switch (tagName) {
+            case 'div':
+            case 'p':
+                // Block elements add newlines if they have content or are forced
+                if (this.skipBlockNewlines) return content;
+                return content ? `\n${content}\n` : '';
+
+            case 'br':
+                return '\n';
+
+            case 'h1': return `\n# ${content}\n`;
+            case 'h2': return `\n## ${content}\n`;
+            case 'h3': return `\n### ${content}\n`;
+            case 'h4': return `\n#### ${content}\n`;
+
+            case 'b':
+            case 'strong':
+                return content.trim() ? `**${content}**` : '';
+
+            case 'i':
+            case 'em':
+                return content.trim() ? `*${content}*` : '';
+
+            case 'u':
+                return content.trim() ? `<u>${content}</u>` : '';
+
+            case 'sub':
+                return content.trim() ? `~${content}~` : '';
+
+            case 'sup':
+                return content.trim() ? `^${content}^` : '';
+
+            case 's':
+            case 'strike':
+            case 'del':
+                return content.trim() ? `~~${content}~~` : '';
+
+            case 'span':
+                // Check if it's a custom note tag
+                if (node.classList.contains('note-tag')) {
+                    if (node.classList.contains('action')) return '-a-';
+                    if (node.classList.contains('finding')) return '-f-';
+                    if (node.classList.contains('documentation')) return '-d-';
+                    if (node.classList.contains('question')) return '-q-';
+                }
+                return content;
+
+            case 'pre':
+                // Code block handling
+                const codeChild = node.querySelector('code');
+                const rawCode = codeChild ? codeChild.textContent : node.textContent;
+                // Preserve internal newlines and spaces, only remove trailing block breaks if any
+                return `\n\`\`\`\n${rawCode}\n\`\`\`\n`;
+
+            case 'code':
+                // Inline code only if not inside pre (though processNode is recursive, 
+                // we handle PRE separately above to avoid double wrapping)
+                if (node.parentElement && node.parentElement.tagName === 'PRE') {
+                    return content;
+                }
+                return content.trim() ? `\`${content}\`` : '';
+
+            case 'a':
+                const href = node.getAttribute('href');
+                return href ? `[${content}](${href})` : content;
+
+            case 'img':
+                const alt = node.getAttribute('alt') || 'image';
+                const src = node.getAttribute('data-img-id') ? `tf-img://${node.getAttribute('data-img-id')}` : node.getAttribute('src');
+                return `![${alt}](${src})`;
+
+            case 'input':
+                if (node.type === 'checkbox') {
+                    return node.checked ? '[x] ' : '[ ] ';
+                }
+                return '';
+
+            case 'ul':
+            case 'ol':
+                // Lists are tricky with recursion since we need to know we are in a list for LI items
+                // Current simple implementation: block separation
+                return `\n${content}\n`;
+
+            case 'li':
+                // Check if it's a footnote item
+                if (node.closest('.markdown-footnotes')) {
+                    const id = node.id.replace('fn-', '');
+                    // Remove backref link from content if possible, or just return basic
+                    const cleanContent = content.replace(' ↩', '');
+                    return `\n[^${id}]: ${cleanContent.trim()}\n`;
+                }
+                // Ideally check parent for OL/UL but simple dash works for now
+                // Improvement: could pass context 'listType'
+                const parent = node.parentElement;
+                if (parent && parent.tagName === 'OL') {
+                    // Start index not tracked easily in recursion without context, fallback to 1.
+                    return `1. ${content}\n`;
+                }
+                return `- ${content}\n`;
+
+            default:
+                return content;
+        }
+    }
+}
+
+// ============================================================================
+// HTML SANITIZER (Minimalist for XSS Protection)
+// ============================================================================
+
+class HtmlSanitizer {
+    static sanitize(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+
+        const walked = this.walk(div);
+        return walked.innerHTML;
+    }
+
+    static walk(node) {
+        const allowedTags = ['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'code', 'pre', 'a', 'img', 'ul', 'ol', 'li', 'input', 'blockquote', 'hr', 'span', 'sub', 'sup'];
+        const allowedAttrs = ['href', 'src', 'alt', 'title', 'class', 'id', 'type', 'checked', 'data-img-id', 'data-line', 'target', 'rel', 'onclick', 'contenteditable', 'role', 'tabindex', 'aria-label'];
+
+        const elNodes = node.querySelectorAll('*');
+        for (const el of elNodes) {
+            // Remove unapproved tags
+            if (!allowedTags.includes(el.tagName.toLowerCase())) {
+                el.parentNode.removeChild(el);
+                continue;
+            }
+
+            // Remove unapproved attributes
+            for (let i = el.attributes.length - 1; i >= 0; i--) {
+                const attr = el.attributes[i].name.toLowerCase();
+                if (!allowedAttrs.includes(attr)) {
+                    el.removeAttribute(attr);
+                    continue;
+                }
+
+                // Basic URL/Event sanitization
+                if (attr === 'href' || attr === 'src') {
+                    const val = el.getAttribute(attr).trim().toLowerCase();
+                    if (val.startsWith('javascript:') || val.startsWith('data:') && !val.startsWith('data:image/')) {
+                        el.removeAttribute(attr);
+                    }
+                }
+
+                // Only allow specific hardcoded onclick actions for custom tags
+                if (attr === 'onclick') {
+                    const val = el.getAttribute(attr);
+                    if (!val.startsWith('clkNoteTag(') && !val.startsWith('openFullscreenImage(')) {
+                        el.removeAttribute(attr);
+                    }
+                }
+            }
+        }
+        return node;
     }
 }
 
@@ -610,6 +801,8 @@ class SyntaxHighlighter {
             { pattern: /\*\*(.*?)\*\*/g, class: 'md-bold' },
             { pattern: /\*(.*?)\*/g, class: 'md-italic' },
             { pattern: /~~(.*?)~~/g, class: 'md-strike' },
+            { pattern: /~(.*?)~/g, class: 'md-sub' },
+            { pattern: /\^(.*?)\^/g, class: 'md-sup' },
             { pattern: /`(.*?)`/g, class: 'md-code' },
             { pattern: /!\[(.*?)\]\((.*?)\)/g, class: 'md-image' },
             { pattern: /\[(.*?)\]\((.*?)\)/g, class: 'md-link' },
@@ -873,6 +1066,9 @@ class MarkdownEditor {
         // State
         this.lastActiveElement = null;
         this.currentView = 'split';
+        this.undoStack = [];
+        this.redoStack = [];
+        this.maxStackSize = 50;
     }
 
     async open() {
@@ -904,6 +1100,9 @@ class MarkdownEditor {
 
             // Show modal
             this.dialog.showModal();
+
+            // Check for high contrast
+            this.applyAccessibilityPreferences();
 
             // Focus textarea
             this.textarea.focus();
@@ -940,7 +1139,10 @@ class MarkdownEditor {
                 <button class="notes-toggle-btn" id="btnViewPreview" aria-label="Preview only view">Preview</button>
               </div>
               <button class="notes-export-btn" id="btnExport" aria-label="Export options" title="Export">
-                <i class="material-icons">download</i>
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              </button>
+              <button class="btn-close-notes" id="btnCloseNotes" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
               </button>
             </div>
           </div>
@@ -953,6 +1155,8 @@ class MarkdownEditor {
             <i class="material-icons" title="Italic (Ctrl+I)" tabindex="0" role="button" aria-label="Italic" data-action="italic">format_italic</i>
             <i class="material-icons" title="Underline (Ctrl+U)" tabindex="0" role="button" aria-label="Underline" data-action="underline">format_underlined</i>
             <i class="material-icons" title="Strikethrough" tabindex="0" role="button" aria-label="Strikethrough" data-action="strikethrough">format_strikethrough</i>
+            <i class="material-icons" title="Subscript" tabindex="0" role="button" aria-label="Subscript" data-action="subscript">subscript</i>
+            <i class="material-icons" title="Superscript" tabindex="0" role="button" aria-label="Superscript" data-action="superscript">superscript</i>
             <i class="material-icons" title="Inline Code" tabindex="0" role="button" aria-label="Inline code" data-action="code">code</i>
             <div class="notes-toolbar-divider"></div>
             <i class="material-icons" title="Heading 1" tabindex="0" role="button" aria-label="Heading 1" data-action="header1">filter_1</i>
@@ -963,6 +1167,10 @@ class MarkdownEditor {
             <i class="material-icons" title="Bullet List" tabindex="0" role="button" aria-label="Bullet list" data-action="list">format_list_bulleted</i>
             <i class="material-icons" title="Task List" tabindex="0" role="button" aria-label="Task list" data-action="task">check_box</i>
             <i class="material-icons" title="Separator" tabindex="0" role="button" aria-label="Horizontal rule" data-action="hr">horizontal_rule</i>
+            <div class="notes-toolbar-divider"></div>
+            <button class="notes-export-btn" title="Search (Ctrl+F)" tabindex="0" role="button" aria-label="Search" data-action="search" style="padding: 0; background: none; border: none; color: inherit; cursor: pointer; display: flex; align-items: center;">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            </button>
           </div>
 
           <div class="notes-editor-container">
@@ -992,14 +1200,41 @@ class MarkdownEditor {
         </div>
 
         <div class="notes-export-menu" id="idExportMenu" style="display: none;">
-          <button data-export="markdown-file"><i class="material-icons">description</i> Export as Markdown (.md)</button>
-          <button data-export="text-file"><i class="material-icons">article</i> Export as Text (.txt)</button>
-          <button data-export="pdf-file"><i class="material-icons">picture_as_pdf</i> Export as PDF</button>
+          <button data-export="markdown-file">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            Export as Markdown (.md)
+          </button>
+          <button data-export="text-file">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            Export as Text (.txt)
+          </button>
+          <button data-export="pdf-file">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
+            Export as PDF
+          </button>
           <div class="export-divider"></div>
-          <button data-export="copy-markdown"><i class="material-icons">content_copy</i> Copy as Markdown</button>
-          <button data-export="copy-text"><i class="material-icons">content_paste</i> Copy as Plain Text</button>
-        </div>
-      `;
+            <button data-export="copy-markdown">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                Copy as Markdown
+            </button>
+            <button data-export="copy-text">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"/></svg>
+                Copy as Plain Text
+            </button>
+          </div>
+          
+          <div class="notes-search-panel" id="idSearchPanel" style="display: none;">
+            <input type="text" id="idSearchInput" placeholder="Find...">
+            <button class="notes-search-btn" id="btnFindPrev" title="Previous"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg></button>
+            <button class="notes-search-btn" id="btnFindNext" title="Next"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+            <div class="divider"></div>
+            <input type="text" id="idReplaceInput" placeholder="Replace...">
+            <button class="notes-search-btn" id="btnReplace" title="Replace"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M11 6c1.38 0 2.63.56 3.54 1.46L12 10h6V4l-2.05 2.05C14.68 4.78 12.93 4 11 4c-3.53 0-6.43 2.61-6.92 6h2.02c.47-2.26 2.43-4 4.9-4zM12 14v6l2.05-2.05C15.32 19.22 17.07 20 19 20c3.53 0 6.43-2.61 6.92-6h-2.02c-.47 2.26-2.43 4-4.9 4-1.38 0-2.63-.56-3.54-1.46L18 14h-6z"/></svg></button>
+            <button class="notes-search-btn" id="btnReplaceAll" title="Replace All"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/></svg></button>
+            <div class="divider"></div>
+            <button class="notes-search-btn" id="btnCloseSearch" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+          </div>
+        `;
     }
 
     setupElements() {
@@ -1009,6 +1244,11 @@ class MarkdownEditor {
         this.paneEditor = document.getElementById("paneEditor");
         this.panePreview = document.getElementById("panePreview");
         this.textSelection = new TextSelection(this.textarea);
+
+        // Phase 4: Each block has contentEditable="true", container should not
+        // to avoid event target ambiguity and browser-inserted generic divs.
+        this.preview.contentEditable = "false";
+        this.preview.spellcheck = true;
 
         this.highlighter = new SyntaxHighlighter();
         this.highlight(); // Initial highlight
@@ -1049,7 +1289,13 @@ class MarkdownEditor {
 
         this.cleanupManager.addEventListener(this.textarea, 'input', () => {
             this.highlight(); // Instant syntax highlight
-            debouncedUpdate();
+
+            // Only update preview if the user is not actively typing in it
+            const isEditingInPreview = this.preview.contains(this.lastActiveElement);
+            if (!isEditingInPreview) {
+                debouncedUpdate();
+            }
+
             this.autoSave.markDirty();
             this.updateStats();
         });
@@ -1110,6 +1356,63 @@ class MarkdownEditor {
 
         // Export menu
         this.setupExportMenu();
+
+        // Drag and drop
+        this.setupDragAndDrop();
+
+        // Search and replace
+        this.setupSearch();
+    }
+
+    setupDragAndDrop() {
+        const handleDrag = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const handleDrop = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        try {
+                            const compressedBlob = await this.imageStorage.compressImage(file);
+                            const id = await this.imageStorage.saveImage(compressedBlob, {
+                                altText: file.name,
+                                taskIndex: this.taskIndex,
+                                originalSize: file.size
+                            });
+
+                            // Insert markdown at cursor or end
+                            const markdown = `![${file.name}](tf-img://${id})\n`;
+
+                            // If dropped on preview, append to end. If on editor, insert at pos if possible?
+                            // For simplicity, insert at current cursor pos in textarea
+                            if (this.lastActiveElement === this.textarea) {
+                                this.insertMarkdown(markdown, '');
+                            } else {
+                                // Append to end
+                                this.textarea.value += '\n' + markdown;
+                                this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+
+                        } catch (error) {
+                            console.error('Image upload failed:', error);
+                            alert('Failed to upload image: ' + error.message);
+                        }
+                    }
+                }
+            }
+        };
+
+        ['dragenter', 'dragover', 'dragleave'].forEach(eventName => {
+            this.cleanupManager.addEventListener(this.dialog, eventName, handleDrag);
+        });
+
+        this.cleanupManager.addEventListener(this.dialog, 'drop', handleDrop);
     }
 
     setupExportMenu() {
@@ -1137,6 +1440,108 @@ class MarkdownEditor {
         });
     }
 
+    setupSearch() {
+        const panel = document.getElementById('idSearchPanel');
+        const searchInput = document.getElementById('idSearchInput');
+        const replaceInput = document.getElementById('idReplaceInput');
+        const btnFindNext = document.getElementById('btnFindNext');
+        const btnFindPrev = document.getElementById('btnFindPrev');
+        const btnReplace = document.getElementById('btnReplace');
+        const btnReplaceAll = document.getElementById('btnReplaceAll');
+        const btnClose = document.getElementById('btnCloseSearch');
+
+        // Toggle search with Ctrl+F
+        this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => {
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                this.toggleSearchPanel();
+            }
+        });
+
+        // Close
+        this.cleanupManager.addEventListener(btnClose, 'click', () => {
+            panel.style.display = 'none';
+            this.textarea.focus();
+        });
+
+        // Find Logic
+        const find = (forward = true) => {
+            const query = searchInput.value;
+            if (!query) return;
+
+            this.textarea.focus();
+
+            // Native find logic for textarea
+            const text = this.textarea.value;
+            const start = this.textarea.selectionStart;
+            const end = this.textarea.selectionEnd;
+
+            let index = -1;
+            if (forward) {
+                index = text.indexOf(query, end); // Search after current selection
+                if (index === -1) index = text.indexOf(query, 0); // Wrap around
+            } else {
+                index = text.lastIndexOf(query, start - 1); // Search before current selection
+                if (index === -1) index = text.lastIndexOf(query); // Wrap around
+            }
+
+            if (index !== -1) {
+                this.textarea.setSelectionRange(index, index + query.length);
+                // Scroll to selection (rudimentary)
+                const lineHeight = 21; // approx
+                const lineNo = text.substr(0, index).split('\n').length;
+                this.textarea.scrollTop = (lineNo - 5) * lineHeight;
+            } else {
+                // Not found
+                searchInput.classList.add('error');
+                setTimeout(() => searchInput.classList.remove('error'), 500);
+            }
+        };
+
+        this.cleanupManager.addEventListener(btnFindNext, 'click', () => find(true));
+        this.cleanupManager.addEventListener(btnFindPrev, 'click', () => find(false));
+        this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => {
+            if (e.key === 'Enter') find(true);
+        });
+
+        // Replace Logic
+        this.cleanupManager.addEventListener(btnReplace, 'click', () => {
+            const query = searchInput.value;
+            const replacement = replaceInput.value;
+            if (!query) return;
+
+            // Check if current selection matches query
+            const start = this.textarea.selectionStart;
+            const end = this.textarea.selectionEnd;
+            const selected = this.textarea.value.substring(start, end);
+
+            if (selected === query) {
+                // Replace current
+                this.textarea.setRangeText(replacement, start, end, 'select');
+                this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                find(true); // Find next
+            } else {
+                find(true); // Find first then user clicks again to replace
+            }
+        });
+
+        this.cleanupManager.addEventListener(btnReplaceAll, 'click', () => {
+            const query = searchInput.value;
+            const replacement = replaceInput.value;
+            if (!query) return;
+
+            const text = this.textarea.value;
+            const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            const newText = text.replace(regex, replacement);
+
+            if (text !== newText) {
+                this.textarea.value = newText;
+                this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                alert('Replaced all occurrences.');
+            }
+        });
+    }
+
     setView(view) {
         this.currentView = view;
         document.querySelectorAll('.notes-toggle-btn').forEach(b => b.classList.remove('active'));
@@ -1157,13 +1562,65 @@ class MarkdownEditor {
     async updatePreview() {
         try {
             const scrollPos = this.preview.scrollTop;
-            this.preview.innerHTML = this.parser.parse(this.textarea.value);
+            let html = this.parser.parse(this.textarea.value);
+
+            // Phase 4: Add XSS protection
+            html = HtmlSanitizer.sanitize(html);
+
+            this.preview.innerHTML = html;
             this.preview.scrollTop = scrollPos;
             await this.resolveImages();
             this.updateStats(); // Ensure stats are updated on preview refresh too
         } catch (error) {
             console.error('Preview update failed:', error);
         }
+    }
+
+    saveToHistory() {
+        // Only save if content changed from top of stack
+        const currentContent = this.textarea.value;
+        if (this.undoStack.length > 0 && this.undoStack[this.undoStack.length - 1].content === currentContent) {
+            return;
+        }
+
+        this.undoStack.push({
+            content: currentContent,
+            selectionStart: this.textarea.selectionStart,
+            selectionEnd: this.textarea.selectionEnd
+        });
+
+        if (this.undoStack.length > this.maxStackSize) {
+            this.undoStack.shift();
+        }
+
+        // Reset redo stack on new action
+        this.redoStack = [];
+    }
+
+    handleUndoRedo(isUndo = true) {
+        const stack = isUndo ? this.undoStack : this.redoStack;
+        const otherStack = isUndo ? this.redoStack : this.undoStack;
+
+        if (stack.length === 0) return;
+
+        // Save current state to other stack before restoring
+        otherStack.push({
+            content: this.textarea.value,
+            selectionStart: this.textarea.selectionStart,
+            selectionEnd: this.textarea.selectionEnd
+        });
+
+        if (otherStack.length > this.maxStackSize) {
+            otherStack.shift();
+        }
+
+        const state = stack.pop();
+        this.textarea.value = state.content;
+        this.textarea.setSelectionRange(state.selectionStart, state.selectionEnd);
+
+        // Trigger sync
+        this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        this.textarea.focus();
     }
 
     updateStats() {
@@ -1206,142 +1663,184 @@ class MarkdownEditor {
     }
 
     handleToolbarAction(action) {
+        // Save current state before any action
+        this.saveToHistory();
+
         if (this.lastActiveElement === this.textarea) {
             this.textarea.focus();
 
             switch (action) {
-                case 'bold':
-                    this.insertMarkdown('**', '**');
-                    break;
-                case 'italic':
-                    this.insertMarkdown('*', '*');
-                    break;
-                case 'underline':
-                    this.insertMarkdown('<u>', '</u>');
-                    break;
-                case 'strikethrough':
-                    this.insertMarkdown('~~', '~~');
-                    break;
+                case 'undo': this.handleUndoRedo(true); break;
+                case 'redo': this.handleUndoRedo(false); break;
+                case 'bold': this.insertMarkdown('**', '**'); break;
+                case 'italic': this.insertMarkdown('*', '*'); break;
+                case 'underline': this.insertMarkdown('<u>', '</u>'); break;
+                case 'strikethrough': this.insertMarkdown('~~', '~~'); break;
+                case 'subscript': this.insertMarkdown('~', '~'); break;
+                case 'superscript': this.insertMarkdown('^', '^'); break;
                 case 'code':
-                    this.insertMarkdown('`', '`');
-                    break;
-                case 'header1':
-                    this.insertMarkdown('# ', '');
-                    break;
-                case 'header2':
-                    this.insertMarkdown('## ', '');
-                    break;
-                case 'header3':
-                    this.insertMarkdown('### ', '');
-                    break;
-                case 'link':
-                    this.insertLink();
-                    break;
-                case 'list':
-                    this.insertMarkdown('- ', '');
-                    break;
-                case 'task':
-                    this.insertMarkdown('[ ] ', '');
-                    break;
-                case 'hr':
-                    this.insertMarkdown('\n---\n', '');
-                    break;
-                case 'undo':
-                case 'redo':
-                    // These would need a custom undo/redo stack
-                    // For now, rely on browser default
-                    break;
-            }
-        } else {
-            // Preview is active - use execCommand for contenteditable
-            // Note: document.execCommand is deprecated but still the only way for contenteditable
-            // without complex custom selection logic.
-            this.lastActiveElement.focus();
+                    const start = this.textarea.selectionStart;
+                    const end = this.textarea.selectionEnd;
+                    const selected = this.textarea.value.substring(start, end);
+                    const isNewBlock = selected.includes('\n') || this.isAtStartOfLine();
 
-            let cmd = '';
-            let val = null;
-
-            switch (action) {
-                case 'bold': cmd = 'bold'; break;
-                case 'italic': cmd = 'italic'; break;
-                case 'underline': cmd = 'underline'; break;
-                case 'strikethrough': cmd = 'strikeThrough'; break;
-                case 'list': cmd = 'insertUnorderedList'; break;
-                case 'hr': cmd = 'insertHorizontalRule'; break;
-
-                // Smart toggles for headers
-                case 'header1':
-                    val = document.queryCommandValue('formatBlock') === 'h1' ? 'div' : 'H1';
-                    cmd = 'formatBlock';
-                    break;
-                case 'header2':
-                    val = document.queryCommandValue('formatBlock') === 'h2' ? 'div' : 'H2';
-                    cmd = 'formatBlock';
-                    break;
-                case 'header3':
-                    val = document.queryCommandValue('formatBlock') === 'h3' ? 'div' : 'H3';
-                    cmd = 'formatBlock';
-                    break;
-
-                case 'code':
-                    // Inline code toggle
-                    const selection = window.getSelection();
-                    if (selection.rangeCount > 0) {
-                        const range = selection.getRangeAt(0);
-                        const parent = range.commonAncestorContainer.nodeType === 3 ?
-                            range.commonAncestorContainer.parentElement :
-                            range.commonAncestorContainer;
-
-                        if (parent.closest('code')) {
-                            // Already code - unwrap (simplified approach)
-                            // A robust unwrap is complex, simplified: just remove formatting
-                            document.execCommand('removeFormat', false, null);
-                            cmd = null;
-                        } else {
-                            if (selection.toString()) {
-                                document.execCommand('insertHTML', false, `<code>${selection.toString()}</code>`);
-                            } else {
-                                document.execCommand('insertHTML', false, `<code>code</code>`);
-                            }
-                            cmd = null;
-                        }
-                    }
-                    break;
-
-                case 'link':
-                    const selectionLink = window.getSelection().anchorNode.parentElement.closest('a');
-                    if (selectionLink) {
-                        cmd = 'unlink';
+                    if (isNewBlock) {
+                        this.insertMarkdown('```\n', '\n```');
                     } else {
-                        const url = prompt("Enter URL:", "https://");
-                        if (url) {
-                            cmd = 'createLink';
-                            val = url;
-                        }
+                        this.insertMarkdown('`', '`');
                     }
                     break;
-
-                case 'task':
-                    // Insert actual checkbox input which parser understands
-                    document.execCommand('insertHTML', false, '<input type="checkbox"> ');
-                    cmd = null;
-                    break;
-
+                case 'header1': this.insertMarkdown('# ', ''); break;
+                case 'header2': this.insertMarkdown('## ', ''); break;
+                case 'header3': this.insertMarkdown('### ', ''); break;
+                case 'link': this.insertLink(); break;
+                case 'list': this.insertMarkdown('- ', ''); break;
+                case 'task': this.insertMarkdown('[ ] ', ''); break;
+                case 'hr': this.insertMarkdown('\n---\n', ''); break;
+                case 'search': this.toggleSearchPanel(); break;
                 default:
-                    console.log('Action not supported in preview mode:', action);
-                    return;
+                    console.warn('Action not recognized in textarea:', action);
+                    break;
+            }
+        } else if (this.lastActiveElement && this.lastActiveElement.isContentEditable) {
+            this.applyFormatModern(action);
+        }
+    }
+
+    applyFormatModern(action, val = null) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        const range = selection.getRangeAt(0);
+
+        switch (action) {
+            case 'bold': this.wrapInTag(range, 'strong'); break;
+            case 'italic': this.wrapInTag(range, 'em'); break;
+            case 'underline': this.wrapInTag(range, 'u'); break;
+            case 'strikethrough': this.wrapInTag(range, 'strike'); break;
+            case 'subscript': this.wrapInTag(range, 'sub'); break;
+            case 'superscript': this.wrapInTag(range, 'sup'); break;
+            case 'code':
+                // Smart select: if selection is multi-line or contains block elements, use code block
+                if (selection.toString().includes('\n') || !range.collapsed && range.commonAncestorContainer.nodeType !== 3) {
+                    this.applyBlockFormat(range, 'pre');
+                } else {
+                    this.wrapInTag(range, 'code');
+                }
+                break;
+            case 'undo': this.handleUndoRedo(true); break;
+            case 'redo': this.handleUndoRedo(false); break;
+            case 'header1': this.applyBlockFormat(range, 'h1'); break;
+            case 'header2': this.applyBlockFormat(range, 'h2'); break;
+            case 'header3': this.applyBlockFormat(range, 'h3'); break;
+            case 'link':
+                const url = prompt("Enter URL:", "https://");
+                if (url) {
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.appendChild(range.extractContents());
+                    range.insertNode(a);
+                }
+                break;
+            case 'list':
+                this.applyBlockFormat(range, 'li');
+                break;
+            case 'task':
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                range.insertNode(cb);
+                range.insertNode(document.createTextNode(' '));
+                break;
+            case 'hr':
+                range.insertNode(document.createElement('hr'));
+                break;
+            case 'search':
+                this.toggleSearchPanel();
+                break;
+            default:
+                console.warn('Formatting action not yet supported in modern mode:', action);
+        }
+
+        // Trigger sync back to markdown
+        this.lastActiveElement.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    wrapInTag(range, tagName) {
+        if (range.collapsed) {
+            const el = document.createElement(tagName);
+            el.innerHTML = '&#8203;'; // Zero width space to allow typing
+            range.insertNode(el);
+            range.setStart(el, 1);
+            range.collapse(true);
+        } else {
+            const content = range.extractContents();
+            const el = document.createElement(tagName);
+            el.appendChild(content);
+            range.insertNode(el);
+            // Re-select applied format
+            const newRange = document.createRange();
+            newRange.selectNodeContents(el);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+        }
+    }
+
+    applyBlockFormat(range, tagName) {
+        let container = range.commonAncestorContainer;
+        if (container.nodeType === 3) container = container.parentElement;
+
+        // Find existing block element
+        const block = container.closest('div, p, h1, h2, h3, h4, h5, h6, li');
+
+        // Safety check: Don't replace the preview pane itself!
+        if (block && this.preview.contains(block) && block !== this.preview) {
+            const newBlock = document.createElement(tagName);
+            if (tagName === 'pre') {
+                newBlock.className = 'code-block';
+                const codeInner = document.createElement('code');
+                while (block.firstChild) {
+                    codeInner.appendChild(block.firstChild);
+                }
+                newBlock.appendChild(codeInner);
+            } else {
+                while (block.firstChild) {
+                    newBlock.appendChild(block.firstChild);
+                }
             }
 
-            if (cmd) {
-                document.execCommand(cmd, false, val);
-            }
+            block.parentNode.replaceChild(newBlock, block);
 
-            // Trigger input event to sync back to markdown
-            this.lastActiveElement.dispatchEvent(new Event('input', { bubbles: true }));
+            // Select contents
+            const newRange = document.createRange();
+            newRange.selectNodeContents(newBlock);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+        } else {
+            // Case: cursor in text node directly in preview, or multiple nodes selected
+            const newBlock = document.createElement(tagName);
+            if (range.collapsed) {
+                newBlock.innerHTML = '&#8203;';
+                range.insertNode(newBlock);
+                range.setStart(newBlock, 1);
+                range.collapse(true);
+            } else {
+                newBlock.appendChild(range.extractContents());
+                range.insertNode(newBlock);
+
+                const newRange = document.createRange();
+                newRange.selectNodeContents(newBlock);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(newRange);
+            }
         }
     }
 
     insertMarkdown(before, after) {
+        // Save history before change
+        this.saveToHistory();
+
         const b = before.replace(/\\n/g, '\n');
         const a = after.replace(/\\n/g, '\n');
         this.textarea.focus();
@@ -1373,36 +1872,41 @@ class MarkdownEditor {
                     this.textarea.setRangeText(b, lineStart, lineStart, 'end');
                 }
             }
-            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            return;
-        }
-
-        // Standard Wrapping Toggle Logic
-        if (selectedText.startsWith(b) && selectedText.endsWith(a)) {
-            // Unwrap
-            const innerText = selectedText.substring(b.length, selectedText.length - a.length);
-            this.textarea.setRangeText(innerText, start, end, 'end');
-            this.textarea.setSelectionRange(start, start + innerText.length);
         } else {
-            const outerBefore = text.substring(start - b.length, start);
-            const outerAfter = text.substring(end, end + a.length);
-
-            if (outerBefore === b && outerAfter === a) {
-                // Unwrap from outside
-                this.textarea.setRangeText(selectedText, start - b.length, end + a.length, 'end');
-                this.textarea.setSelectionRange(start - b.length, start - b.length + selectedText.length);
+            // Standard Wrapping Toggle Logic
+            if (selectedText.startsWith(b) && selectedText.endsWith(a)) {
+                // Unwrap
+                const innerText = selectedText.substring(b.length, selectedText.length - a.length);
+                this.textarea.setRangeText(innerText, start, end, 'end');
+                this.textarea.setSelectionRange(start, start + innerText.length);
             } else {
-                // Wrap
-                this.textarea.setRangeText(b + selectedText + a, start, end, 'end');
-                if (selectedText.length > 0) {
-                    this.textarea.setSelectionRange(start + b.length, end + b.length);
+                const outerBefore = text.substring(start - b.length, start);
+                const outerAfter = text.substring(end, end + a.length);
+
+                if (outerBefore === b && outerAfter === a) {
+                    // Unwrap from outside
+                    this.textarea.setRangeText(selectedText, start - b.length, end + a.length, 'end');
+                    this.textarea.setSelectionRange(start - b.length, start - b.length + selectedText.length);
                 } else {
-                    this.textarea.setSelectionRange(start + b.length, start + b.length);
+                    // Wrap
+                    this.textarea.setRangeText(b + selectedText + a, start, end, 'end');
+                    if (selectedText.length > 0) {
+                        this.textarea.setSelectionRange(start + b.length, end + b.length);
+                    } else {
+                        this.textarea.setSelectionRange(start + b.length, start + b.length);
+                    }
                 }
             }
         }
 
         this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    isAtStartOfLine() {
+        const pos = this.textarea.selectionStart;
+        const text = this.textarea.value;
+        if (pos === 0) return true;
+        return text[pos - 1] === '\n';
     }
 
     insertLink() {
@@ -1465,39 +1969,62 @@ class MarkdownEditor {
     }
 
     handlePreviewEdit(e) {
-        const target = e.target.closest('[data-line]'); // Ensure we get the container
+        const node = e.target.nodeType === 3 ? e.target.parentElement : e.target;
+        const target = node.closest('[data-line]');
         if (!target) return;
 
         const lineIdx = parseInt(target.getAttribute('data-line'), 10);
-        if (!isNaN(lineIdx)) {
-            const lines = this.textarea.value.split('\n');
-            let htmlToMd = this.htmlConverter.convert(target.innerHTML);
+        if (isNaN(lineIdx)) return;
 
-            // Reconstruct the markdown line prefix if needed
-            let prefix = "";
-            const rawLine = lines[lineIdx] ? lines[lineIdx] : ""; // Handle undefined if new line
-            if (rawLine.startsWith('# ')) prefix = "# ";
-            else if (rawLine.startsWith('## ')) prefix = "## ";
-            else if (rawLine.startsWith('### ')) prefix = "### ";
-            else if (rawLine.startsWith('- [ ] ')) prefix = "- [ ] ";
-            else if (rawLine.startsWith('- [x] ')) prefix = "- [x] ";
-            else if (rawLine.startsWith('- ')) prefix = "- ";
-            else if (rawLine.startsWith('* ')) prefix = "* ";
-            // Handle quotes and other prefixes
-            else if (rawLine.startsWith('> ')) prefix = "> ";
+        const lines = this.textarea.value.split('\n');
+        let htmlToMd = this.htmlConverter.convert(target.innerHTML, true, true);
 
-            // Check if conversion already includes prefix to avoid duplication if user typed it
-            if (htmlToMd.startsWith(prefix.trim())) {
-                prefix = "";
-            }
+        // Normalize spaces and non-breaking chars early to ensure accurate mapping/comparison
+        htmlToMd = htmlToMd.replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
 
-            lines[lineIdx] = prefix + htmlToMd;
+        // Robust structural prefix detection from source (indentation, bullets, quotes, headings)
+        const oldLine = (lines[lineIdx] || "").replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
+        const prefixMatch = oldLine.match(/^([#>\s\*-]*(\[[ x]\])?\s*)/);
+        let prefix = prefixMatch ? prefixMatch[1] : "";
+
+        // DEDUPLICATION: If the conversion already contains the prefix, don't add it again.
+        // This handles cases where the browser includes leading spaces in paragraphs
+        // or where formatting tags (like bold **) are at the start of a matched prefix.
+        if (prefix && htmlToMd.startsWith(prefix)) {
+            prefix = "";
+        }
+
+        const newLine = prefix + htmlToMd;
+
+        if (lines[lineIdx] !== newLine) {
+            lines[lineIdx] = newLine;
             this.textarea.value = lines.join('\n');
 
-            // Sync syntax highlighter
+            // Immediate sync feedback for stats and syntax layer
             this.highlight();
-
+            this.updateStats();
             this.autoSave.markDirty();
+
+            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+
+    toggleSearchPanel() {
+        const panel = document.getElementById('idSearchPanel');
+        const searchInput = document.getElementById('idSearchInput');
+        if (!panel || !searchInput) return;
+
+        const isHidden = panel.style.display === 'none';
+        panel.style.display = isHidden ? 'flex' : 'none';
+
+        if (isHidden) {
+            searchInput.focus();
+            const selection = window.getSelection().toString();
+            if (selection) {
+                searchInput.value = selection;
+            }
+        } else {
+            this.textarea.focus();
         }
     }
 
@@ -1533,6 +2060,25 @@ class MarkdownEditor {
     }
 
     handleKeyboardShortcuts(e) {
+        // Toolbar Arrow Key Navigation
+        if (e.target.closest('.notes-toolbar')) {
+            const buttons = Array.from(this.dialog.querySelectorAll('.notes-toolbar [tabindex="0"]'));
+            const index = buttons.indexOf(e.target);
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                const nextIndex = e.key === 'ArrowRight'
+                    ? (index + 1) % buttons.length
+                    : (index - 1 + buttons.length) % buttons.length;
+                buttons[nextIndex].focus();
+                return;
+            }
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.target.click();
+                return;
+            }
+        }
+
         if (!e.ctrlKey) return;
 
         let handled = true;
@@ -1576,21 +2122,36 @@ class MarkdownEditor {
                     this.downloadFile(plainText, `${taskTitle}.txt`, 'text/plain');
                     break;
                 case 'pdf-file':
-                    await this.exportToPDF();
+                    // Force update to ensure latest content
+                    await this.updatePreview();
+
+                    const wasEditor = this.currentView === 'editor';
+                    if (wasEditor) {
+                        this.paneEditor.classList.add('hidden');
+                        this.panePreview.classList.remove('hidden');
+                    }
+
+                    window.print();
+
+                    // Restore view
+                    if (wasEditor) {
+                        this.paneEditor.classList.remove('hidden');
+                        this.panePreview.classList.add('hidden');
+                    }
                     break;
                 case 'copy-markdown':
                     await navigator.clipboard.writeText(content);
-                    this.showToast('Copied as Markdown');
+                    alert('Markdown copied to clipboard!');
                     break;
                 case 'copy-text':
                     const plainTextCopy = this.convertToPlainText(content);
                     await navigator.clipboard.writeText(plainTextCopy);
-                    this.showToast('Copied as Plain Text');
+                    alert('Text copied to clipboard!');
                     break;
             }
         } catch (error) {
             console.error('Export failed:', error);
-            this.showToast('Export failed', 'error');
+            alert('Export failed: ' + error.message);
         }
     }
 
@@ -1643,6 +2204,12 @@ class MarkdownEditor {
             data[this.taskIndex].notes = this.textarea.value;
             data[this.taskIndex].date_updated = new Date().toISOString();
             localStorage.setItem("data", JSON.stringify(data));
+
+            // Phase 4: Vacuum orphaned images on save
+            if (typeof data !== 'undefined') {
+                await this.imageStorage.cleanupOrphanedImages(data);
+            }
+
             return true;
         } catch (error) {
             console.error('Save failed:', error);
@@ -1674,6 +2241,11 @@ class MarkdownEditor {
         if (this.dialog) {
             this.dialog.close();
             this.dialog.remove();
+        }
+    }
+    applyAccessibilityPreferences() {
+        if (window.matchMedia('(prefers-contrast: high)').matches) {
+            this.dialog.classList.add('high-contrast');
         }
     }
 }

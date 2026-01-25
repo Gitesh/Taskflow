@@ -21,9 +21,34 @@
   --font-family-task-detail: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --font-size-base: 14px;
   --font-size-lg: 130%;
+}
 
+/* Material Icons Fallback */
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
 
-  /* View-specific Layouts */
+/* View-specific Layouts */
+:root {
   --dashboard-list-width: 1fr;
   --dashboard-detail-width: 3fr;
   --kanban-min-column: 280px;
@@ -2709,6 +2734,42 @@ body.hide-tags .clsFrontTags {
   font-size: 0.9em;
 }
 
+#idNotesPreview u {
+  text-decoration: underline;
+}
+
+#idNotesPreview sub {
+  vertical-align: sub;
+  font-size: 0.75em;
+}
+
+#idNotesPreview sup {
+  vertical-align: super;
+  font-size: 0.75em;
+}
+
+#idNotesPreview pre.code-block {
+  background: var(--color-bg-section);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 15px;
+  margin: 15px 0;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  /* Phase 4: Preserve spaces but wrap long lines */
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+
+#idNotesPreview pre.code-block code {
+  background: transparent;
+  padding: 0;
+  font-size: 1em;
+  color: inherit;
+}
+
 #idNotesPreview a {
   color: var(--color-accent);
   text-decoration: none;
@@ -3078,6 +3139,26 @@ hr {
   color: #64b5f6;
 }
 
+.md-sub {
+  vertical-align: sub;
+  font-size: 0.8em;
+  color: var(--color-text-secondary);
+}
+
+.md-sup {
+  vertical-align: super;
+  font-size: 0.8em;
+  color: var(--color-text-secondary);
+}
+
+.md-math {
+  font-family: 'Times New Roman', Times, serif;
+  font-style: italic;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+
 
 /* Pasted Images & Fullscreen Viewer */
 .pasted-image {
@@ -3300,4 +3381,169 @@ hr {
   /* Point UP: Bottom border has color */
   border-bottom: 6px solid rgba(30, 30, 30, 0.95);
   border-top: none;
+}
+
+/* Print Styling for PDF Export */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Force modal and content path to be visible */
+  #idNotesModal,
+  #idNotesModal .notes-modal-content,
+  #idNotesModal .notes-editor-container,
+  #idNotesModal .notes-preview-pane,
+  #idNotesPreview,
+  #idNotesPreview * {
+    visibility: visible !important;
+    display: block !important;
+    opacity: 1 !important;
+  }
+
+  #idNotesModal {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: white !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  /* Hide UI chrome */
+  .notes-header,
+  .notes-toolbar,
+  .notes-editor-pane,
+  .notes-footer,
+  .notes-export-menu,
+  .btn-close-notes,
+  .notes-view-toggle,
+  .notes-stats {
+    display: none !important;
+  }
+
+  .notes-modal-content {
+    height: auto !important;
+    background: white !important;
+  }
+
+  #idNotesPreview {
+    width: 100% !important;
+    position: static !important;
+    background: white !important;
+    color: black !important;
+    padding: 20px !important;
+    font-size: 12pt !important;
+  }
+
+  /* Ensure images print well */
+  #idNotesPreview img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure page breaks don't cut content awkwardly */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid !important;
+  }
+
+  p,
+  li,
+  blockquote {
+    page-break-inside: avoid !important;
+  }
+}
+
+/* Search Panel */
+.notes-search-panel {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notes-search-panel input {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: var(--color-input-bg);
+  color: var(--color-text-primary);
+  width: 150px;
+}
+
+.notes-search-btn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notes-search-btn:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.notes-search-panel .divider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin: 0 4px;
+}
+
+/* Phase 5: High Contrast Mode Support */
+.clsNotesModal.high-contrast {
+  border: 4px solid #000 !important;
+  outline: 4px solid #fff !important;
+}
+
+.clsNotesModal.high-contrast .notes-toolbar {
+  border-bottom: 2px solid #000 !important;
+}
+
+.clsNotesModal.high-contrast .notes-toolbar i:focus {
+  border-color: #000 !important;
+  outline: 2px solid #fff !important;
+}
+
+.clsNotesModal.high-contrast #idNotesTextarea,
+.clsNotesModal.high-contrast #idNotesPreview {
+  border: 2px solid #000 !important;
+  background: white !important;
+  color: black !important;
 }
