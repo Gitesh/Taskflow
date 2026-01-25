@@ -1,99 +1,405 @@
 /*==================================*/
-/* Task Notes & Markdown Support */
+/* Enhanced Markdown Notes Editor */
 /*==================================*/
 
-// --- IndexedDB for Images ---
-const IMAGE_DB_NAME = 'TaskflowImages';
-const IMAGE_STORE_NAME = 'images';
-let imageDB = null;
+/**
+ * Enhanced Markdown Editor with modular architecture
+ * Features: Auto-save, performance optimizations, accessibility, extended markdown support
+ */
 
-function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result); // This is a data URL
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-    });
-}
-
-function initImageDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(IMAGE_DB_NAME, 1);
-        request.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(IMAGE_STORE_NAME)) {
-                db.createObjectStore(IMAGE_STORE_NAME);
-            }
+// Utility Functions
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
         };
-        request.onsuccess = (e) => {
-            imageDB = e.target.result;
-            resolve(imageDB);
-        };
-        request.onerror = (e) => reject(e.target.error);
-    });
-}
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
 
-function saveImageToDB(id, blob) {
-    return new Promise((resolve, reject) => {
-        const transaction = imageDB.transaction([IMAGE_STORE_NAME], 'readwrite');
-        const store = transaction.objectStore(IMAGE_STORE_NAME);
-        const request = store.put(blob, id);
-        request.onsuccess = () => resolve();
-        request.onerror = (e) => reject(e.target.error);
-    });
-}
+const sanitizeHTML = (html) => {
+    const div = document.createElement('div');
+    div.textContent = html;
+    return div.innerHTML;
+};
 
-function getImageFromDB(id) {
-    return new Promise((resolve, reject) => {
-        const transaction = imageDB.transaction([IMAGE_STORE_NAME], 'readonly');
-        const store = transaction.objectStore(IMAGE_STORE_NAME);
-        const request = store.get(id);
-        request.onsuccess = (e) => resolve(e.target.result);
-        request.onerror = (e) => reject(e.target.error);
-    });
-}
+// Image Storage Class
+class ImageStorage {
+    constructor() {
+        this.dbName = 'TaskflowImages';
+        this.storeName = 'images';
+        this.db = null;
+    }
 
-function getAllImagesFromDB() {
-    return new Promise((resolve, reject) => {
-        if (!imageDB) {
-            initImageDB().then(() => doWork()).catch(reject);
-        } else {
-            doWork();
-        }
-
-        function doWork() {
-            const transaction = imageDB.transaction([IMAGE_STORE_NAME], 'readonly');
-            const store = transaction.objectStore(IMAGE_STORE_NAME);
-            const request = store.getAll();
-            const keyRequest = store.getAllKeys();
-
-            let images = {};
-            request.onsuccess = () => {
-                keyRequest.onsuccess = () => {
-                    const keys = keyRequest.result;
-                    const values = request.result;
-                    keys.forEach((key, i) => {
-                        images[key] = values[i];
-                    });
-                    resolve(images);
+    async init() {
+        try {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(this.storeName)) {
+                        db.createObjectStore(this.storeName);
+                    }
                 };
-            };
-            request.onerror = (e) => reject(e.target.error);
+                request.onsuccess = (e) => {
+                    this.db = e.target.result;
+                    resolve(this.db);
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (error) {
+            console.error('Failed to initialize image storage:', error);
+            throw error;
         }
-    });
+    }
+
+    async saveImage(id, blob) {
+        try {
+            if (!this.db) await this.init();
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.put(blob, id);
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (error) {
+            console.error('Failed to save image:', error);
+            throw error;
+        }
+    }
+
+    async getImage(id) {
+        try {
+            if (!this.db) await this.init();
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.get(id);
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (error) {
+            console.error('Failed to get image:', error);
+            return null;
+        }
+    }
+
+    async getAllImages() {
+        try {
+            if (!this.db) await this.init();
+            return new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.getAll();
+                const keyRequest = store.getAllKeys();
+
+                let images = {};
+                request.onsuccess = () => {
+                    keyRequest.onsuccess = () => {
+                        const keys = keyRequest.result;
+                        const values = request.result;
+                        keys.forEach((key, i) => {
+                            images[key] = values[i];
+                        });
+                        resolve(images);
+                    };
+                };
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (error) {
+            console.error('Failed to get all images:', error);
+            return {};
+        }
+    }
+}
+
+// Enhanced Markdown Parser
+class MarkdownParser {
+    constructor() {
+        this.cache = new Map();
+    }
+
+    parse(text) {
+        const cacheKey = text;
+        if (this.cache.has(cacheKey)) {
+            return this.cache.get(cacheKey);
+        }
+
+        try {
+            const html = this.parseMarkdown(text);
+            this.cache.set(cacheKey, html);
+            
+            // Clear cache if it gets too large
+            if (this.cache.size > 100) {
+                const firstKey = this.cache.keys().next().value;
+                this.cache.delete(firstKey);
+            }
+            
+            return html;
+        } catch (error) {
+            console.error('Markdown parsing error:', error);
+            return `<div class="error">Markdown parsing failed: ${error.message}</div>`;
+        }
+    }
+
+    parseMarkdown(text) {
+        if (!text) return "";
+
+        const lines = text.split('\n');
+        let htmlResult = [];
+        let inList = false;
+        let inBlockquote = false;
+        let inCodeBlock = false;
+        let codeBlockLang = '';
+
+        const parseInline = (str) => {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/<u>(.*?)<\/u>/gi, '<u>$1</u>')
+                .replace(/~~(.*?)~~/g, '<strike>$1</strike>')
+                .replace(/`(.*?)`/g, '<code>$1</code>')
+                .replace(/\[ \]/g, '<input type="checkbox" aria-label="Task item">')
+                .replace(/\[x\]/g, '<input type="checkbox" checked aria-label="Completed task">')
+                .replace(/-a-/gi, '<span class="note-tag action" contenteditable="false" role="button" tabindex="0" aria-label="Action tag" onclick="clkNoteTag(\'action\')">action</span>')
+                .replace(/-f-/gi, '<span class="note-tag finding" contenteditable="false" role="button" tabindex="0" aria-label="Finding tag" onclick="clkNoteTag(\'finding\')">finding</span>')
+                .replace(/-d-/gi, '<span class="note-tag documentation" contenteditable="false" role="button" tabindex="0" aria-label="Documentation tag" onclick="clkNoteTag(\'documentation\')">documentation</span>')
+                .replace(/-q-/gi, '<span class="note-tag question" contenteditable="false" role="button" tabindex="0" aria-label="Question tag" onclick="clkNoteTag(\'question\')">question</span>')
+                .replace(/!\[(.*?)\]\(tf-img:\/\/(.*?)\)/g, '<img class="pasted-image" alt="$1" data-img-id="$2" onclick="openFullscreenImage(this.src)" loading="lazy">')
+                .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                .replace(/(^|[^"'])(https?:\/\/[^\s\)]+)/g, '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>');
+        };
+
+        const parseTable = (lines, startIndex) => {
+            const tableLines = [];
+            let i = startIndex;
+            
+            while (i < lines.length && lines[i].trim().includes('|')) {
+                tableLines.push(lines[i]);
+                i++;
+            }
+            
+            if (tableLines.length < 2) return { html: '', nextIndex: i };
+            
+            let tableHTML = '<table class="markdown-table" role="table"><thead><tr>';
+            const headerCells = tableLines[0].split('|').map(cell => cell.trim()).filter(cell => cell);
+            headerCells.forEach(cell => {
+                tableHTML += `<th>${parseInline(cell)}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            for (let j = 2; j < tableLines.length; j++) {
+                tableHTML += '<tr>';
+                const cells = tableLines[j].split('|').map(cell => cell.trim()).filter(cell => cell);
+                cells.forEach(cell => {
+                    tableHTML += `<td>${parseInline(cell)}</td>`;
+                });
+                tableHTML += '</tr>';
+            }
+            
+            tableHTML += '</tbody></table>';
+            return { html: tableHTML, nextIndex: i };
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const rawLine = line.trim();
+
+            // Code blocks
+            if (rawLine.startsWith('```')) {
+                if (inCodeBlock) {
+                    htmlResult.push('</code></pre>');
+                    inCodeBlock = false;
+                    codeBlockLang = '';
+                } else {
+                    inCodeBlock = true;
+                    codeBlockLang = rawLine.substring(3).trim();
+                    htmlResult.push(`<pre class="code-block ${codeBlockLang}"><code class="language-${codeBlockLang}">`);
+                }
+                continue;
+            }
+
+            if (inCodeBlock) {
+                htmlResult.push(escapeHtml(line));
+                continue;
+            }
+
+            // Tables
+            if (rawLine.includes('|') && !inList) {
+                const tableResult = parseTable(lines, i);
+                htmlResult.push(tableResult.html);
+                i = tableResult.nextIndex - 1;
+                continue;
+            }
+
+            // Blockquotes
+            if (rawLine.startsWith('>')) {
+                if (!inBlockquote) {
+                    htmlResult.push('<blockquote class="markdown-blockquote">');
+                    inBlockquote = true;
+                }
+                htmlResult.push(`<div contenteditable="true" data-line="${i}">${parseInline(rawLine.substring(1).trim())}</div>`);
+                continue;
+            }
+
+            if (inBlockquote) {
+                htmlResult.push('</blockquote>');
+                inBlockquote = false;
+            }
+
+            // Horizontal Rule
+            if (rawLine === '---' || rawLine === '***' || rawLine === '___') {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                htmlResult.push('<hr class="markdown-hr">');
+                continue;
+            }
+
+            // Empty lines
+            if (rawLine === '' && !inList) {
+                htmlResult.push(`<div contenteditable="true" data-line="${i}" class="empty-line">&nbsp;</div>`);
+                continue;
+            }
+
+            // Headings
+            if (rawLine.startsWith('# ')) {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                htmlResult.push(`<h1 contenteditable="true" data-line="${i}" class="markdown-h1">${parseInline(rawLine.substring(2))}</h1>`);
+            } else if (rawLine.startsWith('## ')) {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                htmlResult.push(`<h2 contenteditable="true" data-line="${i}" class="markdown-h2">${parseInline(rawLine.substring(3))}</h2>`);
+            } else if (rawLine.startsWith('### ')) {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                htmlResult.push(`<h3 contenteditable="true" data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
+            }
+            // Lists & Task Lists
+            else if (rawLine.match(/^[-*]\s/)) {
+                if (!inList) {
+                    htmlResult.push('<ul class="markdown-list">');
+                    inList = true;
+                }
+                const isTask = rawLine.includes('[ ]') || rawLine.includes('[x]');
+                const content = parseInline(rawLine.substring(rawLine.match(/^[-*]\s/)[0].length));
+                htmlResult.push(`<li class="${isTask ? 'task-item' : ''}" contenteditable="true" data-line="${i}">${content}</li>`);
+            } else {
+                if (inList) {
+                    htmlResult.push('</ul>');
+                    inList = false;
+                }
+                if (rawLine !== '') {
+                    htmlResult.push(`<div contenteditable="true" data-line="${i}" class="markdown-paragraph">${parseInline(rawLine)}</div>`);
+                }
+            }
+        }
+
+        // Close any open blocks
+        if (inList) htmlResult.push('</ul>');
+        if (inBlockquote) htmlResult.push('</blockquote>');
+        if (inCodeBlock) htmlResult.push('</code></pre>');
+
+        return htmlResult.join('');
+    }
+}
+
+// Text Selection Helper
+class TextSelection {
+    constructor(textarea) {
+        this.textarea = textarea;
+    }
+
+    getSelectedText() {
+        return this.textarea.value.substring(this.textarea.selectionStart, this.textarea.selectionEnd);
+    }
+
+    insertText(text, replaceSelection = true) {
+        const start = this.textarea.selectionStart;
+        const end = this.textarea.selectionEnd;
+        const value = this.textarea.value;
+        
+        let newValue;
+        if (replaceSelection) {
+            newValue = value.substring(0, start) + text + value.substring(end);
+        } else {
+            newValue = value.substring(0, end) + text + value.substring(end);
+        }
+        
+        this.textarea.value = newValue;
+        
+        // Restore cursor position
+        const newCursorPos = replaceSelection ? start + text.length : end + text.length;
+        this.textarea.setSelectionRange(newCursorPos, newCursorPos);
+        
+        // Trigger input event
+        this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    wrapSelection(before, after) {
+        const start = this.textarea.selectionStart;
+        const end = this.textarea.selectionEnd;
+        const selectedText = this.getSelectedText();
+        const text = this.textarea.value;
+        
+        // Check if already wrapped
+        const beforeAtStart = text.substring(start - before.length, start);
+        const afterAtEnd = text.substring(end, end + after.length);
+        
+        if (beforeAtStart === before && afterAtEnd === after) {
+            // Unwrap
+            this.textarea.setSelectionRange(start - before.length, end + after.length);
+            this.insertText(selectedText, true);
+        } else {
+            // Wrap
+            this.insertText(before + selectedText + after, true);
+        }
+    }
+
+    applyMarkdown(command) {
+        const commands = {
+            bold: ['**', '**'],
+            italic: ['*', '*'],
+            underline: ['<u>', '</u>'],
+            strikethrough: ['~~', '~~'],
+            code: ['`', '`']
+        };
+        
+        if (commands[command]) {
+            const [before, after] = commands[command];
+            this.wrapSelection(before, after);
+        }
+    }
 }
 
 // Global fullscreen viewer
 window.openFullscreenImage = (src) => {
-    let overlay = document.getElementById('image-fullscreen-overlay');
-    if (!overlay) {
-        overlay = document.createElement('dialog');
-        overlay.id = 'image-fullscreen-overlay';
-        overlay.onclick = () => overlay.close();
-        document.body.appendChild(overlay);
+    try {
+        let overlay = document.getElementById('image-fullscreen-overlay');
+        if (!overlay) {
+            overlay = document.createElement('dialog');
+            overlay.id = 'image-fullscreen-overlay';
+            overlay.className = 'image-overlay';
+            overlay.innerHTML = `
+                <div class="image-container">
+                    <img src="${src}" alt="Fullscreen image">
+                    <button class="close-btn" aria-label="Close image" onclick="this.closest('dialog').close()">×</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.close();
+            });
+        } else {
+            overlay.querySelector('img').src = src;
+        }
+        overlay.showModal();
+    } catch (error) {
+        console.error('Failed to open fullscreen image:', error);
     }
-    overlay.innerHTML = `<img src="${src}">`;
-    overlay.showModal();
 };
 
 function clkOpenTaskNotes(index) {

@@ -1048,9 +1048,6 @@ body.view-dashboard {
 } */
 
 
-
-
-
 .view-matrix .clsTaskCard {
   padding: 8px;
   min-height: 40px;
@@ -1070,7 +1067,6 @@ body.view-dashboard {
   /* border-bottom: 2px solid var(--color-border); */
   font-size: var(--font-size-base);
   display: flex;
-  */
   /* Ensure a minimum height of ~3 lines while allowing growth */
   line-height: 1.3;
   min-height: calc(2 * 0.3em + 2 * var(--card-padding));
@@ -2654,6 +2650,8 @@ body.hide-tags .clsFrontTags {
   line-height: 1.5;
   box-sizing: border-box;
   outline: none;
+  text-align: left !important;
+  /* Force left alignment */
 }
 
 #idNotesTextarea:focus {
@@ -2669,7 +2667,11 @@ body.hide-tags .clsFrontTags {
   border: 1px solid var(--color-border);
   color: var(--color-text-primary);
   line-height: 1.6;
-  text-align: left;
+  text-align: left !important;
+  /* Force left alignment */
+  align-self: stretch;
+  /* Ensure it fills width */
+  justify-self: start;
 }
 
 #idNotesPreview h1 {
@@ -2778,6 +2780,150 @@ hr {
   box-shadow: 0 4px 12px rgba(232, 0, 78, 0.3);
 }
 
+/* Save Status Indicator */
+.notes-save-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: white;
+}
+
+.notes-save-status i {
+  font-size: 18px;
+}
+
+.notes-save-status.saved {
+  color: #4CAF50;
+}
+
+.notes-save-status.saving {
+  color: #FFC107;
+}
+
+.notes-save-status.unsaved {
+  color: #FF9800;
+}
+
+.notes-save-status.error {
+  color: #F44336;
+}
+
+.notes-save-status.saving i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Export Button and Menu */
+.notes-export-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.notes-export-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.notes-export-btn i {
+  font-size: 20px;
+}
+
+.notes-export-menu {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 250px;
+  overflow: hidden;
+}
+
+.notes-export-menu button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.notes-export-menu button:hover {
+  background: var(--color-bg-card-hover);
+  color: var(--color-accent);
+}
+
+.notes-export-menu button i {
+  font-size: 20px;
+  color: var(--color-text-secondary);
+}
+
+.notes-export-menu button:hover i {
+  color: var(--color-accent);
+}
+
+.export-divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
+}
+
+/* Footer Stats */
+.notes-footer {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-container);
+  border-top: 1px solid var(--color-border);
+}
+
+.notes-stats {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.notes-stats span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.stats-divider {
+  color: var(--color-border);
+}
+
 /* Dark Mode Overrides */
 [data-theme="dark"] #idNotesPreview {
   background: #1e2533;
@@ -2793,6 +2939,145 @@ hr {
     border-bottom: 1px solid var(--color-border);
   }
 }
+
+/* Syntax Highlighting */
+.editor-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex: 1;
+}
+
+.syntax-layer,
+#idNotesTextarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  margin: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+  /* Allow scrolling on both, sync via JS */
+  text-align: left !important;
+  /* Fix centering bug */
+}
+
+/* Syntax Layer (Behind) */
+.syntax-layer {
+  z-index: 1;
+  color: var(--color-text-primary);
+  background: var(--color-input-bg);
+  pointer-events: none;
+  /* Let clicks pass through */
+  /* Ensure scrollbar space matches textarea to prevent wrapping mismatches */
+  scrollbar-color: transparent transparent;
+}
+
+.syntax-layer::-webkit-scrollbar {
+  width: 17px;
+  /* Typical scrollbar width */
+  background: transparent;
+}
+
+.syntax-layer::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+/* Textarea (Front) */
+#idNotesTextarea {
+  z-index: 2;
+  color: transparent;
+  /* Hide text but keep caret */
+  background: transparent;
+  caret-color: var(--color-text-primary);
+  /* Visible caret */
+  resize: none;
+}
+
+#idNotesTextarea::selection {
+  background: rgba(100, 100, 100, 0.3);
+  /* Visible selection */
+  color: transparent;
+}
+
+/* Token Styles */
+.md-heading {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.md-bold {
+  color: var(--color-accent);
+  font-weight: bold;
+}
+
+.md-italic {
+  font-style: italic;
+  color: #9c27b0;
+}
+
+.md-strike {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.md-code {
+  color: #e91e63;
+  background: rgba(233, 30, 99, 0.1);
+  border-radius: 3px;
+}
+
+.md-link {
+  color: #2196f3;
+  text-decoration: underline;
+}
+
+.md-image {
+  color: #ff9800;
+}
+
+.md-list {
+  color: var(--color-accent);
+}
+
+.md-quote {
+  color: #4caf50;
+  font-style: italic;
+  display: block !important;
+  /* Fix potential display issues */
+  text-align: left;
+}
+
+.md-task {
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.md-hr {
+  color: var(--color-border);
+  font-weight: bold;
+}
+
+/* Dark Mode Adjustments for Syntax */
+[data-theme="dark"] .md-code {
+  color: #ff80ab;
+  background: rgba(255, 128, 171, 0.1);
+}
+
+[data-theme="dark"] .md-link {
+  color: #64b5f6;
+}
+
 
 /* Pasted Images & Fullscreen Viewer */
 .pasted-image {
