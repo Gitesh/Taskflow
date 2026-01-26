@@ -1073,11 +1073,16 @@ class MarkdownEditor {
 
     async open() {
         try {
-            // Close existing modal if any
-            const existing = document.getElementById("idNotesModal");
+            // Check if this specific task's note is already open
+            const existing = document.getElementById(`idNotesModal_${this.taskIndex}`);
             if (existing) {
-                existing.close();
-                existing.remove();
+                // If it's minimized, restore it. Otherwise just focus it.
+                if (existing.classList.contains('minimized')) {
+                    this.dialog = existing;
+                    this.toggleMinimize();
+                }
+                existing.focus();
+                return;
             }
 
             // Initialize image storage
@@ -1098,8 +1103,8 @@ class MarkdownEditor {
             // Initial render
             await this.updatePreview();
 
-            // Show modal
-            this.dialog.showModal();
+            // Show as non-modal to allow multitasking and preserve app interaction
+            this.dialog.show();
 
             // Check for high contrast
             this.applyAccessibilityPreferences();
@@ -1114,7 +1119,7 @@ class MarkdownEditor {
 
     createDialog() {
         this.dialog = document.createElement("dialog");
-        this.dialog.id = "idNotesModal";
+        this.dialog.id = `idNotesModal_${this.taskIndex}`;
         this.dialog.className = "clsNotesModal";
         document.body.appendChild(this.dialog);
 
@@ -1141,7 +1146,13 @@ class MarkdownEditor {
               <button class="notes-export-btn" id="btnExport" aria-label="Export options" title="Export">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               </button>
-              <button class="btn-close-notes" id="btnCloseNotes" aria-label="Close">
+              <button class="notes-header-icon-btn" id="btnMinimizeNotes" aria-label="Minimize" title="Minimize">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
+              </button>
+              <button class="notes-header-icon-btn" id="btnMaximizeNotes" aria-label="Maximize" title="Maximize">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+              </button>
+              <button class="btn-close-notes" id="btnCloseNotes" aria-label="Close" title="Close">
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
               </button>
             </div>
@@ -1238,11 +1249,11 @@ class MarkdownEditor {
     }
 
     setupElements() {
-        this.textarea = document.getElementById("idNotesTextarea");
-        this.syntaxLayer = document.getElementById("idSyntaxLayer");
-        this.preview = document.getElementById("idNotesPreview");
-        this.paneEditor = document.getElementById("paneEditor");
-        this.panePreview = document.getElementById("panePreview");
+        this.textarea = this.dialog.querySelector("#idNotesTextarea");
+        this.syntaxLayer = this.dialog.querySelector("#idSyntaxLayer");
+        this.preview = this.dialog.querySelector("#idNotesPreview");
+        this.paneEditor = this.dialog.querySelector("#paneEditor");
+        this.panePreview = this.dialog.querySelector("#panePreview");
         this.textSelection = new TextSelection(this.textarea);
 
         // Phase 4: Each block has contentEditable="true", container should not
@@ -1274,7 +1285,7 @@ class MarkdownEditor {
 
     setupAutoSave() {
         this.autoSave = new EditorAutoSave(this, 2000);
-        const statusElement = document.getElementById("idSaveStatus");
+        const statusElement = this.dialog.querySelector("#idSaveStatus");
         this.autoSave.setStatusElement(statusElement);
     }
 
@@ -1301,9 +1312,9 @@ class MarkdownEditor {
         });
 
         // View toggles
-        this.cleanupManager.addEventListener(document.getElementById('btnViewEditor'), 'click', () => this.setView('editor'));
-        this.cleanupManager.addEventListener(document.getElementById('btnViewSplit'), 'click', () => this.setView('split'));
-        this.cleanupManager.addEventListener(document.getElementById('btnViewPreview'), 'click', () => this.setView('preview'));
+        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnViewEditor'), 'click', () => this.setView('editor'));
+        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnViewSplit'), 'click', () => this.setView('split'));
+        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnViewPreview'), 'click', () => this.setView('preview'));
 
         // Toolbar actions
         const toolbarButtons = this.dialog.querySelectorAll('.notes-toolbar [data-action]');
@@ -1321,8 +1332,19 @@ class MarkdownEditor {
         this.cleanupManager.addEventListener(this.preview, 'paste', handlePaste);
 
         // Track active element
-        this.cleanupManager.addEventListener(this.textarea, 'focus', () => this.lastActiveElement = this.textarea);
-        this.cleanupManager.addEventListener(this.preview, 'focusin', (e) => this.lastActiveElement = e.target);
+        this.cleanupManager.addEventListener(this.textarea, 'focus', () => {
+            this.lastActiveElement = this.textarea;
+            this.bringToFront();
+        });
+        this.cleanupManager.addEventListener(this.preview, 'focusin', (e) => {
+            this.lastActiveElement = e.target;
+            this.bringToFront();
+        });
+
+        // Window resize listener for minimized notes centering
+        this.cleanupManager.addEventListener(window, 'resize', () => {
+            MarkdownEditor.updateMinimizedPositions();
+        });
 
         // Checkbox interactions
         this.cleanupManager.addEventListener(this.preview, 'change', (e) => this.handleCheckboxChange(e));
@@ -1330,11 +1352,28 @@ class MarkdownEditor {
         // Edit-in-preview sync
         this.cleanupManager.addEventListener(this.preview, 'input', (e) => this.handlePreviewEdit(e));
 
+        // Minimize/Maximize
+        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnMinimizeNotes'), 'click', (e) => {
+            e.stopPropagation();
+            this.toggleMinimize();
+        });
+        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnMaximizeNotes'), 'click', (e) => {
+            e.stopPropagation();
+            this.toggleMaximize();
+        });
+
+        // Restore from minimized on header click
+        this.cleanupManager.addEventListener(this.dialog.querySelector('.notes-header'), 'click', () => {
+            if (this.dialog.classList.contains('minimized')) {
+                this.toggleMinimize();
+            }
+        });
+
         // Enter key in preview
         this.cleanupManager.addEventListener(this.preview, 'keydown', (e) => this.handlePreviewKeydown(e));
 
         // Save and close
-        this.cleanupManager.addEventListener(document.getElementById('btnSaveClose'), 'click', () => this.saveAndClose());
+        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnSaveClose'), 'click', () => this.saveAndClose());
 
         // Close on escape
         this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => {
@@ -1347,7 +1386,11 @@ class MarkdownEditor {
         // Keyboard shortcuts
         this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => this.handleKeyboardShortcuts(e));
 
-        // Click outside to close
+        // Click outside to close (or bring to front)
+        this.cleanupManager.addEventListener(this.dialog, 'mousedown', () => {
+            this.bringToFront();
+        });
+
         this.cleanupManager.addEventListener(this.dialog, 'click', (e) => {
             if (e.target === this.dialog) {
                 this.saveAndClose();
@@ -1416,8 +1459,8 @@ class MarkdownEditor {
     }
 
     setupExportMenu() {
-        const exportBtn = document.getElementById('btnExport');
-        const exportMenu = document.getElementById('idExportMenu');
+        const exportBtn = this.dialog.querySelector('#btnExport');
+        const exportMenu = this.dialog.querySelector('#idExportMenu');
 
         this.cleanupManager.addEventListener(exportBtn, 'click', (e) => {
             e.stopPropagation();
@@ -1441,14 +1484,14 @@ class MarkdownEditor {
     }
 
     setupSearch() {
-        const panel = document.getElementById('idSearchPanel');
-        const searchInput = document.getElementById('idSearchInput');
-        const replaceInput = document.getElementById('idReplaceInput');
-        const btnFindNext = document.getElementById('btnFindNext');
-        const btnFindPrev = document.getElementById('btnFindPrev');
-        const btnReplace = document.getElementById('btnReplace');
-        const btnReplaceAll = document.getElementById('btnReplaceAll');
-        const btnClose = document.getElementById('btnCloseSearch');
+        const panel = this.dialog.querySelector('#idSearchPanel');
+        const searchInput = this.dialog.querySelector('#idSearchInput');
+        const replaceInput = this.dialog.querySelector('#idReplaceInput');
+        const btnFindNext = this.dialog.querySelector('#btnFindNext');
+        const btnFindPrev = this.dialog.querySelector('#btnFindPrev');
+        const btnReplace = this.dialog.querySelector('#btnReplace');
+        const btnReplaceAll = this.dialog.querySelector('#btnReplaceAll');
+        const btnClose = this.dialog.querySelector('#btnCloseSearch');
 
         // Toggle search with Ctrl+F
         this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => {
@@ -1544,18 +1587,18 @@ class MarkdownEditor {
 
     setView(view) {
         this.currentView = view;
-        document.querySelectorAll('.notes-toggle-btn').forEach(b => b.classList.remove('active'));
+        this.dialog.querySelectorAll('.notes-toggle-btn').forEach(b => b.classList.remove('active'));
         this.paneEditor.classList.remove('hidden');
         this.panePreview.classList.remove('hidden');
 
         if (view === 'editor') {
             this.panePreview.classList.add('hidden');
-            document.getElementById('btnViewEditor').classList.add('active');
+            this.dialog.querySelector('#btnViewEditor').classList.add('active');
         } else if (view === 'preview') {
             this.paneEditor.classList.add('hidden');
-            document.getElementById('btnViewPreview').classList.add('active');
+            this.dialog.querySelector('#btnViewPreview').classList.add('active');
         } else {
-            document.getElementById('btnViewSplit').classList.add('active');
+            this.dialog.querySelector('#btnViewSplit').classList.add('active');
         }
     }
 
@@ -1629,9 +1672,9 @@ class MarkdownEditor {
         const chars = text.length;
         const readTime = Math.ceil(words / 200);
 
-        const wordCountEl = document.getElementById('idWordCount');
-        const charCountEl = document.getElementById('idCharCount');
-        const readTimeEl = document.getElementById('idReadTime');
+        const wordCountEl = this.dialog.querySelector('#idWordCount');
+        const charCountEl = this.dialog.querySelector('#idCharCount');
+        const readTimeEl = this.dialog.querySelector('#idReadTime');
 
         if (wordCountEl) wordCountEl.textContent = `${words} words`;
         if (charCountEl) charCountEl.textContent = `${chars} characters`;
@@ -2010,8 +2053,8 @@ class MarkdownEditor {
     }
 
     toggleSearchPanel() {
-        const panel = document.getElementById('idSearchPanel');
-        const searchInput = document.getElementById('idSearchInput');
+        const panel = this.dialog.querySelector('#idSearchPanel');
+        const searchInput = this.dialog.querySelector('#idSearchInput');
         if (!panel || !searchInput) return;
 
         const isHidden = panel.style.display === 'none';
@@ -2247,6 +2290,73 @@ class MarkdownEditor {
         if (window.matchMedia('(prefers-contrast: high)').matches) {
             this.dialog.classList.add('high-contrast');
         }
+    }
+
+    toggleMinimize() {
+        const isMinimized = this.dialog.classList.toggle('minimized');
+        const titleEl = this.dialog.querySelector('.notes-task-title');
+        const detailEl = this.dialog.querySelector('.notes-task-detail');
+
+        if (isMinimized) {
+            this.dialog.classList.remove('maximized');
+
+            // Truncate title
+            const title = this.task.title;
+            titleEl.textContent = title.length > 18 ? title.substring(0, 18) + "..." : title;
+            if (detailEl) detailEl.style.display = 'none';
+
+            // Ensure it's showing (non-modal)
+            this.dialog.show();
+        } else {
+            titleEl.textContent = this.task.title;
+            if (detailEl) detailEl.style.display = 'block';
+            this.dialog.style.left = '';
+            this.dialog.style.transform = '';
+
+            // Restore as non-modal to avoid blocking other notes/app
+            this.dialog.show();
+        }
+
+        MarkdownEditor.updateMinimizedPositions();
+    }
+
+    static updateMinimizedPositions() {
+        const minimized = Array.from(document.querySelectorAll('.clsNotesModal.minimized'));
+        if (minimized.length === 0) return;
+
+        const gap = 10;
+        const width = 160; // Base width from CSS
+        const totalWidth = (minimized.length * width) + ((minimized.length - 1) * gap);
+        const startLeft = (window.innerWidth - totalWidth) / 2;
+
+        minimized.forEach((dialog, index) => {
+            dialog.style.left = `${startLeft + (index * (width + gap))}px`;
+            dialog.style.right = 'auto';
+            dialog.style.transform = 'none';
+        });
+    }
+
+    toggleMaximize() {
+        const isMaximized = this.dialog.classList.toggle('maximized');
+        if (isMaximized) {
+            this.dialog.classList.remove('minimized');
+            // Restore full title if it was minimized
+            const titleEl = this.dialog.querySelector('.notes-task-title');
+            const detailEl = this.dialog.querySelector('.notes-task-detail');
+            titleEl.textContent = this.task.title;
+            if (detailEl) detailEl.style.display = 'block';
+        }
+    }
+
+    bringToFront() {
+        const others = document.querySelectorAll('.clsNotesModal');
+        let maxZ = 9000;
+        others.forEach(d => {
+            const style = window.getComputedStyle(d);
+            const z = parseInt(style.zIndex);
+            if (!isNaN(z) && z > maxZ) maxZ = z;
+        });
+        this.dialog.style.zIndex = maxZ + 1;
     }
 }
 
