@@ -183,7 +183,7 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
-  min-height: 100vh;
+  min-height: 97vh;
   padding: 1rem;
   box-sizing: border-box;
   display: flex;
@@ -2526,9 +2526,9 @@ body.hide-tags .clsFrontTags {
 
 .clsNotesModal.minimized {
   width: 160px;
-  height: 24px;
+  height: 14px;
   position: fixed;
-  bottom: 20px;
+  bottom: 1px;
   top: auto !important;
   margin: 0;
   z-index: 10000;
@@ -2536,14 +2536,15 @@ body.hide-tags .clsFrontTags {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transform: none !important;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  /* transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); */
+  transition: all 0.3s cubic-bezier(0, 0.86, 0.3, 1);
   overflow: hidden;
 }
 
 .clsNotesModal.minimized:hover {
   width: 200px;
   height: 32px;
-  bottom: 24px;
+  bottom: 4px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
@@ -2582,7 +2583,7 @@ body.hide-tags .clsFrontTags {
 }
 
 .clsNotesModal.minimized .notes-task-title {
-  font-size: 1em;
+  font-size: 10px;
   margin: 0;
   white-space: nowrap;
   font-weight: 500;
