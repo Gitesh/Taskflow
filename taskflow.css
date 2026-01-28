@@ -2544,9 +2544,15 @@ body.hide-tags .clsFrontTags {
 .clsNotesModal.minimized:hover {
   width: 200px;
   height: 32px;
-  bottom: 4px;
+  bottom: 1px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
+.clsNotesModal.minimized:hover .notes-task-title {
+  font-size: 18px;
+  font-weight: normal;
+}
+
 
 .clsNotesModal.maximized {
   width: 100vw;
