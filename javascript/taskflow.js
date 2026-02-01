@@ -891,8 +891,8 @@ function renderTaskCard(task, index) {
           
           <!-- FRONT FACE -->
           <div class="clsTaskCard">
-            <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.title}</span>&nbsp - &nbsp
-            <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.description}</span>
+            <span class="clsTaskCardTitle" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.title.replace(/#[a-z0-9_-]+/gi, '')}</span>&nbsp - &nbsp
+            <span class="clsTaskCardDetail" ondblclick="clkCardEditTitleOrDetail(this.parentElement.querySelector('.clsTaskCardHoverIcons i[title=\\'Edit details\\']')); setTimeout(() => this.focus(), 10);">${task.description.replace(/#[a-z0-9_-]+/gi, '')}</span>
 
             <span class="clsTaskCardHoverIcons">
               ${actionIcons}
@@ -1811,6 +1811,17 @@ function clkCardEditTitleOrDetail(e) {
   editTitle.focus();
 
   const cardID = editTitle.parentElement.parentElement.parentElement.id;
+  const task = data[cardID];
+
+  // Feature: Inline Tag Editing
+  // Restore the RAW text (with tags) into the fields so they can be edited.
+  // We use innerText to handle specific tag rendering if needed, but the raw data is source of truth.
+  if (task) {
+    editTitle.innerText = task.title;
+    editDetail.innerText = task.description;
+  }
+
+  // NOTE: Tags are now persisted in the text, so we don't need to append them manually.
 
   // Save function (Ctrl+Enter or click outside)
   const saveAndExit = () => {
@@ -1820,10 +1831,20 @@ function clkCardEditTitleOrDetail(e) {
     editDetail.setAttribute("class", "clsTaskCardDetail");
 
     // V2 Update Logic
-    data[cardID].title = editTitle.innerHTML.trim();
-    data[cardID].description = editDetail.innerHTML.trim();
-    // Regenerate tags
-    data[cardID].tags = extractTagsFromText(data[cardID].description + " " + data[cardID].title);
+    // Get raw text (innerText avoids HTML issues)
+    let rawTitle = editTitle.innerText;
+    let rawDetail = editDetail.innerText;
+
+    // 1. Extract Tags from both fields
+    const combinedText = rawTitle + " " + rawDetail;
+    const extractedTags = extractTagsFromText(combinedText);
+
+    // 2. Update Data
+    // We store the raw text (including #tags) so they appear in the correct field on next edit.
+    // The renderTaskCard function handles hiding them for display.
+    data[cardID].title = rawTitle.replace(/\s\s+/g, ' ').trim() || "Untitled";
+    data[cardID].description = rawDetail.replace(/\s\s+/g, ' ').trim();
+    data[cardID].tags = extractedTags;
 
     localStorage.setItem("data", JSON.stringify(data));
     console.log("TASKFLOW: Saved task", cardID);
