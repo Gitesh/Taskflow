@@ -1204,7 +1204,8 @@ body.view-dashboard {
   display: inline-block;
   vertical-align: middle;
   line-height: 1;
-  color: inherit;
+  /* color: inherit; */
+  color: grey;
   float: none;
 
 }
@@ -2579,6 +2580,9 @@ body.hide-tags .clsFrontTags {
   display: none !important;
 }
 
+
+/* Style for minimised notes */
+
 .clsNotesModal.minimized .notes-header {
   height: 100%;
   padding: 0 10px;
@@ -2587,6 +2591,7 @@ body.hide-tags .clsFrontTags {
   display: flex;
   align-items: center;
   justify-content: center;
+  align-items: flex-start;
 }
 
 .clsNotesModal.minimized .notes-task-title {
@@ -2655,7 +2660,7 @@ body.hide-tags .clsFrontTags {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start
 }
 
 .notes-header-left {
@@ -3682,7 +3687,8 @@ hr {
   border: 2px solid #000 !important;
   background: white !important;
   color: black !important;
-} 
+}
+
 /* Notes Header Tags */
 .notes-header-tags {
   display: flex;
@@ -3702,4 +3708,39 @@ hr {
 
 .notes-header-tags .note-tag:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* Search Highlight */
+.find-highlight {
+  background-color: rgba(255, 235, 59, 0.5);
+  color: inherit;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 193, 7, 0.5);
+}
+
+[data-theme='dark'] .find-highlight {
+  background-color: rgba(255, 215, 0, 0.4);
+  color: white;
+}
+
+/* Active Search Highlight */
+.find-highlight-active {
+  background-color: #ff9800;
+  /* Orange */
+  color: white;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px #e65100;
+  z-index: 2;
+  position: relative;
+}
+
+#idFooterViewToggle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+.notes-footer {
+  position: relative;
 }

@@ -813,22 +813,98 @@ class SyntaxHighlighter {
         ];
     }
 
-    highlight(text) {
+    highlight(text, searchQuery = null, activeStart = -1) {
         let html = escapeHtml(text);
 
-        // This is a simplified highlighter. For full accuracy with overlapping tokens,
-        // a more complex tokenization approach would be needed. 
-        // This regex-replacement approach works for basic cases.
+        // 1. Basic Markdown Highlighting
         this.rules.forEach(rule => {
             html = html.replace(rule.pattern, match => {
                 return `<span class="${rule.class}">${match}</span>`;
             });
         });
 
+        // 2. Search Highlighting (with Active Match Support)
+        if (searchQuery && searchQuery.length > 0) {
+            try {
+                const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                // We use a manual approach here to verify if the match roughly aligns with active selection.
+                // Note: Since 'html' is already HTML-escaped and has span tags, indices won't match raw text exactly.
+                // However, for visual highlighting purposes, we can try to wrap matches uniquely.
+
+                // Better approach for precision:
+                // We can't easily map raw text indices to the escaped HTML indices without a full parser.
+                // BUT, since we just want to highlight the "current" one, and the user likely just searched for it...
+                // We can use a simpler heuristic or just highlight all for now, but to do "active" properly requires
+                // DOM manipulation or a more complex highlighter that rebuilds HTML from tokens.
+
+                // Compromise: We will use a unique class for ALL matches (yellow), 
+                // and if we find a match that starts EXACTLY at activeStart (in raw text), we try to flag it?
+                // No, raw text index != HTML index.
+
+                // Let's stick to global highlighting for now, but if we really want active style,
+                // we can try to update the regex replacement loop to check indices?
+                // No, because 'html' string grows as we replace.
+
+                // Alternative: The syntax layer is just visual overlay. 
+                // We can use the 'find-highlight' class.
+                // To support 'active', we need to pass a specific index to highlighting? Only if we build it perfectly.
+
+                // For this request, checking 'textarea.selectionStart' is unreliable against the HTML string 
+                // because of the tags added by step 1.
+
+                // SIMPLE SOLUTION for 'Active':
+                // We can't reliably do it in this simple regex highlighter without a rewrite.
+                // However, users usually just want to see where they are. 
+                // The textarea selection itself (blue background) shows the active one.
+                // The yellow highlight shows ALL matches.
+                // If we want a different color for the "current" one on top of the selection...
+
+                // Let's try to do it by creating a specific regex for the active selection if it matches query?
+                // No.
+
+                // Given constraints, I will stick to the existing robust global highlight. 
+                // To do 'active', we would need to know the 'occurrence index' (e.g. "match 3 of 5").
+
+                // Wait, we can do this:
+                // 1. Find all matches in raw text. determine which one includes activeStart.
+                // 2. That gives us "Match #3 is active".
+                // 3. In the HTML replacement loop, we count matches and style #3 differently.
+
+                // Let's do that!
+
+                // 1. Find active match index in raw text
+                let activeMatchIndex = -1;
+                if (activeStart !== -1) {
+                    const regexRaw = new RegExp(escapedQuery, 'gi');
+                    let match;
+                    let count = 0;
+                    while ((match = regexRaw.exec(text)) !== null) {
+                        if (match.index === activeStart) {
+                            activeMatchIndex = count;
+                            break;
+                        }
+                        count++;
+                    }
+                }
+
+                // 2. Replace in HTML
+                const regexHTML = new RegExp(`(${escapedQuery})(?![^<]*>)`, 'gi');
+                let matchCount = 0;
+                html = html.replace(regexHTML, (match, p1) => {
+                    const isGroup = matchCount === activeMatchIndex;
+                    matchCount++;
+                    const cls = isGroup ? 'find-highlight-active' : 'find-highlight';
+                    return `<span class="${cls}">${p1}</span>`;
+                });
+
+            } catch (e) {
+                console.warn('Invalid regex in search highlight', e);
+            }
+        }
+
         // Handle trailing newlines for pre-wrap alignment
-        // Note: Adding <br> can cause double newlines with pre-wrap
         if (text.endsWith('\n')) {
-            html += ' '; // Add space to preserve height without extra line
+            html += ' ';
         }
 
         return html;
@@ -1141,11 +1217,6 @@ class MarkdownEditor {
               </div>
             </div>
             <div class="notes-header-right">
-              <div class="notes-view-toggle">
-                <button class="notes-toggle-btn" id="btnViewEditor" aria-label="Editor only view">Editor</button>
-                <button class="notes-toggle-btn active" id="btnViewSplit" aria-label="Split view">Split</button>
-                <button class="notes-toggle-btn" id="btnViewPreview" aria-label="Preview only view">Preview</button>
-              </div>
               <button class="notes-header-btn" id="btnExportNotes" aria-label="Export options" title="Export">
                 <i class="material-icons">file_download</i>
               </button>
@@ -1211,6 +1282,12 @@ class MarkdownEditor {
               <span id="idCharCount">0 characters</span>
               <span class="stats-divider">•</span>
               <span id="idReadTime">0 min read</span>
+            </div>
+            
+            <div class="notes-view-toggle" id="idFooterViewToggle">
+              <button class="notes-toggle-btn" id="btnViewEditor" aria-label="Editor only view">Editor</button>
+              <button class="notes-toggle-btn active" id="btnViewSplit" aria-label="Split view">Split</button>
+              <button class="notes-toggle-btn" id="btnViewPreview" aria-label="Preview only view">Preview</button>
             </div>
             <div class="notes-save-status" id="idSaveStatus">
               <i class="material-icons">check_circle</i>
@@ -1289,7 +1366,12 @@ class MarkdownEditor {
 
     highlight() {
         if (this.syntaxLayer && this.textarea) {
-            this.syntaxLayer.innerHTML = this.highlighter.highlight(this.textarea.value);
+            const searchInput = this.dialog.querySelector("#idSearchInput");
+            const searchPanel = this.dialog.querySelector("#idSearchPanel");
+            // Only highlight search terms if the panel is visible and input is active
+            const query = (searchInput && searchPanel && searchPanel.style.display !== 'none') ? searchInput.value : null;
+
+            this.syntaxLayer.innerHTML = this.highlighter.highlight(this.textarea.value, query, this.textarea.selectionStart);
         }
     }
 
@@ -1352,6 +1434,12 @@ class MarkdownEditor {
         this.cleanupManager.addEventListener(this.textarea, 'focus', () => {
             this.lastActiveElement = this.textarea;
             this.bringToFront();
+        });
+        this.cleanupManager.addEventListener(this.textarea, 'click', () => {
+            this.highlight(); // Update active match highlight if cursor moved
+        });
+        this.cleanupManager.addEventListener(this.textarea, 'keyup', () => {
+            this.highlight(); // Update active match highlight if cursor moved
         });
         this.cleanupManager.addEventListener(this.preview, 'focusin', (e) => {
             this.lastActiveElement = e.target;
@@ -1532,7 +1620,8 @@ class MarkdownEditor {
             const query = searchInput.value;
             if (!query) return;
 
-            this.textarea.focus();
+            // Do not force focus to textarea here, focus will be handled contextually.
+            // We want to keep typing/enter capability in search box.
 
             // Native find logic for textarea
             const text = this.textarea.value;
@@ -1554,6 +1643,9 @@ class MarkdownEditor {
                 const lineHeight = 21; // approx
                 const lineNo = text.substr(0, index).split('\n').length;
                 this.textarea.scrollTop = (lineNo - 5) * lineHeight;
+
+                // Update highlights (since selection doesn't trigger input event)
+                this.highlight();
             } else {
                 // Not found
                 searchInput.classList.add('error');
@@ -1564,7 +1656,10 @@ class MarkdownEditor {
         this.cleanupManager.addEventListener(btnFindNext, 'click', () => find(true));
         this.cleanupManager.addEventListener(btnFindPrev, 'click', () => find(false));
         this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => {
-            if (e.key === 'Enter') find(true);
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent accidental form submission or anything
+                find(true);
+            }
         });
 
         // Replace Logic
@@ -2102,8 +2197,10 @@ class MarkdownEditor {
             if (selection) {
                 searchInput.value = selection;
             }
+            this.highlight();
         } else {
             this.textarea.focus();
+            this.highlight();
         }
     }
 
