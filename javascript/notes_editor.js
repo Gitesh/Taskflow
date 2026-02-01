@@ -879,7 +879,7 @@ class SyntaxHighlighter {
                     let match;
                     let count = 0;
                     while ((match = regexRaw.exec(text)) !== null) {
-                        if (match.index === activeStart) {
+                        if (activeStart >= match.index && activeStart <= match.index + match[0].length) {
                             activeMatchIndex = count;
                             break;
                         }
@@ -1435,10 +1435,12 @@ class MarkdownEditor {
             this.bringToFront();
         });
         this.cleanupManager.addEventListener(this.textarea, 'click', () => {
-            this.highlight(); // Update active match highlight if cursor moved
+            this.highlight(); // Update active match highlight for markdown
+            this.highlightPreviewSearch(); // Update active match highlight for preview
         });
         this.cleanupManager.addEventListener(this.textarea, 'keyup', () => {
-            this.highlight(); // Update active match highlight if cursor moved
+            this.highlight();
+            this.highlightPreviewSearch();
         });
         this.cleanupManager.addEventListener(this.preview, 'focusin', (e) => {
             this.lastActiveElement = e.target;
@@ -1656,6 +1658,7 @@ class MarkdownEditor {
 
                 // Update highlights (since selection doesn't trigger input event)
                 this.highlight();
+                this.highlightPreviewSearch();
             } else {
                 // Not found
                 searchInput.classList.add('error');
@@ -1667,10 +1670,15 @@ class MarkdownEditor {
         this.cleanupManager.addEventListener(btnFindPrev, 'click', () => find(false));
         this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // Prevent accidental form submission or anything
+                e.preventDefault();
                 find(true);
             }
         });
+
+        this.cleanupManager.addEventListener(searchInput, 'input', debounce(() => {
+            this.highlight();
+            this.highlightPreviewSearch();
+        }, 150));
 
         // Replace Logic
         this.cleanupManager.addEventListener(btnReplace, 'click', () => {
@@ -1738,6 +1746,7 @@ class MarkdownEditor {
             this.preview.innerHTML = html;
             this.preview.scrollTop = scrollPos;
             await this.resolveImages(forceLoad);
+            this.highlightPreviewSearch(); // Add search highlighting to preview
             this.updateStats(); // Ensure stats are updated on preview refresh too
         } catch (error) {
             console.error('Preview update failed:', error);
@@ -1856,8 +1865,142 @@ class MarkdownEditor {
         }
     }
 
+    highlightPreviewSearch() {
+        const searchInput = this.dialog.querySelector('#idSearchInput');
+        const searchPanel = this.dialog.querySelector('#idSearchPanel');
+        if (!this.preview) return;
+
+        // 1. ALWAYS clear existing highlights first
+        const existing = this.preview.querySelectorAll('.find-highlight, .find-highlight-active');
+        existing.forEach(el => {
+            const textNode = document.createTextNode(el.textContent);
+            el.parentNode.replaceChild(textNode, el);
+        });
+        this.preview.normalize();
+
+        // 2. Only continue if search panel is visible and we have a query
+        if (!searchInput || !searchPanel || searchPanel.style.display === 'none') {
+            return;
+        }
+
+        const query = searchInput.value;
+        if (!query || query.length === 0) {
+            return;
+        }
+
+        // Determine which match is active based on textarea selection
+        let activeMatchIndex = -1;
+        const textareaText = this.textarea.value;
+        const selectionStart = this.textarea.selectionStart;
+
+        if (selectionStart !== -1) {
+            const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+            let match;
+            let count = 0;
+            while ((match = regex.exec(textareaText)) !== null) {
+                // If cursor is within this match, this is the active one
+                if (selectionStart >= match.index && selectionStart <= match.index + match[0].length) {
+                    activeMatchIndex = count;
+                    break;
+                }
+                count++;
+            }
+        }
+
+        try {
+            // Walk through all text nodes in the preview and highlight matches
+            const walker = document.createTreeWalker(
+                this.preview,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        // Skip if parent already has highlight class
+                        if (node.parentElement.classList.contains('find-highlight') ||
+                            node.parentElement.classList.contains('find-highlight-active')) {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        // Skip script and style elements
+                        if (node.parentElement.tagName === 'SCRIPT' ||
+                            node.parentElement.tagName === 'STYLE') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                }
+            );
+
+            const nodesToProcess = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.textContent.toLowerCase().includes(query.toLowerCase())) {
+                    nodesToProcess.push(node);
+                }
+            }
+
+            // Track global match count across all nodes
+            let globalMatchCount = 0;
+
+            // Process nodes and add highlights
+            nodesToProcess.forEach(textNode => {
+                const text = textNode.textContent;
+                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                const matches = text.match(regex);
+
+                if (matches) {
+                    const fragment = document.createDocumentFragment();
+                    let lastIndex = 0;
+
+                    text.replace(regex, (match, p1, offset) => {
+                        // Add text before match
+                        if (offset > lastIndex) {
+                            fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+                        }
+
+                        // Add highlighted match
+                        const span = document.createElement('span');
+                        // Check if this is the active match
+                        const isActive = globalMatchCount === activeMatchIndex;
+                        span.className = isActive ? 'find-highlight-active' : 'find-highlight';
+                        span.textContent = match;
+                        fragment.appendChild(span);
+
+                        globalMatchCount++;
+                        lastIndex = offset + match.length;
+                    });
+
+                    // Add remaining text
+                    if (lastIndex < text.length) {
+                        fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                    }
+
+                    textNode.parentNode.replaceChild(fragment, textNode);
+                }
+            });
+
+            // Scroll active match into view
+            if (activeMatchIndex !== -1) {
+                const activeHighlight = this.preview.querySelector('.find-highlight-active');
+                if (activeHighlight) {
+                    activeHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        } catch (error) {
+            console.warn('Preview search highlighting failed:', error);
+        }
+    }
+
     handleToolbarAction(action) {
-        // Save current state before any action (except undo/redo themselves)
+        // 1. Handle Global Meta Actions (don't require history save)
+        if (action === 'search') {
+            this.toggleSearchPanel();
+            return;
+        }
+        if (action === 'help') {
+            this.showHelpModal();
+            return;
+        }
+
+        // 2. Save current state before formatting actions (except undo/redo themselves)
         if (action !== 'undo' && action !== 'redo') {
             this.saveToHistory();
         }
@@ -1893,13 +2036,11 @@ class MarkdownEditor {
                 case 'list': this.insertMarkdown('- ', ''); break;
                 case 'task': this.insertMarkdown('[ ] ', ''); break;
                 case 'hr': this.insertMarkdown('\n---\n', ''); break;
-                case 'search': this.toggleSearchPanel(); break;
-                case 'help': this.showHelpModal(); break;
                 default:
                     console.warn('Action not recognized in textarea:', action);
                     break;
             }
-        } else if (this.lastActiveElement && this.lastActiveElement.isContentEditable) {
+        } else if (this.lastActiveElement && (this.lastActiveElement === this.preview || this.lastActiveElement.isContentEditable)) {
             this.applyFormatModern(action);
         }
     }
@@ -1949,9 +2090,6 @@ class MarkdownEditor {
                 break;
             case 'hr':
                 range.insertNode(document.createElement('hr'));
-                break;
-            case 'search':
-                this.toggleSearchPanel();
                 break;
             default:
                 console.warn('Formatting action not yet supported in modern mode:', action);
@@ -2221,9 +2359,11 @@ class MarkdownEditor {
                 searchInput.value = selection;
             }
             this.highlight();
+            this.highlightPreviewSearch();
         } else {
             this.textarea.focus();
             this.highlight();
+            this.highlightPreviewSearch();
         }
     }
 
