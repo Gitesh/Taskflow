@@ -3682,4 +3682,24 @@ hr {
   border: 2px solid #000 !important;
   background: white !important;
   color: black !important;
+} 
+/* Notes Header Tags */
+.notes-header-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.notes-header-tags .note-tag {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-size: 0.75rem;
+  padding: 2px 8px;
+}
+
+.notes-header-tags .note-tag:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

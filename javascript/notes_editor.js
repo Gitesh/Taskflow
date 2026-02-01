@@ -1136,6 +1136,9 @@ class MarkdownEditor {
             <div class="notes-header-left">
               <h2 class="notes-task-title">${this.task.title}</h2>
               <p class="notes-task-detail">${this.task.description}</p>
+              <div class="notes-header-tags">
+                  ${(this.task.tags || []).map(tag => `<span class="note-tag">${tag}</span>`).join('')}
+              </div>
             </div>
             <div class="notes-header-right">
               <div class="notes-view-toggle">
