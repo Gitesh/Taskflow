@@ -337,10 +337,88 @@ const TaskflowTests = {
             console.error("[FAIL]", e.message);
         }
         console.groupEnd();
+    },
+
+    // Test 11: Notes Undo/Redo Consistency
+    testNotesHistory: async () => {
+        console.group("Test 11: Notes Undo/Redo");
+        try {
+            // Open editor for first task
+            window.clkOpenTaskNotes(0);
+            await new Promise(r => setTimeout(r, 500)); // Wait for render
+
+            const dialog = document.querySelector('.clsNotesModal');
+            const textarea = dialog.querySelector('.notes-editor-textarea');
+            const initialValue = textarea.value;
+
+            // Type something
+            textarea.value = initialValue + " Updated for test";
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+            // Wait for debounced history (1000ms in code)
+            await new Promise(r => setTimeout(r, 1200));
+
+            // Undo
+            const undoBtn = dialog.querySelector('[data-action="undo"]');
+            undoBtn.click();
+
+            if (textarea.value !== initialValue) {
+                throw new Error(`Undo failed: expected "${initialValue}", got "${textarea.value}"`);
+            }
+
+            // Redo
+            const redoBtn = dialog.querySelector('[data-action="redo"]');
+            redoBtn.click();
+
+            if (textarea.value !== initialValue + " Updated for test") {
+                throw new Error("Redo failed");
+            }
+
+            console.log("[PASS] Notes Undo/Redo working consistently");
+
+            // Clean up: close editor
+            const closeBtn = dialog.querySelector('#btnCloseNotes');
+            closeBtn.click();
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
+    },
+
+    // Test 12: Notes Shortcut Logic
+    testNotesShortcuts: async () => {
+        console.group("Test 12: Notes Shortcuts");
+        try {
+            window.clkOpenTaskNotes(0);
+            await new Promise(r => setTimeout(r, 500));
+
+            const dialog = document.querySelector('.clsNotesModal');
+            const searchPanel = dialog.querySelector('#idSearchPanel');
+
+            if (searchPanel.style.display !== 'none') throw new Error("Search panel should be hidden initially");
+
+            // Dispatch CTRL+F
+            const event = new KeyboardEvent('keydown', {
+                key: 'f',
+                ctrlKey: true,
+                bubbles: true
+            });
+            dialog.dispatchEvent(event);
+
+            if (searchPanel.style.display === 'none') throw new Error("CTRL+F failed to show search panel");
+
+            console.log("[PASS] Shortcuts (CTRL+F) working");
+
+            const closeBtn = dialog.querySelector('#btnCloseNotes');
+            closeBtn.click();
+        } catch (e) {
+            console.error("[FAIL]", e.message);
+        }
+        console.groupEnd();
     }
 };
 
-window.runAutomatedTests = () => {
+window.runAutomatedTests = async () => {
     console.log("=== Running Taskflow Automated Tests ===");
     TaskflowTests.testV2Schema();
     TaskflowTests.testTagExtraction();
@@ -352,6 +430,8 @@ window.runAutomatedTests = () => {
     TaskflowTests.testDeleteButton();
     TaskflowTests.testConsecutiveDeletions();
     TaskflowTests.testRestoreTask();
+    await TaskflowTests.testNotesHistory();
+    await TaskflowTests.testNotesShortcuts();
     console.log("=== Done ===");
 };
 

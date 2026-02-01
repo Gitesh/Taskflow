@@ -1183,9 +1183,8 @@ body.view-dashboard {
 }
 
 
-/*hide the <i> tag - so we con show icons on hover. <i> tag is used for the edit icons */
-
-i.material-icons {
+/* Limit icon hiding to task cards only to keep lists clean */
+.clsTaskCard i.material-icons {
   display: none;
 }
 
@@ -1202,8 +1201,10 @@ i.material-icons {
 /* default style for all material icons */
 
 .material-icons {
-  display: contents;
-  color: grey;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+  color: inherit;
   float: none;
 
 }
@@ -2573,7 +2574,7 @@ body.hide-tags .clsFrontTags {
 .clsNotesModal.minimized .notes-save-status,
 .clsNotesModal.minimized .notes-view-toggle,
 .clsNotesModal.minimized .notes-export-btn,
-.clsNotesModal.minimized .notes-header-icon-btn,
+.clsNotesModal.minimized .notes-header-btn,
 .clsNotesModal.minimized .btn-close-notes {
   display: none !important;
 }
@@ -2608,26 +2609,31 @@ body.hide-tags .clsFrontTags {
   padding: 2px;
 }
 
-.notes-header-icon-btn {
+.notes-header-btn {
   background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
   color: white;
-  padding: 4px;
+  padding: 6px;
   cursor: pointer;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
-.notes-header-icon-btn:hover {
+.notes-header-btn:hover {
   background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
-.notes-header-icon-btn svg {
-  width: 18px;
-  height: 18px;
+.notes-header-btn i {
+  font-size: 20px;
+  color: white !important;
+}
+
+.btn-close-notes:hover {
+  background: #f44336 !important;
 }
 
 .clsNotesModal::backdrop {
@@ -2933,9 +2939,22 @@ hr {
 .notes-footer {
   padding: 12px 20px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   background: var(--color-bg-container);
   border-top: 1px solid var(--color-border);
+}
+
+.notes-stats {
+  display: flex;
+  gap: 15px;
+  color: var(--color-text-secondary);
+  font-size: 0.85em;
+  align-items: center;
+}
+
+.stats-divider {
+  opacity: 0.3;
 }
 
 .notes-btn-save {
@@ -2959,11 +2978,14 @@ hr {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.875rem;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.8em;
+  padding: 4px 10px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  color: white;
+  color: var(--color-text-secondary);
+  margin-left: auto;
+  margin-right: 15px;
 }
 
 .notes-save-status i {
@@ -3002,10 +3024,10 @@ hr {
 
 /* Export Button and Menu */
 .notes-export-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 6px;
-  color: white;
+  color: var(--color-text-primary);
   cursor: pointer;
   padding: 6px 10px;
   display: flex;
@@ -3015,7 +3037,8 @@ hr {
 }
 
 .notes-export-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-bg-card-hover);
+  color: var(--color-accent);
   transform: scale(1.05);
 }
 
@@ -3628,8 +3651,8 @@ hr {
 }
 
 .notes-search-btn:hover {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
+  background: var(--color-bg-card-hover);
+  color: var(--color-accent);
 }
 
 .notes-search-panel .divider {
