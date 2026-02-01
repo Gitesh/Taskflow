@@ -1191,8 +1191,8 @@ body.view-dashboard {
 
 /* display the icons on hover */
 
-.clsTaskCard:hover .material-icons {
-  display: inline-block;
+.clsTaskCard:hover i.material-icons {
+  display: inline-block !important;
   padding: 4px;
   /* Ensure hit area */
 }
@@ -2991,6 +2991,18 @@ hr {
   color: var(--color-text-secondary);
   margin-left: auto;
   margin-right: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notes-save-status:hover {
+  background: var(--color-bg-card-hover);
+  border-color: var(--color-accent);
+  transform: scale(1.05);
+}
+
+.notes-save-status:active {
+  transform: scale(0.98);
 }
 
 .notes-save-status i {
@@ -3368,9 +3380,9 @@ hr {
 }
 
 /* display the icons on hover */
-.clsTaskCard:hover .material-icons,
+.clsTaskCard:hover i.material-icons,
 .clsTaskCardHoverIcons.force-visible .material-icons {
-  display: inline-block;
+  display: inline-block !important;
   padding: 4px;
   /* Ensure hit area */
 }
@@ -3531,10 +3543,10 @@ hr {
   }
 
   /* Force modal and content path to be visible */
-  #idNotesModal,
-  #idNotesModal .notes-modal-content,
-  #idNotesModal .notes-editor-container,
-  #idNotesModal .notes-preview-pane,
+  .clsNotesModal,
+  .clsNotesModal .notes-modal-content,
+  .clsNotesModal .notes-editor-container,
+  .clsNotesModal .notes-preview-pane,
   #idNotesPreview,
   #idNotesPreview * {
     visibility: visible !important;
@@ -3542,13 +3554,12 @@ hr {
     opacity: 1 !important;
   }
 
-  #idNotesModal {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+  .clsNotesModal {
+    position: static !important;
     width: 100% !important;
+    max-width: 8.5in !important;
     height: auto !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
     border: none !important;
     background: white !important;
@@ -3571,15 +3582,28 @@ hr {
   .notes-modal-content {
     height: auto !important;
     background: white !important;
+    display: block !important;
+  }
+
+  .notes-editor-container {
+    display: block !important;
+  }
+
+  .notes-preview-pane {
+    width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
   }
 
   #idNotesPreview {
     width: 100% !important;
+    max-width: 100% !important;
     position: static !important;
     background: white !important;
     color: black !important;
-    padding: 20px !important;
+    padding: 0.5in 0.75in !important;
     font-size: 12pt !important;
+    margin: 0 !important;
   }
 
   /* Ensure images print well */
@@ -3744,3 +3768,93 @@ hr {
 .notes-footer {
   position: relative;
 }
+/* Auto-Save Info Popup */
+.auto-save-popup {
+  position: fixed;
+  z-index: 10000;
+  animation: popupFadeIn 0.2s ease-out;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.15));
+}
+
+@keyframes popupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auto-save-popup-content {
+  background: var(--color-bg-container);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 280px;
+  max-width: 350px;
+  color: var(--color-text-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.auto-save-popup-content::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  right: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid var(--color-bg-container);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.auto-save-popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--color-accent);
+  font-size: 1.1em;
+}
+
+.auto-save-popup-header i {
+  font-size: 20px;
+}
+
+.auto-save-popup-body p {
+  margin: 0 0 12px 0;
+  font-size: 0.9em;
+  line-height: 1.5;
+}
+
+.auto-save-status-list {
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auto-save-status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85em;
+  padding: 6px 8px;
+  background: var(--color-bg-section);
+  border-radius: 6px;
+}
+
+.auto-save-status-item i {
+  font-size: 18px;
+}
+
+.auto-save-footer {
+  margin: 12px 0 0 0 !important;
+  font-size: 0.85em !important;
+  color: var(--color-text-secondary) !important;
+  font-style: italic;
+}
+

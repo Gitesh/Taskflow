@@ -1289,11 +1289,10 @@ class MarkdownEditor {
               <button class="notes-toggle-btn active" id="btnViewSplit" aria-label="Split view">Split</button>
               <button class="notes-toggle-btn" id="btnViewPreview" aria-label="Preview only view">Preview</button>
             </div>
-            <div class="notes-save-status" id="idSaveStatus">
+            <div class="notes-save-status" id="idSaveStatus" role="button" tabindex="0" aria-label="Auto-save information" title="Click for auto-save info">
               <i class="material-icons">check_circle</i>
               <span>Saved</span>
             </div>
-            <button class="notes-btn-save" id="btnSaveClose">Save & Close</button>
           </div>
         </div>
 
@@ -1483,7 +1482,18 @@ class MarkdownEditor {
         // Enter key in preview
         this.cleanupManager.addEventListener(this.preview, 'keydown', (e) => this.handlePreviewKeydown(e));
 
-        this.cleanupManager.addEventListener(this.dialog.querySelector('#btnSaveClose'), 'click', () => this.saveAndClose());
+        // Save status click handler - show auto-save info
+        const saveStatus = this.dialog.querySelector('#idSaveStatus');
+        if (saveStatus) {
+            this.cleanupManager.addEventListener(saveStatus, 'click', () => this.showAutoSaveInfo());
+            this.cleanupManager.addEventListener(saveStatus, 'keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.showAutoSaveInfo();
+                }
+            });
+        }
+
         const btnHeaderClose = this.dialog.querySelector('#btnCloseNotes');
         if (btnHeaderClose) {
             this.cleanupManager.addEventListener(btnHeaderClose, 'click', () => this.saveAndClose());
@@ -1717,7 +1727,7 @@ class MarkdownEditor {
         }
     }
 
-    async updatePreview() {
+    async updatePreview(forceLoad = false) {
         try {
             const scrollPos = this.preview.scrollTop;
             let html = this.parser.parse(this.textarea.value);
@@ -1727,7 +1737,7 @@ class MarkdownEditor {
 
             this.preview.innerHTML = html;
             this.preview.scrollTop = scrollPos;
-            await this.resolveImages();
+            await this.resolveImages(forceLoad);
             this.updateStats(); // Ensure stats are updated on preview refresh too
         } catch (error) {
             console.error('Preview update failed:', error);
@@ -1809,27 +1819,40 @@ class MarkdownEditor {
         if (readTimeEl) readTimeEl.textContent = `${readTime} min read`;
     }
 
-    async resolveImages() {
+    async resolveImages(forceLoad = false) {
         const images = this.preview.querySelectorAll('img[data-img-id]');
+        const promises = [];
 
         for (const img of images) {
             const id = img.getAttribute('data-img-id');
 
-            // Use lazy loading for better performance
-            this.lazyImageLoader.observe(img, async (imgElement) => {
+            const loadTask = async (imgElement) => {
                 try {
                     const blob = await this.imageStorage.getImage(id);
                     if (blob) {
                         const url = URL.createObjectURL(blob);
-                        imgElement.src = url;
-                        this.cleanupManager.addBlobUrl(url);
+                        return new Promise((resolve) => {
+                            imgElement.onload = () => resolve();
+                            imgElement.onerror = () => resolve(); // Don't block if image fails
+                            imgElement.src = url;
+                            this.cleanupManager.addBlobUrl(url);
+                        });
                     }
                 } catch (error) {
                     console.error(`Failed to load image ${id}:`, error);
-                    // Set a placeholder or error state
-                    imgElement.alt = 'Image failed to load';
                 }
-            });
+            };
+
+            if (forceLoad) {
+                promises.push(loadTask(img));
+            } else {
+                // Use lazy loading for better performance
+                this.lazyImageLoader.observe(img, loadTask);
+            }
+        }
+
+        if (forceLoad && promises.length > 0) {
+            await Promise.all(promises);
         }
     }
 
@@ -2293,8 +2316,11 @@ class MarkdownEditor {
                     this.downloadFile(plainText, `${taskTitle}.txt`, 'text/plain');
                     break;
                 case 'pdf-file':
-                    // Force update to ensure latest content
-                    await this.updatePreview();
+                    // Force update to ensure latest content and FORCE load all images for printing
+                    await this.updatePreview(true);
+
+                    // Tiny delay to ensure images are rendered in parent layout
+                    await new Promise(r => setTimeout(r, 100));
 
                     const wasEditor = this.currentView === 'editor';
                     if (wasEditor) {
@@ -2543,6 +2569,79 @@ class MarkdownEditor {
             </style>
         `;
         helpDialog.showModal();
+    }
+
+
+    showAutoSaveInfo() {
+        // Remove any existing popup
+        const existingPopup = document.getElementById('idAutoSaveInfoPopup');
+        if (existingPopup) {
+            existingPopup.remove();
+            return; // Toggle behavior - clicking again closes it
+        }
+
+        const saveStatus = this.dialog.querySelector('#idSaveStatus');
+        if (!saveStatus) return;
+
+        // Create popup element
+        const popup = document.createElement('div');
+        popup.id = 'idAutoSaveInfoPopup';
+        popup.className = 'auto-save-popup';
+        popup.innerHTML = `
+            <div class="auto-save-popup-content">
+                <div class="auto-save-popup-header">
+                    <i class="material-icons">info</i>
+                    <strong>Auto-Save</strong>
+                </div>
+                <div class="auto-save-popup-body">
+                    <p>Your notes are <strong>automatically saved</strong> as you type.</p>
+                    <div class="auto-save-status-list">
+                        <div class="auto-save-status-item">
+                            <i class="material-icons" style="color: #4CAF50;">check_circle</i>
+                            <span><strong>Saved</strong> - All changes saved</span>
+                        </div>
+                        <div class="auto-save-status-item">
+                            <i class="material-icons" style="color: #FFC107;">sync</i>
+                            <span><strong>Saving...</strong> - Currently saving</span>
+                        </div>
+                        <div class="auto-save-status-item">
+                            <i class="material-icons" style="color: #FF9800;">pending</i>
+                            <span><strong>Unsaved</strong> - Changes pending</span>
+                        </div>
+                    </div>
+                    <p class="auto-save-footer">Simply close the editor when you're done!</p>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(popup);
+
+        // Position the popup near the save status
+        const rect = saveStatus.getBoundingClientRect();
+        popup.style.position = 'fixed';
+        popup.style.bottom = `${window.innerHeight - rect.top + 10}px`;
+        popup.style.right = `${window.innerWidth - rect.right}px`;
+
+        // Close popup when clicking outside
+        const closePopup = (e) => {
+            if (!popup.contains(e.target) && e.target !== saveStatus) {
+                popup.remove();
+                document.removeEventListener('click', closePopup);
+            }
+        };
+
+        // Delay adding the listener to prevent immediate closure
+        setTimeout(() => {
+            document.addEventListener('click', closePopup);
+        }, 100);
+
+        // Auto-close after 8 seconds
+        setTimeout(() => {
+            if (popup.parentElement) {
+                popup.remove();
+                document.removeEventListener('click', closePopup);
+            }
+        }, 8000);
     }
 }
 
