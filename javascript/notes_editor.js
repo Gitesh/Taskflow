@@ -397,7 +397,7 @@ class MarkdownParser {
                     htmlResult.push('<blockquote class="markdown-blockquote">');
                     inBlockquote = true;
                 }
-                htmlResult.push(`<div contenteditable="true" data-line="${i}">${parseInline(rawLine.substring(1).trim())}</div>`);
+                htmlResult.push(`<div data-line="${i}">${parseInline(rawLine.substring(1).trim())}</div>`);
                 continue;
             }
 
@@ -415,20 +415,17 @@ class MarkdownParser {
 
             // Empty lines
             if (rawLine === '' && !inList) {
-                htmlResult.push(`<div contenteditable="true" data-line="${i}" class="empty-line">&nbsp;</div>`);
+                htmlResult.push(`<div data-line="${i}" class="empty-line">&nbsp;</div>`);
                 continue;
             }
 
             // Headings
             if (rawLine.startsWith('# ')) {
-                if (inList) { htmlResult.push('</ul>'); inList = false; }
-                htmlResult.push(`<h1 contenteditable="true" data-line="${i}" class="markdown-h1">${parseInline(rawLine.substring(2))}</h1>`);
+                htmlResult.push(`<h1 data-line="${i}" class="markdown-h1">${parseInline(rawLine.substring(2))}</h1>`);
             } else if (rawLine.startsWith('## ')) {
-                if (inList) { htmlResult.push('</ul>'); inList = false; }
-                htmlResult.push(`<h2 contenteditable="true" data-line="${i}" class="markdown-h2">${parseInline(rawLine.substring(3))}</h2>`);
+                htmlResult.push(`<h2 data-line="${i}" class="markdown-h2">${parseInline(rawLine.substring(3))}</h2>`);
             } else if (rawLine.startsWith('### ')) {
-                if (inList) { htmlResult.push('</ul>'); inList = false; }
-                htmlResult.push(`<h3 contenteditable="true" data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
+                htmlResult.push(`<h3 data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
             }
             // Lists & Task Lists (Support indentation, allow no space but ignore bold/tags)
             else if (line.match(/^(\s*)(?:-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))(?:\s*)/)) {
@@ -444,16 +441,16 @@ class MarkdownParser {
                 const content = parseInline(line.substring(match[0].length));
                 const style = indent > 0 ? `style="margin-left: ${indent * 10}px"` : "";
 
-                htmlResult.push(`<li class="${isTask ? 'task-item' : ''}" contenteditable="true" data-line="${i}" ${style}>${content}</li>`);
+                htmlResult.push(`<li class="${isTask ? 'task-item' : ''}" data-line="${i}" ${style}>${content}</li>`);
             } else {
                 if (inList) {
                     htmlResult.push('</ul>');
                     inList = false;
                 }
                 if (rawLine !== '') {
-                    htmlResult.push(`<div contenteditable="true" data-line="${i}" class="markdown-paragraph">${parseInline(rawLine)}</div>`);
+                    htmlResult.push(`<div data-line="${i}" class="markdown-paragraph">${parseInline(rawLine)}</div>`);
                 } else {
-                    htmlResult.push(`<div contenteditable="true" data-line="${i}" class="empty-line">&nbsp;</div>`);
+                    htmlResult.push(`<div data-line="${i}" class="empty-line">&nbsp;</div>`);
                 }
             }
         }
@@ -643,6 +640,9 @@ class HtmlToMarkdownConverter {
                     if (node.classList.contains('documentation')) return '-d-';
                     if (node.classList.contains('question')) return '-q-';
                 }
+                if (node.classList.contains('md-hash')) {
+                    return node.textContent;
+                }
                 return content;
 
             case 'pre':
@@ -697,6 +697,9 @@ class HtmlToMarkdownConverter {
                     return `1. ${content}\n`;
                 }
                 return `- ${content}\n`;
+
+            case 'hr':
+                return '---';
 
             default:
                 return content;
@@ -829,50 +832,6 @@ class SyntaxHighlighter {
         if (searchQuery && searchQuery.length > 0) {
             try {
                 const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                // We use a manual approach here to verify if the match roughly aligns with active selection.
-                // Note: Since 'html' is already HTML-escaped and has span tags, indices won't match raw text exactly.
-                // However, for visual highlighting purposes, we can try to wrap matches uniquely.
-
-                // Better approach for precision:
-                // We can't easily map raw text indices to the escaped HTML indices without a full parser.
-                // BUT, since we just want to highlight the "current" one, and the user likely just searched for it...
-                // We can use a simpler heuristic or just highlight all for now, but to do "active" properly requires
-                // DOM manipulation or a more complex highlighter that rebuilds HTML from tokens.
-
-                // Compromise: We will use a unique class for ALL matches (yellow), 
-                // and if we find a match that starts EXACTLY at activeStart (in raw text), we try to flag it?
-                // No, raw text index != HTML index.
-
-                // Let's stick to global highlighting for now, but if we really want active style,
-                // we can try to update the regex replacement loop to check indices?
-                // No, because 'html' string grows as we replace.
-
-                // Alternative: The syntax layer is just visual overlay. 
-                // We can use the 'find-highlight' class.
-                // To support 'active', we need to pass a specific index to highlighting? Only if we build it perfectly.
-
-                // For this request, checking 'textarea.selectionStart' is unreliable against the HTML string 
-                // because of the tags added by step 1.
-
-                // SIMPLE SOLUTION for 'Active':
-                // We can't reliably do it in this simple regex highlighter without a rewrite.
-                // However, users usually just want to see where they are. 
-                // The textarea selection itself (blue background) shows the active one.
-                // The yellow highlight shows ALL matches.
-                // If we want a different color for the "current" one on top of the selection...
-
-                // Let's try to do it by creating a specific regex for the active selection if it matches query?
-                // No.
-
-                // Given constraints, I will stick to the existing robust global highlight. 
-                // To do 'active', we would need to know the 'occurrence index' (e.g. "match 3 of 5").
-
-                // Wait, we can do this:
-                // 1. Find all matches in raw text. determine which one includes activeStart.
-                // 2. That gives us "Match #3 is active".
-                // 3. In the HTML replacement loop, we count matches and style #3 differently.
-
-                // Let's do that!
 
                 // 1. Find active match index in raw text
                 let activeMatchIndex = -1;
@@ -1115,9 +1074,6 @@ class EditorAutoSave {
 }
 
 // ============================================================================
-// Continue with MarkdownEditor class in next part...
-// ============================================================================
-// ============================================================================
 // MARKDOWN EDITOR CLASS (Main Controller)
 // ============================================================================
 
@@ -1148,6 +1104,7 @@ class MarkdownEditor {
         this.redoStack = [];
         this.maxStackSize = 50;
         this.isActionInProgress = false;
+        this.isSyncingFromPreview = false;
     }
 
     async open() {
@@ -1205,7 +1162,6 @@ class MarkdownEditor {
                     const sel = window.getSelection();
                     const ran = document.createRange();
                     if (firstBlock.firstChild) {
-                        // In case of text nodes or nested elements
                         if (firstBlock.firstChild.nodeType === 3) {
                             ran.setStart(firstBlock.firstChild, 0);
                         } else {
@@ -1231,7 +1187,6 @@ class MarkdownEditor {
         this.dialog.className = "clsNotesModal";
         document.body.appendChild(this.dialog);
 
-        // Determine priority color
         const headerColor = this.task.priority === 1 ? "var(--color-accent)" : "var(--color-primary)";
 
         this.dialog.innerHTML = `
@@ -1370,19 +1325,16 @@ class MarkdownEditor {
         this.panePreview = this.dialog.querySelector("#panePreview");
         this.textSelection = new TextSelection(this.textarea);
 
-        // Phase 4: Each block has contentEditable="true", container should not
-        // to avoid event target ambiguity and browser-inserted generic divs.
-        this.preview.contentEditable = "false";
+        this.preview.contentEditable = "true";
         this.preview.spellcheck = true;
+        this.preview.classList.add('editor-root');
 
         this.highlighter = new SyntaxHighlighter();
-        this.highlight(); // Initial highlight
+        this.highlight();
 
-        // Initialize Scroll Sync
         this.scrollSync = new ScrollSyncManager(this.textarea, this.preview);
         this.scrollSync.init(this.cleanupManager);
 
-        // Sync syntax layer scroll
         this.cleanupManager.addEventListener(this.textarea, 'scroll', () => {
             if (this.syntaxLayer) {
                 this.syntaxLayer.scrollTop = this.textarea.scrollTop;
@@ -1395,9 +1347,7 @@ class MarkdownEditor {
         if (this.syntaxLayer && this.textarea) {
             const searchInput = this.dialog.querySelector("#idSearchInput");
             const searchPanel = this.dialog.querySelector("#idSearchPanel");
-            // Only highlight search terms if the panel is visible and input is active
             const query = (searchInput && searchPanel && searchPanel.style.display !== 'none') ? searchInput.value : null;
-
             this.syntaxLayer.innerHTML = this.highlighter.highlight(this.textarea.value, query, this.textarea.selectionStart);
         }
     }
@@ -1411,38 +1361,23 @@ class MarkdownEditor {
     setupEventListeners() {
         const debouncedUpdate = debounce(() => {
             this.updatePreview();
-            // Re-sync after render if editor is active
             if (this.scrollSync && this.lastActiveElement === this.textarea) {
                 this.scrollSync.forceSync();
             }
         }, 300);
 
-        const debouncedSaveHistory = debounce(() => {
-            if (this.textarea) this.saveToHistory();
-        }, 1000);
-
-        this.cleanupManager.addEventListener(this.textarea, 'input', () => {
-            if (this.isActionInProgress) return; // Skip history save when we are setting value from code
-
-            this.highlight(); // Instant syntax highlight
-
-            // Only update preview if the user is not actively typing in it
-            const isEditingInPreview = this.preview.contains(this.lastActiveElement);
-            if (!isEditingInPreview) {
-                debouncedUpdate();
-            }
-
-            debouncedSaveHistory();
-            this.autoSave.markDirty();
-            this.updateStats();
+        this.cleanupManager.addEventListener(this.textarea, 'input', () => this.handleMarkdownInput());
+        this.cleanupManager.addEventListener(this.preview, 'input', (e) => this.handleEditorInput(e));
+        this.cleanupManager.addEventListener(this.textarea, 'keydown', (e) => this.handleTextareaShortcuts(e));
+        this.cleanupManager.addEventListener(this.preview, 'keydown', (e) => {
+            this.handleEditorShortcuts(e);
+            this.handlePreviewKeydown(e);
         });
 
-        // View toggles
         this.cleanupManager.addEventListener(this.dialog.querySelector('#btnViewEditor'), 'click', () => this.setView('editor'));
         this.cleanupManager.addEventListener(this.dialog.querySelector('#btnViewSplit'), 'click', () => this.setView('split'));
         this.cleanupManager.addEventListener(this.dialog.querySelector('#btnViewPreview'), 'click', () => this.setView('preview'));
 
-        // Toolbar actions
         const toolbarButtons = this.dialog.querySelectorAll('.notes-toolbar [data-action]');
         toolbarButtons.forEach(btn => {
             this.cleanupManager.addEventListener(btn, 'click', (e) => {
@@ -1452,19 +1387,17 @@ class MarkdownEditor {
             this.cleanupManager.addEventListener(btn, 'mousedown', (e) => e.preventDefault());
         });
 
-        // Paste handler for images
         const handlePaste = (e) => this.handlePaste(e);
         this.cleanupManager.addEventListener(this.textarea, 'paste', handlePaste);
         this.cleanupManager.addEventListener(this.preview, 'paste', handlePaste);
 
-        // Track active element
         this.cleanupManager.addEventListener(this.textarea, 'focus', () => {
             this.lastActiveElement = this.textarea;
             this.bringToFront();
         });
         this.cleanupManager.addEventListener(this.textarea, 'click', () => {
-            this.highlight(); // Update active match highlight for markdown
-            this.highlightPreviewSearch(); // Update active match highlight for preview
+            this.highlight();
+            this.highlightPreviewSearch();
         });
         this.cleanupManager.addEventListener(this.textarea, 'keyup', () => {
             this.highlight();
@@ -1475,166 +1408,68 @@ class MarkdownEditor {
             this.bringToFront();
         });
 
-        // Window resize listener for minimized notes centering
         this.cleanupManager.addEventListener(window, 'resize', () => {
             MarkdownEditor.updateMinimizedPositions();
         });
 
-        // Checkbox interactions
-        this.cleanupManager.addEventListener(this.preview, 'change', (e) => this.handleCheckboxChange(e));
-
-        // Edit-in-preview sync
-        this.cleanupManager.addEventListener(this.preview, 'input', (e) => this.handlePreviewEdit(e));
-
-        // Minimise/Maximise
         const btnMin = this.dialog.querySelector('#btnMinimiseNotes');
-        if (btnMin) {
-            this.cleanupManager.addEventListener(btnMin, 'click', (e) => {
-                e.stopPropagation();
-                this.toggleMinimize();
-            });
-        }
+        if (btnMin) this.cleanupManager.addEventListener(btnMin, 'click', (e) => { e.stopPropagation(); this.toggleMinimize(); });
         const btnMax = this.dialog.querySelector('#btnMaximiseNotes');
-        if (btnMax) {
-            this.cleanupManager.addEventListener(btnMax, 'click', (e) => {
-                e.stopPropagation();
-                this.toggleMaximize();
-            });
-        }
+        if (btnMax) this.cleanupManager.addEventListener(btnMax, 'click', (e) => { e.stopPropagation(); this.toggleMaximize(); });
 
-        // Restore from minimized on header click
         this.cleanupManager.addEventListener(this.dialog.querySelector('.notes-header'), 'click', () => {
-            if (this.dialog.classList.contains('minimized')) {
-                this.toggleMinimize();
-            }
+            if (this.dialog.classList.contains('minimized')) this.toggleMinimize();
         });
 
-        // Enter key in preview
-        this.cleanupManager.addEventListener(this.preview, 'keydown', (e) => this.handlePreviewKeydown(e));
-
-        // Save status click handler - show auto-save info
         const saveStatus = this.dialog.querySelector('#idSaveStatus');
-        if (saveStatus) {
-            this.cleanupManager.addEventListener(saveStatus, 'click', () => this.showAutoSaveInfo());
-            this.cleanupManager.addEventListener(saveStatus, 'keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.showAutoSaveInfo();
-                }
-            });
-        }
+        if (saveStatus) this.cleanupManager.addEventListener(saveStatus, 'click', () => this.showAutoSaveInfo());
 
         const btnHeaderClose = this.dialog.querySelector('#btnCloseNotes');
-        if (btnHeaderClose) {
-            this.cleanupManager.addEventListener(btnHeaderClose, 'click', () => this.saveAndClose());
-        }
+        if (btnHeaderClose) this.cleanupManager.addEventListener(btnHeaderClose, 'click', () => this.saveAndClose());
 
-        // Close on escape
         this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => {
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                this.saveAndClose();
-            }
+            if (e.key === 'Escape') { e.preventDefault(); this.saveAndClose(); }
+            this.handleKeyboardShortcuts(e);
         });
 
-        // Keyboard shortcuts
-        this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => this.handleKeyboardShortcuts(e));
+        this.cleanupManager.addEventListener(this.dialog, 'mousedown', () => this.bringToFront());
+        this.cleanupManager.addEventListener(this.dialog, 'click', (e) => { if (e.target === this.dialog) this.saveAndClose(); });
 
-        // Click outside to close (or bring to front)
-        this.cleanupManager.addEventListener(this.dialog, 'mousedown', () => {
-            this.bringToFront();
-        });
-
-        this.cleanupManager.addEventListener(this.dialog, 'click', (e) => {
-            if (e.target === this.dialog) {
-                this.saveAndClose();
-            }
-        });
-
-        // Export menu
         this.setupExportMenu();
-
-        // Drag and drop
         this.setupDragAndDrop();
-
-        // Search and replace
         this.setupSearch();
     }
 
     setupDragAndDrop() {
-        const handleDrag = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        };
-
+        const handleDrag = (e) => { e.preventDefault(); e.stopPropagation(); };
         const handleDrop = async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
+            e.preventDefault(); e.stopPropagation();
             const files = e.dataTransfer.files;
             if (files && files.length > 0) {
                 for (const file of files) {
                     if (file.type.startsWith('image/')) {
                         try {
                             const compressedBlob = await this.imageStorage.compressImage(file);
-                            const id = await this.imageStorage.saveImage(compressedBlob, {
-                                altText: file.name,
-                                taskIndex: this.taskIndex,
-                                originalSize: file.size
-                            });
-
-                            // Insert markdown at cursor or end
+                            const id = await this.imageStorage.saveImage(compressedBlob, { altText: file.name, taskIndex: this.taskIndex });
                             const markdown = `![${file.name}](tf-img://${id})\n`;
-
-                            // If dropped on preview, append to end. If on editor, insert at pos if possible?
-                            // For simplicity, insert at current cursor pos in textarea
-                            if (this.lastActiveElement === this.textarea) {
-                                this.insertMarkdown(markdown, '');
-                            } else {
-                                // Append to end
-                                this.textarea.value += '\n' + markdown;
-                                this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                            }
-
-                        } catch (error) {
-                            console.error('Image upload failed:', error);
-                            alert('Failed to upload image: ' + error.message);
-                        }
+                            if (this.lastActiveElement === this.textarea) this.insertMarkdown(markdown, '');
+                            else { this.textarea.value += '\n' + markdown; this.textarea.dispatchEvent(new Event('input', { bubbles: true })); }
+                        } catch (error) { console.error('Image upload failed:', error); }
                     }
                 }
             }
         };
-
-        ['dragenter', 'dragover', 'dragleave'].forEach(eventName => {
-            this.cleanupManager.addEventListener(this.dialog, eventName, handleDrag);
-        });
-
+        ['dragenter', 'dragover', 'dragleave'].forEach(eventName => this.cleanupManager.addEventListener(this.dialog, eventName, handleDrag));
         this.cleanupManager.addEventListener(this.dialog, 'drop', handleDrop);
     }
 
     setupExportMenu() {
         const exportBtn = this.dialog.querySelector('#btnExportNotes');
         const exportMenu = this.dialog.querySelector('#idExportMenu');
-
-        this.cleanupManager.addEventListener(exportBtn, 'click', (e) => {
-            e.stopPropagation();
-            exportMenu.style.display = exportMenu.style.display === 'none' ? 'block' : 'none';
-        });
-
-        // Close menu when clicking outside
-        this.cleanupManager.addEventListener(document, 'click', () => {
-            exportMenu.style.display = 'none';
-        });
-
-        // Export actions
+        this.cleanupManager.addEventListener(exportBtn, 'click', (e) => { e.stopPropagation(); exportMenu.style.display = exportMenu.style.display === 'none' ? 'block' : 'none'; });
+        this.cleanupManager.addEventListener(document, 'click', () => { exportMenu.style.display = 'none'; });
         const exportButtons = exportMenu.querySelectorAll('[data-export]');
-        exportButtons.forEach(btn => {
-            this.cleanupManager.addEventListener(btn, 'click', (e) => {
-                e.stopPropagation();
-                this.handleExport(btn.getAttribute('data-export'));
-                exportMenu.style.display = 'none';
-            });
-        });
+        exportButtons.forEach(btn => { this.cleanupManager.addEventListener(btn, 'click', (e) => { e.stopPropagation(); this.handleExport(btn.getAttribute('data-export')); exportMenu.style.display = 'none'; }); });
     }
 
     setupSearch() {
@@ -1647,48 +1482,23 @@ class MarkdownEditor {
         const btnReplaceAll = this.dialog.querySelector('#btnReplaceAll');
         const btnClose = this.dialog.querySelector('#btnCloseSearch');
 
-        // Toggle search with Ctrl+F is already handled in global keydown
+        this.cleanupManager.addEventListener(btnClose, 'click', () => { panel.style.display = 'none'; this.textarea.focus(); });
 
-        // Close
-        this.cleanupManager.addEventListener(btnClose, 'click', () => {
-            panel.style.display = 'none';
-            this.textarea.focus();
-        });
-
-        // Find Logic
         const find = (forward = true) => {
             const query = searchInput.value;
             if (!query) return;
-
-            // Do not force focus to textarea here, focus will be handled contextually.
-            // We want to keep typing/enter capability in search box.
-
-            // Native find logic for textarea
             const text = this.textarea.value;
             const start = this.textarea.selectionStart;
             const end = this.textarea.selectionEnd;
-
-            let index = -1;
-            if (forward) {
-                index = text.indexOf(query, end); // Search after current selection
-                if (index === -1) index = text.indexOf(query, 0); // Wrap around
-            } else {
-                index = text.lastIndexOf(query, start - 1); // Search before current selection
-                if (index === -1) index = text.lastIndexOf(query); // Wrap around
-            }
-
+            let index = forward ? text.indexOf(query, end) : text.lastIndexOf(query, start - 1);
+            if (index === -1) index = forward ? text.indexOf(query, 0) : text.lastIndexOf(query);
             if (index !== -1) {
                 this.textarea.setSelectionRange(index, index + query.length);
-                // Scroll to selection (rudimentary)
-                const lineHeight = 21; // approx
                 const lineNo = text.substr(0, index).split('\n').length;
-                this.textarea.scrollTop = (lineNo - 5) * lineHeight;
-
-                // Update highlights (since selection doesn't trigger input event)
+                this.textarea.scrollTop = (lineNo - 5) * 21;
                 this.highlight();
                 this.highlightPreviewSearch();
             } else {
-                // Not found
                 searchInput.classList.add('error');
                 setTimeout(() => searchInput.classList.remove('error'), 500);
             }
@@ -1696,161 +1506,459 @@ class MarkdownEditor {
 
         this.cleanupManager.addEventListener(btnFindNext, 'click', () => find(true));
         this.cleanupManager.addEventListener(btnFindPrev, 'click', () => find(false));
-        this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                find(true);
-            }
-        });
+        this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); find(true); } });
+        this.cleanupManager.addEventListener(searchInput, 'input', debounce(() => { this.highlight(); this.highlightPreviewSearch(); }, 150));
 
-        this.cleanupManager.addEventListener(searchInput, 'input', debounce(() => {
-            this.highlight();
-            this.highlightPreviewSearch();
-        }, 150));
-
-        // Replace Logic
         this.cleanupManager.addEventListener(btnReplace, 'click', () => {
             const query = searchInput.value;
             const replacement = replaceInput.value;
             if (!query) return;
-
-            // Check if current selection matches query
             const start = this.textarea.selectionStart;
             const end = this.textarea.selectionEnd;
-            const selected = this.textarea.value.substring(start, end);
-
-            if (selected === query) {
-                // Replace current
+            if (this.textarea.value.substring(start, end) === query) {
                 this.textarea.setRangeText(replacement, start, end, 'select');
                 this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                find(true); // Find next
-            } else {
-                find(true); // Find first then user clicks again to replace
-            }
+                find(true);
+            } else find(true);
         });
 
         this.cleanupManager.addEventListener(btnReplaceAll, 'click', () => {
             const query = searchInput.value;
             const replacement = replaceInput.value;
             if (!query) return;
-
-            const text = this.textarea.value;
             const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-            const newText = text.replace(regex, replacement);
-
-            if (text !== newText) {
+            const newText = this.textarea.value.replace(regex, replacement);
+            if (this.textarea.value !== newText) {
                 this.textarea.value = newText;
                 this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                alert('Replaced all occurrences.');
             }
         });
     }
 
     setView(view) {
         this.currentView = view;
-        this.dialog.querySelectorAll('.notes-toggle-btn').forEach(b => b.classList.remove('active'));
-        this.paneEditor.classList.remove('hidden');
-        this.panePreview.classList.remove('hidden');
-
-        if (view === 'editor') {
-            this.panePreview.classList.add('hidden');
-            this.dialog.querySelector('#btnViewEditor').classList.add('active');
-        } else if (view === 'preview') {
-            this.paneEditor.classList.add('hidden');
-            this.dialog.querySelector('#btnViewPreview').classList.add('active');
-        } else {
-            this.dialog.querySelector('#btnViewSplit').classList.add('active');
-        }
+        this.paneEditor.classList.toggle('hidden', view === 'preview');
+        this.panePreview.classList.toggle('hidden', view === 'editor');
+        this.dialog.querySelectorAll('.notes-toggle-btn').forEach(b => b.classList.toggle('active', b.id === `btnView${view.charAt(0).toUpperCase() + view.slice(1)}`));
     }
 
-    async updatePreview(forceLoad = false) {
+    async updatePreview(isFullRefresh = false) {
+        if (isFullRefresh) this.parser.cache.clear();
         try {
+            const selection = window.getSelection();
+            const isActive = (document.activeElement === this.preview || this.preview.contains(document.activeElement));
+            let savedOffset = isActive && selection.rangeCount > 0 ? this.getGlobalCaretOffset(this.preview) : 0;
+
             const scrollPos = this.preview.scrollTop;
             let html = this.parser.parse(this.textarea.value);
-
-            // Phase 4: Add XSS protection
             html = HtmlSanitizer.sanitize(html);
-
             this.preview.innerHTML = html;
             this.preview.scrollTop = scrollPos;
-            await this.resolveImages(forceLoad);
-            this.highlightPreviewSearch(); // Add search highlighting to preview
-            this.updateStats(); // Ensure stats are updated on preview refresh too
-        } catch (error) {
-            console.error('Preview update failed:', error);
+
+            await this.resolveImages(isFullRefresh);
+            this.highlightPreviewSearch();
+
+            if (isActive) this.setGlobalCaretOffset(this.preview, savedOffset);
+        } catch (error) { console.error('Error updating preview:', error); }
+    }
+
+    handleMarkdownInput() {
+        this.updateStats();
+        this.autoSave.markDirty();
+        if (!this.isSyncingFromPreview) this.updatePreview();
+    }
+
+    handleEditorInput(e) {
+        if (this.isActionInProgress) return;
+        this.isSyncingFromPreview = true;
+        try {
+            this.scanAndReplaceLivePatterns();
+            this.syncEditorToMarkdown();
+            this.updateStats();
+            this.autoSave.markDirty();
+            this.highlight();
+        } finally {
+            this.isSyncingFromPreview = false;
         }
     }
 
-    saveToHistory() {
-        // Only save if content changed from top of stack
-        const currentContent = this.textarea.value;
-        if (this.undoStack.length > 0 && this.undoStack[this.undoStack.length - 1].content === currentContent) {
+    scanAndReplaceLivePatterns() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        const range = selection.getRangeAt(0);
+        const node = range.startContainer;
+        if (node.nodeType !== 3) return;
+
+        const text = node.textContent.replace(/\u00A0/g, ' ');
+        
+        // Find the block-level container
+        let block = node.parentElement;
+        while (block && block !== this.preview && !block.hasAttribute('data-line') && !['DIV', 'P', 'LI', 'H1', 'H2', 'H3', 'BLOCKQUOTE'].includes(block.tagName)) {
+            block = block.parentElement;
+        }
+        if (!block || block === this.preview) return;
+
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(block);
+        preCaretRange.setEnd(range.startContainer, range.startOffset);
+        const textBeforeCaret = preCaretRange.toString().replace(/\u00A0/g, ' ');
+        const blockOffset = textBeforeCaret.length;
+
+        // Structural Triggers (must be at start of block)
+        if (blockOffset >= 2 && blockOffset <= 4 && textBeforeCaret.match(/^(#{1,3})\s$/)) {
+            const level = textBeforeCaret.match(/^(#{1,3})\s/);
+            const tag = `H${level[1].length}`;
+            
+            // Re-fetch node and offset to be extremely precise
+            const matchRange = document.createRange();
+            matchRange.setStart(node, 0);
+            matchRange.setEnd(node, level[0].length);
+            
+            const hashSpan = document.createElement('span');
+            hashSpan.className = 'md-syntax md-hash';
+            hashSpan.setAttribute('contenteditable', 'false');
+            hashSpan.textContent = level[0];
+            
+            matchRange.deleteContents();
+            matchRange.insertNode(hashSpan);
+
+            // Change block type if not already correct
+            if (block.tagName !== tag) {
+                const newHeading = document.createElement(tag);
+                const dataLine = block.getAttribute('data-line');
+                if (dataLine) newHeading.setAttribute('data-line', dataLine);
+                newHeading.className = `markdown-h${level[1].length}`;
+                newHeading.innerHTML = block.innerHTML;
+                block.parentNode.replaceChild(newHeading, block);
+                
+                // Restore caret to after the hidden span
+                const newRange = document.createRange();
+                newRange.setStartAfter(newHeading.querySelector('.md-hash'));
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+            }
+            
+            this.syncEditorToMarkdown();
             return;
         }
 
-        this.undoStack.push({
-            content: currentContent,
-            selectionStart: this.textarea.selectionStart,
-            selectionEnd: this.textarea.selectionEnd
-        });
-
-        if (this.undoStack.length > this.maxStackSize) {
-            this.undoStack.shift();
+        if (blockOffset === 2 && textBeforeCaret === '- ') {
+            const deleteRange = document.createRange();
+            deleteRange.selectNodeContents(block);
+            deleteRange.setEnd(range.startContainer, range.startOffset);
+            deleteRange.deleteContents();
+            document.execCommand('insertUnorderedList');
+            return;
         }
 
-        // Reset redo stack on new action
-        this.redoStack = [];
+        if (blockOffset === 3 && (textBeforeCaret === '---' || textBeforeCaret === '***' || textBeforeCaret === '___')) {
+            const deleteRange = document.createRange();
+            deleteRange.selectNodeContents(block);
+            deleteRange.setEnd(range.startContainer, range.startOffset);
+            deleteRange.deleteContents();
+            
+            const nextPara = document.createElement('div');
+            nextPara.innerHTML = '&nbsp;';
+            block.parentNode.insertBefore(nextPara, block.nextSibling);
+            block.innerHTML = '<hr class="markdown-hr">';
+            this.syncEditorToMarkdown();
+            
+            const newRange = document.createRange();
+            newRange.setStart(nextPara, 0);
+            newRange.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(newRange);
+            nextPara.focus();
+            return;
+        }
 
-        // Debug log (optional)
-        // console.log("State saved to history. Undo Stack size:", this.undoStack.length);
+        // Inline patterns (tags)
+        const patterns = [
+            { regex: /-a-/gi, html: '<span class="note-tag action" contenteditable="false" onclick="clkNoteTag(\'action\')">action</span>&nbsp;' },
+            { regex: /-f-/gi, html: '<span class="note-tag finding" contenteditable="false" onclick="clkNoteTag(\'finding\')">finding</span>&nbsp;' },
+            { regex: /-d-/gi, html: '<span class="note-tag documentation" contenteditable="false" onclick="clkNoteTag(\'documentation\')">documentation</span>&nbsp;' },
+            { regex: /-q-/gi, html: '<span class="note-tag question" contenteditable="false" onclick="clkNoteTag(\'question\')">question</span>&nbsp;' },
+            { regex: /\[ \] /g, html: '<input type="checkbox" aria-label="Task item">&nbsp;' },
+            { regex: /\[x\] /g, html: '<input type="checkbox" checked aria-label="Completed task">&nbsp;' }
+        ];
+
+        for (const p of patterns) {
+            const regex = new RegExp(p.regex);
+            const match = regex.exec(text);
+            if (match) {
+                const offset = match.index;
+                const matchText = match[0];
+                if (range.startOffset < offset + matchText.length) continue;
+
+                const temp = document.createElement('div');
+                temp.innerHTML = p.html;
+                const fragment = document.createDocumentFragment();
+                const nodesToInsert = Array.from(temp.childNodes);
+                nodesToInsert.forEach(n => fragment.appendChild(n));
+                const lastInsertedNode = nodesToInsert[nodesToInsert.length - 1];
+
+                const matchRange = document.createRange();
+                matchRange.setStart(node, offset);
+                matchRange.setEnd(node, offset + matchText.length);
+                matchRange.deleteContents();
+                matchRange.insertNode(fragment);
+
+                const newRange = document.createRange();
+                if (lastInsertedNode.nodeType === 3) {
+                    newRange.setStart(lastInsertedNode, lastInsertedNode.textContent.length);
+                } else {
+                    newRange.setStartAfter(lastInsertedNode);
+                }
+                newRange.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(newRange);
+                break;
+            }
+        }
     }
 
-    handleUndoRedo(isUndo = true) {
-        const stack = isUndo ? this.undoStack : this.redoStack;
-        const otherStack = isUndo ? this.redoStack : this.undoStack;
+    syncEditorToMarkdown() {
+        const mdLines = [];
+        const lines = this.textarea.value.split('\n');
 
-        if (stack.length === 0) return;
-
-        this.isActionInProgress = true;
-
-        try {
-            // Save current state to other stack before restoring
-            otherStack.push({
-                content: this.textarea.value,
-                selectionStart: this.textarea.selectionStart,
-                selectionEnd: this.textarea.selectionEnd
-            });
-
-            if (otherStack.length > this.maxStackSize) {
-                otherStack.shift();
+        const processBlock = (block) => {
+            const lineIdx = parseInt(block.getAttribute('data-line'), 10);
+            let prefix = "";
+            if (!isNaN(lineIdx) && lines[lineIdx]) {
+                const prefixMatch = lines[lineIdx].match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
+                prefix = prefixMatch ? prefixMatch[1] : "";
             }
 
+            let content = this.htmlConverter.convert(block.innerHTML, true, true).replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
+
+            // If we have a prefix and content doesn't already include it (common for lists), prepend it
+            if (prefix && !content.trimStart().startsWith(prefix.trim())) {
+                mdLines.push(prefix + content);
+            } else {
+                mdLines.push(content);
+            }
+        };
+
+        const children = Array.from(this.preview.childNodes);
+        children.forEach(child => {
+            if (child.nodeType === 1) { // Element
+                const tag = child.tagName;
+                if (tag === 'UL' || tag === 'OL' || tag === 'BLOCKQUOTE') {
+                    Array.from(child.children).forEach(inner => processBlock(inner));
+                } else if (tag === 'DIV' || tag === 'P' || tag.startsWith('H')) {
+                    processBlock(child);
+                } else if (tag === 'HR') {
+                    mdLines.push('---');
+                }
+            } else if (child.nodeType === 3 && child.textContent.trim()) {
+                // Handle stray text nodes at root level if any
+                mdLines.push(child.textContent);
+            }
+        });
+
+        const newMarkdown = mdLines.join('\n');
+        if (this.textarea.value !== newMarkdown) {
+            this.textarea.value = newMarkdown;
+            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+
+    getGlobalCaretOffset(element) {
+        const selection = window.getSelection();
+        if (!selection || !selection.rangeCount) return 0;
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.startContainer, range.startOffset);
+        return preCaretRange.toString().length;
+    }
+
+    setGlobalCaretOffset(element, offset) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        let currentOffset = 0, nodeFound = false;
+        const traverse = (node) => {
+            if (nodeFound) return;
+            if (node.nodeType === 3) {
+                const len = node.textContent.length;
+                if (currentOffset + len >= offset) { range.setStart(node, offset - currentOffset); range.collapse(true); nodeFound = true; }
+                currentOffset += len;
+            } else { for (let i = 0; i < node.childNodes.length; i++) { traverse(node.childNodes[i]); if (nodeFound) return; } }
+        };
+        traverse(element);
+        if (nodeFound) { selection.removeAllRanges(); selection.addRange(range); }
+    }
+
+    handleEditorShortcuts(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const selection = window.getSelection();
+            const lineBlocks = [];
+            if (!selection.isCollapsed) {
+                Array.from(this.preview.querySelectorAll('[data-line]')).forEach(b => { if (selection.containsNode(b, true)) lineBlocks.push(b); });
+            } else {
+                const block = e.target.closest('[data-line]');
+                if (block) lineBlocks.push(block);
+            }
+            if (lineBlocks.length > 0) {
+                const lines = this.textarea.value.split('\n');
+                lineBlocks.forEach(b => {
+                    const idx = parseInt(b.getAttribute('data-line'), 10);
+                    if (!isNaN(idx)) {
+                        if (e.shiftKey) lines[idx] = lines[idx].startsWith('  ') ? lines[idx].substring(2) : (lines[idx].startsWith(' ') ? lines[idx].substring(1) : lines[idx]);
+                        else lines[idx] = '  ' + lines[idx];
+                    }
+                });
+                this.textarea.value = lines.join('\n');
+                this.updatePreview();
+            }
+        }
+        if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            const block = e.target.closest('[data-line]');
+            if (block) {
+                e.preventDefault();
+                const lineIdx = parseInt(block.getAttribute('data-line'), 10);
+                const lines = this.textarea.value.split('\n');
+                const targetIdx = e.key === 'ArrowUp' ? lineIdx - 1 : lineIdx + 1;
+                if (targetIdx >= 0 && targetIdx < lines.length) {
+                    [lines[lineIdx], lines[targetIdx]] = [lines[targetIdx], lines[lineIdx]];
+                    this.textarea.value = lines.join('\n');
+                    this.updatePreview();
+                }
+            }
+        }
+        if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) {
+            const block = e.target.closest('[data-line]');
+            if (block) {
+                e.preventDefault();
+                const lineIdx = parseInt(block.getAttribute('data-line'), 10);
+                const lines = this.textarea.value.split('\n');
+                lines.splice(lineIdx + 1, 0, lines[lineIdx]);
+                this.textarea.value = lines.join('\n');
+                this.updatePreview();
+            }
+        }
+    }
+
+    handleTextareaShortcuts(e) {
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.textarea.selectionStart, end = this.textarea.selectionEnd, value = this.textarea.value;
+            if (start === end) {
+                this.textarea.value = value.substring(0, start) + '  ' + value.substring(start);
+                this.textarea.setSelectionRange(start + 2, start + 2);
+            } else {
+                const lineStart = value.substring(0, start).lastIndexOf('\n') + 1, lineEnd = value.indexOf('\n', end);
+                const actualEnd = lineEnd === -1 ? value.length : lineEnd;
+                const lines = value.substring(lineStart, actualEnd).split('\n');
+                const newLines = lines.map(line => e.shiftKey ? (line.startsWith('  ') ? line.substring(2) : (line.startsWith(' ') ? line.substring(1) : line)) : '  ' + line);
+                this.textarea.value = value.substring(0, lineStart) + newLines.join('\n') + value.substring(actualEnd);
+                this.textarea.setSelectionRange(lineStart, lineStart + newLines.join('\n').length);
+            }
+            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+
+    handleToolbarAction(action) {
+        const isPreviewActive = (document.activeElement === this.preview || this.preview.contains(document.activeElement));
+        if (action === 'search') { this.toggleSearchPanel(); return; }
+        if (action === 'help') { this.showHelpModal(); return; }
+        if (action === 'undo') { this.handleUndoRedo(true); return; }
+        if (action === 'redo') { this.handleUndoRedo(false); return; }
+        this.saveToHistory();
+        if (isPreviewActive) this.applyFormatModern(action);
+        else {
+            switch (action) {
+                case 'bold': this.insertMarkdown('**', '**'); break;
+                case 'italic': this.insertMarkdown('*', '*'); break;
+                case 'underline': this.insertMarkdown('<u>', '</u>'); break;
+                case 'strikethrough': this.insertMarkdown('~~', '~~'); break;
+                case 'subscript': this.insertMarkdown('~', '~'); break;
+                case 'superscript': this.insertMarkdown('^', '^'); break;
+                case 'code': const sel = this.textSelection.getSelectedText(); if (sel.includes('\n')) this.insertMarkdown('```\n', '\n```'); else this.insertMarkdown('`', '`'); break;
+                case 'header1': this.insertMarkdown('# ', ''); break;
+                case 'header2': this.insertMarkdown('## ', ''); break;
+                case 'header3': this.insertMarkdown('### ', ''); break;
+                case 'link': this.handleLinkAction(); break;
+                case 'list': this.insertMarkdown('- ', ''); break;
+                case 'task': this.insertMarkdown('[ ] ', ''); break;
+                case 'hr': this.insertMarkdown('\n---\n', ''); break;
+            }
+        }
+        this.updateStats();
+        this.autoSave.markDirty();
+    }
+
+    applyFormatModern(action, val = null) {
+        switch (action) {
+            case 'bold': document.execCommand('bold', false, val); break;
+            case 'italic': document.execCommand('italic', false, val); break;
+            case 'underline': document.execCommand('underline', false, val); break;
+            case 'strikethrough': document.execCommand('strikeThrough', false, val); break;
+            case 'header1': document.execCommand('formatBlock', false, '<h1>'); break;
+            case 'header2': document.execCommand('formatBlock', false, '<h2>'); break;
+            case 'header3': document.execCommand('formatBlock', false, '<h3>'); break;
+            case 'list': document.execCommand('insertUnorderedList', false, val); break;
+            case 'task': document.execCommand('insertHTML', false, '<li>[ ] &nbsp;</li>'); break;
+            case 'link': const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); break;
+        }
+        this.handleEditorInput();
+    }
+
+    insertMarkdown(before, after) { this.textSelection.wrapSelection(before, after); this.updatePreview(); }
+    handleLinkAction() { const url = prompt("Enter URL:", "https://"); if (url) this.insertMarkdown("[", `](${url})`); }
+
+    handlePaste(e) {
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        for (const item of items) { if (item.type.indexOf("image") !== -1) { const blob = item.getAsFile(); this.uploadImage(blob); } }
+    }
+
+    async uploadImage(blob) {
+        try {
+            const compressedBlob = await this.imageStorage.compressImage(blob);
+            const id = await this.imageStorage.saveImage(compressedBlob, { altText: "pasted_image", taskIndex: this.taskIndex });
+            const mdRef = `![pasted_image](tf-img://${id})`;
+            if (this.lastActiveElement === this.textarea) this.insertMarkdown(mdRef, "");
+            else {
+                const selection = window.getSelection();
+                if (selection.rangeCount) {
+                    const range = selection.getRangeAt(0), img = document.createElement('img');
+                    img.src = URL.createObjectURL(compressedBlob); img.setAttribute('data-img-id', id); img.className = 'pasted-image';
+                    range.insertNode(img); range.insertNode(document.createTextNode(' '));
+                    this.handleEditorInput();
+                }
+            }
+        } catch (error) { console.error('Image upload failed:', error); }
+    }
+
+    saveToHistory() {
+        const currentContent = this.textarea.value;
+        if (this.undoStack.length > 0 && this.undoStack[this.undoStack.length - 1].content === currentContent) return;
+        const isPreviewActive = (document.activeElement === this.preview || this.preview.contains(document.activeElement));
+        this.undoStack.push({ content: currentContent, selectionStart: this.textarea.selectionStart, selectionEnd: this.textarea.selectionEnd, previewOffset: isPreviewActive ? this.getGlobalCaretOffset(this.preview) : -1 });
+        if (this.undoStack.length > this.maxStackSize) this.undoStack.shift();
+        this.redoStack = [];
+    }
+
+    async handleUndoRedo(isUndo = true) {
+        const stack = isUndo ? this.undoStack : this.redoStack, otherStack = isUndo ? this.redoStack : this.undoStack;
+        if (stack.length === 0) return;
+        this.isActionInProgress = true;
+        try {
+            const isPreviewActive = (document.activeElement === this.preview || this.preview.contains(document.activeElement));
+            otherStack.push({ content: this.textarea.value, selectionStart: this.textarea.selectionStart, selectionEnd: this.textarea.selectionEnd, previewOffset: isPreviewActive ? this.getGlobalCaretOffset(this.preview) : -1 });
             const state = stack.pop();
             this.textarea.value = state.content;
             this.textarea.setSelectionRange(state.selectionStart, state.selectionEnd);
-
-            // Trigger sync
-            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-            this.textarea.focus();
-
-            // Highlight and preview must be updated manually because we returned early in event listener
-            this.highlight();
-            this.updatePreview();
-        } finally {
-            this.isActionInProgress = false;
-        }
+            await this.updatePreview();
+            if (state.previewOffset !== -1) { this.preview.focus(); this.setGlobalCaretOffset(this.preview, state.previewOffset); }
+        } finally { this.isActionInProgress = false; }
     }
 
     updateStats() {
-        const text = this.textarea.value.trim();
-        const words = text ? text.trim().split(/\s+/).length : 0;
-        const chars = text.length;
-        const readTime = Math.ceil(words / 200);
-
-        const wordCountEl = this.dialog.querySelector('#idWordCount');
-        const charCountEl = this.dialog.querySelector('#idCharCount');
-        const readTimeEl = this.dialog.querySelector('#idReadTime');
-
+        const text = this.textarea.value, words = text.trim() ? text.trim().split(/\s+/).length : 0, chars = text.length, readTime = Math.ceil(words / 200);
+        const wordCountEl = this.dialog.querySelector('#idWordCount'), charCountEl = this.dialog.querySelector('#idCharCount'), readTimeEl = this.dialog.querySelector('#idReadTime');
         if (wordCountEl) wordCountEl.textContent = `${words} words`;
         if (charCountEl) charCountEl.textContent = `${chars} characters`;
         if (readTimeEl) readTimeEl.textContent = `${readTime} min read`;
@@ -1858,1174 +1966,129 @@ class MarkdownEditor {
 
     async resolveImages(forceLoad = false) {
         const images = this.preview.querySelectorAll('img[data-img-id]');
-        const promises = [];
-
         for (const img of images) {
             const id = img.getAttribute('data-img-id');
-
-            const loadTask = async (imgElement) => {
+            if (id && (!img.src || img.src.startsWith('blob:') || forceLoad)) {
                 try {
                     const blob = await this.imageStorage.getImage(id);
                     if (blob) {
                         const url = URL.createObjectURL(blob);
-                        return new Promise((resolve) => {
-                            imgElement.onload = () => resolve();
-                            imgElement.onerror = () => resolve(); // Don't block if image fails
-                            imgElement.src = url;
-                            this.cleanupManager.addBlobUrl(url);
-                        });
+                        img.src = url;
+                        this.cleanupManager.addBlobUrl(url);
                     }
-                } catch (error) {
-                    console.error(`Failed to load image ${id}:`, error);
-                }
-            };
-
-            if (forceLoad) {
-                promises.push(loadTask(img));
-            } else {
-                // Use lazy loading for better performance
-                this.lazyImageLoader.observe(img, loadTask);
+                } catch (e) { console.error('Failed to resolve image:', id, e); }
             }
-        }
-
-        if (forceLoad && promises.length > 0) {
-            await Promise.all(promises);
         }
     }
 
     highlightPreviewSearch() {
-        const searchInput = this.dialog.querySelector('#idSearchInput');
-        const searchPanel = this.dialog.querySelector('#idSearchPanel');
-        if (!this.preview) return;
-
-        // 1. ALWAYS clear existing highlights first
-        const existing = this.preview.querySelectorAll('.find-highlight, .find-highlight-active');
-        existing.forEach(el => {
-            const textNode = document.createTextNode(el.textContent);
-            el.parentNode.replaceChild(textNode, el);
-        });
-        this.preview.normalize();
-
-        // 2. Only continue if search panel is visible and we have a query
-        if (!searchInput || !searchPanel || searchPanel.style.display === 'none') {
-            return;
-        }
-
-        const query = searchInput.value;
-        if (!query || query.length === 0) {
-            return;
-        }
-
-        // Determine which match is active based on textarea selection
+        const searchInput = this.dialog.querySelector('#idSearchInput'), searchPanel = this.dialog.querySelector('#idSearchPanel');
+        if (!this.preview || !searchInput || !searchPanel || searchPanel.style.display === 'none') return;
+        const query = searchInput.value; if (!query) return;
         let activeMatchIndex = -1;
-        const textareaText = this.textarea.value;
-        const selectionStart = this.textarea.selectionStart;
-
+        const textareaText = this.textarea.value, selectionStart = this.textarea.selectionStart;
         if (selectionStart !== -1) {
             const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-            let match;
-            let count = 0;
+            let match, count = 0;
             while ((match = regex.exec(textareaText)) !== null) {
-                // If cursor is within this match, this is the active one
-                if (selectionStart >= match.index && selectionStart <= match.index + match[0].length) {
-                    activeMatchIndex = count;
-                    break;
-                }
+                if (selectionStart >= match.index && selectionStart <= match.index + match[0].length) { activeMatchIndex = count; break; }
                 count++;
             }
         }
-
-        try {
-            // Walk through all text nodes in the preview and highlight matches
-            const walker = document.createTreeWalker(
-                this.preview,
-                NodeFilter.SHOW_TEXT,
-                {
-                    acceptNode: (node) => {
-                        // Skip if parent already has highlight class
-                        if (node.parentElement.classList.contains('find-highlight') ||
-                            node.parentElement.classList.contains('find-highlight-active')) {
-                            return NodeFilter.FILTER_REJECT;
-                        }
-                        // Skip script and style elements
-                        if (node.parentElement.tagName === 'SCRIPT' ||
-                            node.parentElement.tagName === 'STYLE') {
-                            return NodeFilter.FILTER_REJECT;
-                        }
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
-                }
-            );
-
-            const nodesToProcess = [];
-            let node;
-            while (node = walker.nextNode()) {
-                if (node.textContent.toLowerCase().includes(query.toLowerCase())) {
-                    nodesToProcess.push(node);
-                }
-            }
-
-            // Track global match count across all nodes
-            let globalMatchCount = 0;
-
-            // Process nodes and add highlights
-            nodesToProcess.forEach(textNode => {
-                const text = textNode.textContent;
-                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-                const matches = text.match(regex);
-
-                if (matches) {
-                    const fragment = document.createDocumentFragment();
-                    let lastIndex = 0;
-
-                    text.replace(regex, (match, p1, offset) => {
-                        // Add text before match
-                        if (offset > lastIndex) {
-                            fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
-                        }
-
-                        // Add highlighted match
-                        const span = document.createElement('span');
-                        // Check if this is the active match
-                        const isActive = globalMatchCount === activeMatchIndex;
-                        span.className = isActive ? 'find-highlight-active' : 'find-highlight';
-                        span.textContent = match;
-                        fragment.appendChild(span);
-
-                        globalMatchCount++;
-                        lastIndex = offset + match.length;
-                    });
-
-                    // Add remaining text
-                    if (lastIndex < text.length) {
-                        fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-                    }
-
-                    textNode.parentNode.replaceChild(fragment, textNode);
-                }
-            });
-
-            // Scroll active match into view
-            if (activeMatchIndex !== -1) {
-                const activeHighlight = this.preview.querySelector('.find-highlight-active');
-                if (activeHighlight) {
-                    activeHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-        } catch (error) {
-            console.warn('Preview search highlighting failed:', error);
-        }
-    }
-
-    handleToolbarAction(action) {
-        // 1. Handle Global Meta Actions (don't require history save)
-        if (action === 'search') {
-            this.toggleSearchPanel();
-            return;
-        }
-        if (action === 'help') {
-            this.showHelpModal();
-            return;
-        }
-
-        // 2. Save current state before formatting actions (except undo/redo themselves)
-        if (action !== 'undo' && action !== 'redo') {
-            this.saveToHistory();
-        }
-
-        if (this.lastActiveElement === this.textarea) {
-            this.textarea.focus();
-
-            switch (action) {
-                case 'undo': this.handleUndoRedo(true); break;
-                case 'redo': this.handleUndoRedo(false); break;
-                case 'bold': this.insertMarkdown('**', '**'); break;
-                case 'italic': this.insertMarkdown('*', '*'); break;
-                case 'underline': this.insertMarkdown('<u>', '</u>'); break;
-                case 'strikethrough': this.insertMarkdown('~~', '~~'); break;
-                case 'subscript': this.insertMarkdown('~', '~'); break;
-                case 'superscript': this.insertMarkdown('^', '^'); break;
-                case 'code':
-                    const start = this.textarea.selectionStart;
-                    const end = this.textarea.selectionEnd;
-                    const selected = this.textarea.value.substring(start, end);
-                    const isNewBlock = selected.includes('\n') || this.isAtStartOfLine();
-
-                    if (isNewBlock) {
-                        this.insertMarkdown('```\n', '\n```');
-                    } else {
-                        this.insertMarkdown('`', '`');
-                    }
-                    break;
-                case 'header1': this.insertMarkdown('# ', ''); break;
-                case 'header2': this.insertMarkdown('## ', ''); break;
-                case 'header3': this.insertMarkdown('### ', ''); break;
-                case 'link': this.insertLink(); break;
-                case 'list': this.insertMarkdown('- ', ''); break;
-                case 'task': this.insertMarkdown('[ ] ', ''); break;
-                case 'hr': this.insertMarkdown('\n---\n', ''); break;
-                default:
-                    console.warn('Action not recognized in textarea:', action);
-                    break;
-            }
-        } else if (this.lastActiveElement && (this.lastActiveElement === this.preview || this.lastActiveElement.isContentEditable)) {
-            this.applyFormatModern(action);
-        }
-    }
-
-    applyFormatModern(action, val = null) {
-        const selection = window.getSelection();
-        if (!selection.rangeCount) return;
-        const range = selection.getRangeAt(0);
-
-        switch (action) {
-            case 'bold': this.wrapInTag(range, 'strong'); break;
-            case 'italic': this.wrapInTag(range, 'em'); break;
-            case 'underline': this.wrapInTag(range, 'u'); break;
-            case 'strikethrough': this.wrapInTag(range, 'strike'); break;
-            case 'subscript': this.wrapInTag(range, 'sub'); break;
-            case 'superscript': this.wrapInTag(range, 'sup'); break;
-            case 'code':
-                // Smart select: if selection is multi-line or contains block elements, use code block
-                if (selection.toString().includes('\n') || !range.collapsed && range.commonAncestorContainer.nodeType !== 3) {
-                    this.applyBlockFormat(range, 'pre');
-                } else {
-                    this.wrapInTag(range, 'code');
-                }
-                break;
-            case 'undo': this.handleUndoRedo(true); break;
-            case 'redo': this.handleUndoRedo(false); break;
-            case 'header1': this.applyBlockFormat(range, 'h1'); break;
-            case 'header2': this.applyBlockFormat(range, 'h2'); break;
-            case 'header3': this.applyBlockFormat(range, 'h3'); break;
-            case 'link':
-                const url = prompt("Enter URL:", "https://");
-                if (url) {
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.appendChild(range.extractContents());
-                    range.insertNode(a);
-                }
-                break;
-            case 'list':
-                this.applyBlockFormat(range, 'li');
-                break;
-            case 'task':
-                const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                range.insertNode(cb);
-                range.insertNode(document.createTextNode(' '));
-                break;
-            case 'hr':
-                range.insertNode(document.createElement('hr'));
-                break;
-            default:
-                console.warn('Formatting action not yet supported in modern mode:', action);
-        }
-
-        // Trigger sync back to markdown
-        this.lastActiveElement.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    wrapInTag(range, tagName) {
-        if (range.collapsed) {
-            const el = document.createElement(tagName);
-            el.innerHTML = '&#8203;'; // Zero width space to allow typing
-            range.insertNode(el);
-            range.setStart(el, 1);
-            range.collapse(true);
-        } else {
-            const content = range.extractContents();
-            const el = document.createElement(tagName);
-            el.appendChild(content);
-            range.insertNode(el);
-            // Re-select applied format
-            const newRange = document.createRange();
-            newRange.selectNodeContents(el);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-        }
-    }
-
-    applyBlockFormat(range, tagName) {
-        let container = range.commonAncestorContainer;
-        if (container.nodeType === 3) container = container.parentElement;
-
-        // Find existing block element
-        const block = container.closest('div, p, h1, h2, h3, h4, h5, h6, li');
-
-        // Safety check: Don't replace the preview pane itself!
-        if (block && this.preview.contains(block) && block !== this.preview) {
-            const newBlock = document.createElement(tagName);
-            if (tagName === 'pre') {
-                newBlock.className = 'code-block';
-                const codeInner = document.createElement('code');
-                while (block.firstChild) {
-                    codeInner.appendChild(block.firstChild);
-                }
-                newBlock.appendChild(codeInner);
-            } else {
-                while (block.firstChild) {
-                    newBlock.appendChild(block.firstChild);
-                }
-            }
-
-            block.parentNode.replaceChild(newBlock, block);
-
-            // Select contents
-            const newRange = document.createRange();
-            newRange.selectNodeContents(newBlock);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(newRange);
-        } else {
-            // Case: cursor in text node directly in preview, or multiple nodes selected
-            const newBlock = document.createElement(tagName);
-            if (range.collapsed) {
-                newBlock.innerHTML = '&#8203;';
-                range.insertNode(newBlock);
-                range.setStart(newBlock, 1);
-                range.collapse(true);
-            } else {
-                newBlock.appendChild(range.extractContents());
-                range.insertNode(newBlock);
-
-                const newRange = document.createRange();
-                newRange.selectNodeContents(newBlock);
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(newRange);
-            }
-        }
-    }
-
-    insertMarkdown(before, after) {
-        // Save history before change
-        this.saveToHistory();
-
-        const b = before.replace(/\\n/g, '\n');
-        const a = after.replace(/\\n/g, '\n');
-        this.textarea.focus();
-
-        const start = this.textarea.selectionStart;
-        const end = this.textarea.selectionEnd;
-        const text = this.textarea.value;
-        const selectedText = text.substring(start, end);
-
-        // Heading Toggle Logic
-        if (b.startsWith('#')) {
-            const lineStart = text.lastIndexOf('\n', start - 1) + 1;
-            const lineEnd = text.indexOf('\n', start);
-            const actualLineEnd = lineEnd === -1 ? text.length : lineEnd;
-            const lineContent = text.substring(lineStart, actualLineEnd);
-
-            if (lineContent.startsWith(b)) {
-                // Toggle off
-                this.textarea.setSelectionRange(lineStart, lineStart + b.length);
-                this.textarea.setRangeText("", lineStart, lineStart + b.length, 'end');
-            } else {
-                // Replace or add
-                const headingMatch = lineContent.match(/^#+\s/);
-                if (headingMatch) {
-                    this.textarea.setSelectionRange(lineStart, lineStart + headingMatch[0].length);
-                    this.textarea.setRangeText(b, lineStart, lineStart + headingMatch[0].length, 'end');
-                } else {
-                    this.textarea.setSelectionRange(lineStart, lineStart);
-                    this.textarea.setRangeText(b, lineStart, lineStart, 'end');
-                }
-            }
-        } else {
-            // Standard Wrapping Toggle Logic
-            if (selectedText.startsWith(b) && selectedText.endsWith(a)) {
-                // Unwrap
-                const innerText = selectedText.substring(b.length, selectedText.length - a.length);
-                this.textarea.setRangeText(innerText, start, end, 'end');
-                this.textarea.setSelectionRange(start, start + innerText.length);
-            } else {
-                const outerBefore = text.substring(start - b.length, start);
-                const outerAfter = text.substring(end, end + a.length);
-
-                if (outerBefore === b && outerAfter === a) {
-                    // Unwrap from outside
-                    this.textarea.setRangeText(selectedText, start - b.length, end + a.length, 'end');
-                    this.textarea.setSelectionRange(start - b.length, start - b.length + selectedText.length);
-                } else {
-                    // Wrap
-                    this.textarea.setRangeText(b + selectedText + a, start, end, 'end');
-                    if (selectedText.length > 0) {
-                        this.textarea.setSelectionRange(start + b.length, end + b.length);
-                    } else {
-                        this.textarea.setSelectionRange(start + b.length, start + b.length);
-                    }
-                }
-            }
-        }
-
-        this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    isAtStartOfLine() {
-        const pos = this.textarea.selectionStart;
-        const text = this.textarea.value;
-        if (pos === 0) return true;
-        return text[pos - 1] === '\n';
-    }
-
-    insertLink() {
-        const url = prompt("Enter URL:", "https://");
-        if (url) {
-            this.insertMarkdown("[", `](${url})`);
-        }
-    }
-
-    async handlePaste(e) {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (const item of items) {
-            if (item.type.indexOf("image") !== -1) {
-                e.preventDefault();
-                const blob = item.getAsFile();
-                const id = 'img_' + Date.now();
-
-                await this.imageStorage.saveImage(id, blob, {
-                    altText: 'screenshot',
-                    taskIndex: this.taskIndex
+        const walker = document.createTreeWalker(this.preview, NodeFilter.SHOW_TEXT, null, false);
+        const nodes = []; let node; while (node = walker.nextNode()) nodes.push(node);
+        let globalMatchCount = 0;
+        nodes.forEach(textNode => {
+            const text = textNode.textContent, regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            if (regex.test(text)) {
+                const fragment = document.createDocumentFragment();
+                let lastIndex = 0;
+                text.replace(regex, (match, p1, offset) => {
+                    fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
+                    const span = document.createElement('span');
+                    span.className = globalMatchCount === activeMatchIndex ? 'find-highlight-active' : 'find-highlight';
+                    span.textContent = match;
+                    fragment.appendChild(span);
+                    globalMatchCount++;
+                    lastIndex = offset + match.length;
                 });
-
-                const mdRef = `![screenshot](tf-img://${id})`;
-                if (this.lastActiveElement === this.textarea) {
-                    this.insertMarkdown(mdRef, "");
-                } else {
-                    // Insert at cursor in preview
-                    const selection = window.getSelection();
-                    if (selection.rangeCount > 0) {
-                        const range = selection.getRangeAt(0);
-                        range.deleteContents();
-                        range.insertNode(document.createTextNode(mdRef));
-                    }
-                }
-                await this.updatePreview();
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+                textNode.parentNode.replaceChild(fragment, textNode);
             }
-        }
-    }
-
-    handleCheckboxChange(e) {
-        if (e.target.type === 'checkbox') {
-            const isChecked = e.target.checked;
-            const indexInList = Array.from(this.preview.querySelectorAll('input[type="checkbox"]')).indexOf(e.target);
-
-            let checkboxCount = 0;
-            const newText = this.textarea.value.split('\n').map(line => {
-                return line.replace(/\[[ x]\]/g, (match) => {
-                    if (checkboxCount === indexInList) {
-                        checkboxCount++;
-                        return isChecked ? '[x]' : '[ ]';
-                    }
-                    checkboxCount++;
-                    return match;
-                });
-            }).join('\n');
-
-            this.textarea.value = newText;
-            this.autoSave.markDirty();
-        }
-    }
-
-    handlePreviewEdit(e) {
-        const node = e.target.nodeType === 3 ? e.target.parentElement : e.target;
-        const target = node.closest('[data-line]');
-        if (!target) return;
-
-        const lineIdx = parseInt(target.getAttribute('data-line'), 10);
-        if (isNaN(lineIdx)) return;
-
-        const lines = this.textarea.value.split('\n');
-        let htmlToMd = this.htmlConverter.convert(target.innerHTML, true, true);
-
-        // Normalize spaces and non-breaking chars early to ensure accurate mapping/comparison
-        htmlToMd = htmlToMd.replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
-
-        // Robust structural prefix detection from source (indentation, bullets, quotes, headings)
-        const oldLine = (lines[lineIdx] || "").replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
-        const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
-        let prefix = prefixMatch ? prefixMatch[1] : "";
-
-        // DEDUPLICATION: Smartly merge returned format mapping with user's pre-rendered spacing
-        if (prefix) {
-            const trimmedPrefix = prefix.trimStart();
-            const trimmedHtmlMd = htmlToMd.trimStart();
-
-            if (trimmedPrefix && trimmedHtmlMd.startsWith(trimmedPrefix)) {
-                htmlToMd = prefix + trimmedHtmlMd.substring(trimmedPrefix.length);
-                prefix = "";
-            }
-        }
-
-        const newLine = prefix + htmlToMd;
-
-        if (lines[lineIdx] !== newLine) {
-            lines[lineIdx] = newLine;
-            this.textarea.value = lines.join('\n');
-
-            // Immediate sync feedback for stats and syntax layer
-            this.highlight();
-            this.updateStats();
-            this.autoSave.markDirty();
-
-            this.textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-    }
-
-    toggleSearchPanel() {
-        const panel = this.dialog.querySelector('#idSearchPanel');
-        const searchInput = this.dialog.querySelector('#idSearchInput');
-        if (!panel || !searchInput) return;
-
-        const isHidden = panel.style.display === 'none';
-        panel.style.display = isHidden ? 'flex' : 'none';
-
-        if (isHidden) {
-            searchInput.focus();
-            const selection = window.getSelection().toString();
-            if (selection) {
-                searchInput.value = selection;
-            }
-            this.highlight();
-            this.highlightPreviewSearch();
-        } else {
-            this.textarea.focus();
-            this.highlight();
-            this.highlightPreviewSearch();
-        }
-    }
-    handlePreviewKeydown(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            const block = e.target.closest('[data-line]');
-            if (!block) return;
-
-            e.preventDefault();
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-
-            const range = selection.getRangeAt(0);
-            const lineIdx = parseInt(block.getAttribute('data-line'));
-            const lines = this.textarea.value.split('\n');
-            const oldLine = lines[lineIdx] || "";
-
-            // Detect structural prefix (bullets, headings, quotes) - ignore bold **
-            const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
-            const prefix = prefixMatch ? prefixMatch[1] : "";
-
-            // Split the block into two parts based on current caret position
-            const beforeRange = range.cloneRange();
-            beforeRange.selectNodeContents(block);
-            beforeRange.setEnd(range.startContainer, range.startOffset);
-
-            const afterRange = range.cloneRange();
-            afterRange.selectNodeContents(block);
-            afterRange.setStart(range.endContainer, range.endOffset);
-
-            const divBefore = document.createElement('div');
-            divBefore.appendChild(beforeRange.cloneContents());
-            const divAfter = document.createElement('div');
-            divAfter.appendChild(afterRange.cloneContents());
-
-            let beforeMd = this.htmlConverter.convert(divBefore.innerHTML, true, true);
-            let afterMd = this.htmlConverter.convert(divAfter.innerHTML, true, true);
-
-            // Special Case: If the line is empty (only contain the prefix) and we hit Enter, 
-            // break out of the list/block by clearing the line.
-            if (beforeMd.trim() === "" && afterMd.trim() === "" && prefix.trim().length > 0) {
-                lines[lineIdx] = "";
-                this.textarea.value = lines.join('\n');
-                this.updatePreview().then(() => {
-                    const currBlock = this.preview.querySelector(`[data-line="${lineIdx}"]`);
-                    if (currBlock) currBlock.focus();
-                });
-                return;
-            }
-
-            lines[lineIdx] = (prefix && !beforeMd.startsWith(prefix) ? prefix : "") + beforeMd;
-            lines.splice(lineIdx + 1, 0, prefix + afterMd);
-            this.textarea.value = lines.join('\n');
-
-            this.updatePreview().then(() => {
-                const nextBlock = this.preview.querySelector(`[data-line="${lineIdx + 1}"]`);
-                if (nextBlock) {
-                    nextBlock.focus();
-                    this.setCaretOffset(nextBlock, 0);
-                }
-            });
-            return;
-        }
-
-        // Arrow Key Navigation between contenteditable blocks
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-            const block = e.target.closest('[data-line]');
-            if (!block) return;
-
-            const selection = window.getSelection();
-            if (!selection.rangeCount || !selection.isCollapsed) return;
-
-            const range = selection.getRangeAt(0);
-
-            // Check if at exact start or end of text content
-            const preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(block);
-            preCaretRange.setEnd(range.startContainer, range.startOffset);
-            const atStart = preCaretRange.toString().length === 0;
-
-            const postCaretRange = range.cloneRange();
-            postCaretRange.selectNodeContents(block);
-            postCaretRange.setStart(range.endContainer, range.endOffset);
-            const atEnd = postCaretRange.toString().length === 0;
-
-            const caretRect = range.getBoundingClientRect();
-            const blockRect = block.getBoundingClientRect();
-
-            // Allow ~30px for "first line" / "last line" detection (line height + padding)
-            let isFirstLine = atStart;
-            let isLastLine = atEnd;
-
-            if (caretRect.height > 0) {
-                isFirstLine = caretRect.top <= (blockRect.top + 30);
-                isLastLine = caretRect.bottom >= (blockRect.bottom - 30);
-            }
-
-            if ((e.key === 'ArrowLeft' && atStart) || (e.key === 'ArrowUp' && isFirstLine)) {
-                // Find previous block
-                const allBlocks = Array.from(this.preview.querySelectorAll('[data-line]'));
-                const currentIndex = allBlocks.indexOf(block);
-                if (currentIndex > 0) {
-                    e.preventDefault();
-                    const prevBlock = allBlocks[currentIndex - 1];
-                    prevBlock.focus();
-
-                    const newRange = document.createRange();
-                    newRange.selectNodeContents(prevBlock);
-                    newRange.collapse(false); // end
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
-                }
-            } else if ((e.key === 'ArrowRight' && atEnd) || (e.key === 'ArrowDown' && isLastLine)) {
-                // Find next block
-                const allBlocks = Array.from(this.preview.querySelectorAll('[data-line]'));
-                const currentIndex = allBlocks.indexOf(block);
-                if (currentIndex !== -1 && currentIndex < allBlocks.length - 1) {
-                    e.preventDefault();
-                    const nextBlock = allBlocks[currentIndex + 1];
-                    nextBlock.focus();
-
-                    const newRange = document.createRange();
-                    newRange.selectNodeContents(nextBlock);
-                    newRange.collapse(true); // start
-                    selection.removeAllRanges();
-                    selection.addRange(newRange);
-                }
-            }
-        }
-
-        // Backspace - Merge with previous block
-        if (e.key === 'Backspace') {
-            const block = e.target.closest('[data-line]');
-            if (!block) return;
-
-            const selection = window.getSelection();
-            if (!selection.rangeCount || !selection.isCollapsed) return;
-
-            const range = selection.getRangeAt(0);
-            const preRange = range.cloneRange();
-            preRange.selectNodeContents(block);
-            preRange.setEnd(range.startContainer, range.startOffset);
-
-            // atStart detection correctly ignoring zero-width chars if any
-            if (preRange.toString().replace(/\u00A0/g, '').length === 0) {
-                const lineIdx = parseInt(block.getAttribute('data-line'));
-                if (lineIdx > 0) {
-                    e.preventDefault();
-                    const lines = this.textarea.value.split('\n');
-                    const currentLine = lines[lineIdx];
-                    const prevLine = lines[lineIdx - 1];
-                    const prevLength = prevLine.length;
-
-                    lines[lineIdx - 1] = prevLine + currentLine;
-                    lines.splice(lineIdx, 1);
-                    this.textarea.value = lines.join('\n');
-
-                    this.updatePreview().then(() => {
-                        const prevBlock = this.preview.querySelector(`[data-line="${lineIdx - 1}"]`);
-                        if (prevBlock) {
-                            prevBlock.focus();
-                            this.setCaretOffset(prevBlock, prevLength);
-                        }
-                    });
-                }
-            }
-        }
-
-        // Delete - Merge with next block
-        if (e.key === 'Delete') {
-            const block = e.target.closest('[data-line]');
-            if (!block) return;
-
-            const selection = window.getSelection();
-            if (!selection.rangeCount || !selection.isCollapsed) return;
-
-            const range = selection.getRangeAt(0);
-            const postRange = range.cloneRange();
-            postRange.selectNodeContents(block);
-            postRange.setStart(range.endContainer, range.endOffset);
-
-            if (postRange.toString().replace(/\u00A0/g, '').length === 0) {
-                const lineIdx = parseInt(block.getAttribute('data-line'));
-                const lines = this.textarea.value.split('\n');
-                if (lineIdx < lines.length - 1) {
-                    e.preventDefault();
-                    const currentOffset = range.startOffset;
-                    const container = range.startContainer;
-
-                    const nextLine = lines[lineIdx + 1];
-                    lines[lineIdx] = lines[lineIdx] + nextLine;
-                    lines.splice(lineIdx + 1, 1);
-                    this.textarea.value = lines.join('\n');
-
-                    const offsetInBlock = this.getCaretOffset(block);
-
-                    this.updatePreview().then(() => {
-                        const currentBlock = this.preview.querySelector(`[data-line="${lineIdx}"]`);
-                        if (currentBlock) {
-                            currentBlock.focus();
-                            this.setCaretOffset(currentBlock, offsetInBlock);
-                        }
-                    });
-                }
-            }
-        }
-    }
-
-    // Helper to get raw character offset within a complex contenteditable block
-    getCaretOffset(element) {
-        const selection = window.getSelection();
-        if (!selection.rangeCount) return 0;
-        const range = selection.getRangeAt(0);
-        const preCaretRange = range.cloneRange();
-        preCaretRange.selectNodeContents(element);
-        preCaretRange.setEnd(range.endContainer, range.endOffset);
-        return preCaretRange.toString().length;
-    }
-
-    // Helper to set raw character offset within a complex contenteditable block
-    setCaretOffset(element, offset) {
-        const selection = window.getSelection();
-        const range = document.createRange();
-        let currentOffset = 0;
-        let nodeFound = false;
-
-        const traverse = (node) => {
-            if (nodeFound) return;
-
-            if (node.nodeType === 3) { // Text node
-                const nextOffset = currentOffset + node.textContent.length;
-                if (offset <= nextOffset) {
-                    range.setStart(node, offset - currentOffset);
-                    range.collapse(true);
-                    nodeFound = true;
-                } else {
-                    currentOffset = nextOffset;
-                }
-            } else {
-                for (let i = 0; i < node.childNodes.length; i++) {
-                    traverse(node.childNodes[i]);
-                    if (nodeFound) break;
-                }
-            }
-        };
-
-        traverse(element);
-
-        if (!nodeFound) {
-            range.selectNodeContents(element);
-            range.collapse(false);
-        }
-
-        selection.removeAllRanges();
-        selection.addRange(range);
-    }
-
-    handleKeyboardShortcuts(e) {
-        // Toolbar Arrow Key Navigation
-        if (e.target.closest('.notes-toolbar')) {
-            const buttons = Array.from(this.dialog.querySelectorAll('.notes-toolbar [tabindex="0"]'));
-            const index = buttons.indexOf(e.target);
-            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                const nextIndex = e.key === 'ArrowRight'
-                    ? (index + 1) % buttons.length
-                    : (index - 1 + buttons.length) % buttons.length;
-                buttons[nextIndex].focus();
-                return;
-            }
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.target.click();
-                return;
-            }
-        }
-
-        if (!e.ctrlKey) return;
-
-        let handled = true;
-        const key = e.key.toLowerCase();
-
-        // Standard shortcuts in editor
-        if (key === 'b') this.handleToolbarAction('bold');
-        else if (key === 'i') this.handleToolbarAction('italic');
-        else if (key === 'u') this.handleToolbarAction('underline');
-        else if (key === 'z') this.handleToolbarAction('undo');
-        else if (key === 'y') this.handleToolbarAction('redo');
-        else if (key === 'f') this.handleToolbarAction('search');
-        else if (key === 'h') this.handleToolbarAction('help');
-        else if (key === 's') { this.saveAndClose(); }
-        else if (e.key === 'Enter') { this.saveAndClose(); }
-        else handled = false;
-
-        if (handled) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    }
-
-
-    async handleExport(type) {
-        const content = this.textarea.value;
-        const taskTitle = this.task.title.replace(/[^a-z0-9]/gi, '_');
-
-        try {
-            switch (type) {
-                case 'markdown-file':
-                    this.downloadFile(content, `${taskTitle}.md`, 'text/markdown');
-                    break;
-                case 'text-file':
-                    const plainText = this.convertToPlainText(content);
-                    this.downloadFile(plainText, `${taskTitle}.txt`, 'text/plain');
-                    break;
-                case 'pdf-file':
-                    // Force update to ensure latest content and FORCE load all images for printing
-                    await this.updatePreview(true);
-
-                    // Tiny delay to ensure images are rendered in parent layout
-                    await new Promise(r => setTimeout(r, 100));
-
-                    const wasEditor = this.currentView === 'editor';
-                    if (wasEditor) {
-                        this.paneEditor.classList.add('hidden');
-                        this.panePreview.classList.remove('hidden');
-                    }
-
-                    window.print();
-
-                    // Restore view
-                    if (wasEditor) {
-                        this.paneEditor.classList.remove('hidden');
-                        this.panePreview.classList.add('hidden');
-                    }
-                    break;
-                case 'copy-markdown':
-                    await navigator.clipboard.writeText(content);
-                    alert('Markdown copied to clipboard!');
-                    break;
-                case 'copy-text':
-                    const plainTextCopy = this.convertToPlainText(content);
-                    await navigator.clipboard.writeText(plainTextCopy);
-                    alert('Text copied to clipboard!');
-                    break;
-            }
-        } catch (error) {
-            console.error('Export failed:', error);
-            alert('Export failed: ' + error.message);
-        }
-    }
-
-    convertToPlainText(markdown) {
-        // Remove markdown syntax for plain text
-        return markdown
-            .replace(/!\[.*?\]\(.*?\)/g, '[Image]')  // Images
-            .replace(/\[(.*?)\]\(.*?\)/g, '$1')      // Links
-            .replace(/[*_~`#]/g, '')                 // Formatting
-            .replace(/^[-*]\s/gm, '• ')              // Lists
-            .replace(/^\d+\.\s/gm, '')               // Numbered lists
-            .replace(/^>\s/gm, '')                   // Blockquotes
-            .replace(/^---$/gm, '─'.repeat(40))      // HR
-            .replace(/<\/?u>/g, '');                 // Underline tags
-    }
-
-    downloadFile(content, filename, mimeType) {
-        const blob = new Blob([content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-        this.showToast(`Downloaded ${filename}`);
-    }
-
-    async exportToPDF() {
-        // Would need jsPDF library - placeholder for now
-        this.showToast('PDF export requires jsPDF library', 'info');
-
-        // TODO: Integrate jsPDF
-        // const { jsPDF } = window.jspdf;
-        // const doc = new jsPDF();
-        // doc.text(this.convertToPlainText(this.textarea.value), 10, 10);
-        // doc.save(`${this.task.title}.pdf`);
-    }
-
-    showToast(message, type = 'success') {
-        // Use global showToast if available
-        if (typeof window.showToast === 'function') {
-            window.showToast(message, type);
-        } else {
-            console.log(`[${type}] ${message}`);
-        }
+        });
+        if (activeMatchIndex !== -1) { const activeHighlight = this.preview.querySelector('.find-highlight-active'); if (activeHighlight) activeHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     }
 
     async save() {
-        try {
-            data[this.taskIndex].notes = this.textarea.value;
-            data[this.taskIndex].date_updated = new Date().toISOString();
-            localStorage.setItem("data", JSON.stringify(data));
-
-            // Phase 4: Vacuum orphaned images on save
-            if (typeof data !== 'undefined') {
-                await this.imageStorage.cleanupOrphanedImages(data);
-            }
-
-            return true;
-        } catch (error) {
-            console.error('Save failed:', error);
-            throw error;
-        }
+        data[this.taskIndex].notes = this.textarea.value;
+        data[this.taskIndex].date_updated = new Date().toISOString();
+        localStorage.setItem("data", JSON.stringify(data));
+        if (typeof data !== 'undefined') await this.imageStorage.cleanupOrphanedImages(data);
     }
 
-    async saveAndClose() {
-        try {
-            await this.save();
-            this.close();
-            createPost(); // Re-render main view
-        } catch (error) {
-            console.error('Save and close failed:', error);
-        }
-    }
+    async saveAndClose() { try { await this.save(); this.close(); if (typeof createPost === 'function') createPost(); } catch (error) { console.error('Save and close failed:', error); } }
 
     close() {
-        // Cleanup
         this.cleanupManager.cleanup();
-        if (this.autoSave) {
-            this.autoSave.destroy();
-        }
-        if (this.lazyImageLoader) {
-            this.lazyImageLoader.disconnect();
-        }
+        if (this.autoSave) this.autoSave.destroy();
+        if (this.lazyImageLoader) this.lazyImageLoader.disconnect();
+        if (this.dialog) { this.dialog.close(); this.dialog.remove(); }
+    }
 
-        // Close and remove dialog
-        if (this.dialog) {
-            this.dialog.close();
-            this.dialog.remove();
-        }
-    }
-    applyAccessibilityPreferences() {
-        if (window.matchMedia('(prefers-contrast: high)').matches) {
-            this.dialog.classList.add('high-contrast');
-        }
-    }
+    applyAccessibilityPreferences() { if (window.matchMedia('(prefers-contrast: high)').matches) this.dialog.classList.add('high-contrast'); }
 
     toggleMinimize() {
         const isMinimized = this.dialog.classList.toggle('minimized');
-        const titleEl = this.dialog.querySelector('.notes-task-title');
-        const detailEl = this.dialog.querySelector('.notes-task-detail');
-
+        const titleEl = this.dialog.querySelector('.notes-task-title'), detailEl = this.dialog.querySelector('.notes-task-detail');
         if (isMinimized) {
             this.dialog.classList.remove('maximized');
-
-            // Truncate title
-            const title = this.task.title;
-            titleEl.textContent = title.length > 18 ? title.substring(0, 18) + "..." : title;
+            const title = this.task.title; titleEl.textContent = title.length > 18 ? title.substring(0, 18) + "..." : title;
             if (detailEl) detailEl.style.display = 'none';
-
-            // Ensure it's showing (non-modal)
-            this.dialog.show();
         } else {
-            titleEl.textContent = this.task.title;
-            if (detailEl) detailEl.style.display = 'block';
-            this.dialog.style.left = '';
-            this.dialog.style.transform = '';
-
-            // Restore as non-modal to avoid blocking other notes/app
-            this.dialog.show();
+            titleEl.textContent = this.task.title; if (detailEl) detailEl.style.display = 'block';
+            this.dialog.style.left = ''; this.dialog.style.transform = '';
         }
-
         MarkdownEditor.updateMinimizedPositions();
     }
 
     static updateMinimizedPositions() {
         const minimized = Array.from(document.querySelectorAll('.clsNotesModal.minimized'));
         if (minimized.length === 0) return;
-
-        const gap = 10;
-        const width = 160; // Base width from CSS
-        const totalWidth = (minimized.length * width) + ((minimized.length - 1) * gap);
-        const startLeft = (window.innerWidth - totalWidth) / 2;
-
-        minimized.forEach((dialog, index) => {
-            dialog.style.left = `${startLeft + (index * (width + gap))}px`;
-            dialog.style.right = 'auto';
-            dialog.style.transform = 'none';
-        });
+        const gap = 10, width = 160, totalWidth = (minimized.length * width) + ((minimized.length - 1) * gap), startLeft = (window.innerWidth - totalWidth) / 2;
+        minimized.forEach((dialog, index) => { dialog.style.left = `${startLeft + (index * (width + gap))}px`; dialog.style.right = 'auto'; dialog.style.transform = 'none'; });
     }
 
-    toggleMaximize() {
-        const isMaximized = this.dialog.classList.toggle('maximized');
-        if (isMaximized) {
-            this.dialog.classList.remove('minimized');
-            // Restore full title if it was minimized
-            const titleEl = this.dialog.querySelector('.notes-task-title');
-            const detailEl = this.dialog.querySelector('.notes-task-detail');
-            titleEl.textContent = this.task.title;
-            if (detailEl) detailEl.style.display = 'block';
-        }
-    }
+    toggleMaximize() { const isMaximized = this.dialog.classList.toggle('maximized'); if (isMaximized) { this.dialog.classList.remove('minimized'); const titleEl = this.dialog.querySelector('.notes-task-title'), detailEl = this.dialog.querySelector('.notes-task-detail'); titleEl.textContent = this.task.title; if (detailEl) detailEl.style.display = 'block'; } }
 
-    bringToFront() {
-        const others = document.querySelectorAll('.clsNotesModal');
-        let maxZ = 9000;
-        others.forEach(d => {
-            const style = window.getComputedStyle(d);
-            const z = parseInt(style.zIndex);
-            if (!isNaN(z) && z > maxZ) maxZ = z;
-        });
-        this.dialog.style.zIndex = maxZ + 1;
-    }
+    bringToFront() { const others = document.querySelectorAll('.clsNotesModal'); let maxZ = 9000; others.forEach(d => { const z = parseInt(window.getComputedStyle(d).zIndex); if (!isNaN(z) && z > maxZ) maxZ = z; }); this.dialog.style.zIndex = maxZ + 1; }
 
     showHelpModal() {
-        const shortcuts = [
-            { key: 'Ctrl + B', desc: 'Bold' },
-            { key: 'Ctrl + I', desc: 'Italic' },
-            { key: 'Ctrl + U', desc: 'Underline' },
-            { key: 'Ctrl + F', desc: 'Find / Replace' },
-            { key: 'Ctrl + Z', desc: 'Undo' },
-            { key: 'Ctrl + Y', desc: 'Redo' },
-            { key: 'Ctrl + S', desc: 'Save & Close' },
-            { key: 'Ctrl + Enter', desc: 'Save & Close' },
-            { key: 'Ctrl + H', desc: 'Show this Help' },
-            { key: 'Esc', desc: 'Close without saving' }
-        ];
-
-        const specialTags = [
-            { key: '-a-', desc: 'Action Tag' },
-            { key: '-f-', desc: 'Finding Tag' },
-            { key: '-d-', desc: 'Documentation Tag' },
-            { key: '-q-', desc: 'Question/Blocker Tag' }
-        ];
-
+        const shortcuts = [{ key: 'Ctrl + B', desc: 'Bold' }, { key: 'Ctrl + I', desc: 'Italic' }, { key: 'Ctrl + U', desc: 'Underline' }, { key: 'Ctrl + F', desc: 'Find / Replace' }, { key: 'Ctrl + Z', desc: 'Undo' }, { key: 'Ctrl + Y', desc: 'Redo' }, { key: 'Ctrl + S', desc: 'Save & Close' }, { key: 'Ctrl + Enter', desc: 'Save & Close' }, { key: 'Ctrl + H', desc: 'Show this Help' }, { key: 'Esc', desc: 'Close without saving' }];
+        const specialTags = [{ key: '-a-', desc: 'Action Tag' }, { key: '-f-', desc: 'Finding Tag' }, { key: '-d-', desc: 'Documentation Tag' }, { key: '-q-', desc: 'Question/Blocker Tag' }];
         let helpDialog = document.getElementById('idNotesHelpDialog');
-        if (!helpDialog) {
-            helpDialog = document.createElement('dialog');
-            helpDialog.id = 'idNotesHelpDialog';
-            helpDialog.className = 'notes-help-dialog';
-            document.body.appendChild(helpDialog);
-        }
-
+        if (!helpDialog) { helpDialog = document.createElement('dialog'); helpDialog.id = 'idNotesHelpDialog'; helpDialog.className = 'notes-help-dialog'; document.body.appendChild(helpDialog); }
         helpDialog.innerHTML = `
             <div class="help-content">
-                <div class="help-header">
-                    <h3>Editor Guide</h3>
-                    <button onclick="this.closest('dialog').close()" class="help-close-x">&times;</button>
-                </div>
-                
-                <div class="help-section">
-                    <h4>Keyboard Shortcuts</h4>
-                    <div class="shortcut-list">
-                        ${shortcuts.map(s => `
-                            <div class="shortcut-item">
-                                <span class="shortcut-key">${s.key}</span>
-                                <span class="shortcut-desc">${s.desc}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
-                <div class="help-section">
-                    <h4>Special Tags</h4>
-                    <p class="section-hint">Type these in <strong>Markdown</strong> or <strong>Editor</strong> mode:</p>
-                    <div class="shortcut-list">
-                        ${specialTags.map(t => `
-                            <div class="shortcut-item">
-                                <span class="shortcut-key tag-key">${t.key}</span>
-                                <span class="shortcut-desc">${t.desc}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-
+                <div class="help-header"><h3>Editor Guide</h3><button onclick="this.closest('dialog').close()" class="help-close-x">&times;</button></div>
+                <div class="help-section"><h4>Keyboard Shortcuts</h4><div class="shortcut-list">${shortcuts.map(s => `<div class="shortcut-item"><span class="shortcut-key">${s.key}</span><span class="shortcut-desc">${s.desc}</span></div>`).join('')}</div></div>
+                <div class="help-section"><h4>Special Tags</h4><p class="section-hint">Type these in <strong>Markdown</strong> or <strong>Editor</strong> mode:</p><div class="shortcut-list">${specialTags.map(t => `<div class="shortcut-item"><span class="shortcut-key tag-key">${t.key}</span><span class="shortcut-desc">${t.desc}</span></div>`).join('')}</div></div>
                 <button onclick="this.closest('dialog').close()" class="help-close-btn">Got it</button>
             </div>
             <style>
-                .notes-help-dialog {
-                    border: none;
-                    border-radius: 16px;
-                    padding: 0;
-                    background: var(--color-bg-container);
-                    color: var(--color-text-primary);
-                    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-                    max-width: 400px;
-                    width: 90%;
-                    overflow: hidden;
-                }
-                .help-content {
-                    padding: 24px;
-                }
-                .help-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 20px;
-                }
+                .notes-help-dialog { border: none; border-radius: 16px; padding: 0; background: var(--color-bg-container); color: var(--color-text-primary); box-shadow: 0 15px 35px rgba(0,0,0,0.3); max-width: 400px; width: 90%; overflow: hidden; }
+                .help-content { padding: 24px; }
+                .help-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
                 .help-header h3 { margin: 0; color: var(--color-accent); font-size: 1.4em; }
-                .help-close-x { 
-                    background: none; border: none; color: var(--color-text-secondary); 
-                    font-size: 24px; cursor: pointer; padding: 0; line-height: 1;
-                }
+                .help-close-x { background: none; border: none; color: var(--color-text-secondary); font-size: 24px; cursor: pointer; padding: 0; line-height: 1; }
                 .help-section { margin-bottom: 24px; }
-                .help-section h4 { 
-                    margin: 0 0 12px 0; 
-                    font-size: 0.9em; 
-                    text-transform: uppercase; 
-                    letter-spacing: 1px;
-                    color: var(--color-text-secondary);
-                    border-bottom: 1px solid var(--color-border);
-                    padding-bottom: 4px;
-                }
+                .help-section h4 { margin: 0 0 12px 0; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-secondary); border-bottom: 1px solid var(--color-border); padding-bottom: 4px; }
                 .section-hint { font-size: 0.8em; color: var(--color-text-secondary); margin-bottom: 10px; }
                 .shortcut-list { display: flex; flex-direction: column; gap: 8px; }
                 .shortcut-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-                .shortcut-key { 
-                    font-weight: bold; 
-                    background: rgba(0,0,0,0.05); 
-                    padding: 4px 8px; 
-                    border-radius: 6px; 
-                    font-family: 'Outfit', sans-serif;
-                    border: 1px solid var(--color-border);
-                    min-width: 45px;
-                    text-align: center;
-                }
+                .shortcut-key { font-weight: bold; background: rgba(0,0,0,0.05); padding: 4px 8px; border-radius: 6px; font-family: 'Outfit', sans-serif; border: 1px solid var(--color-border); min-width: 45px; text-align: center; }
                 .tag-key { background: var(--color-accent); color: white; border: none; }
                 .shortcut-desc { color: var(--color-text-primary); flex: 1; margin-left: 15px; }
-                .help-close-btn { 
-                    width: 100%; padding: 12px; border: none; border-radius: 8px; 
-                    background: var(--color-accent); color: white; cursor: pointer; 
-                    font-weight: bold; transition: all 0.2s;
-                }
+                .help-close-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--color-accent); color: white; cursor: pointer; font-weight: bold; transition: all 0.2s; }
                 .help-close-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
                 [data-theme="dark"] .shortcut-key { background: rgba(255,255,255,0.05); }
             </style>
@@ -3033,156 +2096,222 @@ class MarkdownEditor {
         helpDialog.showModal();
     }
 
-
     showAutoSaveInfo() {
-        // Remove any existing popup
         const existingPopup = document.getElementById('idAutoSaveInfoPopup');
-        if (existingPopup) {
-            existingPopup.remove();
-            return; // Toggle behavior - clicking again closes it
-        }
-
+        if (existingPopup) { existingPopup.remove(); return; }
         const saveStatus = this.dialog.querySelector('#idSaveStatus');
         if (!saveStatus) return;
-
-        // Create popup element
         const popup = document.createElement('div');
         popup.id = 'idAutoSaveInfoPopup';
         popup.className = 'auto-save-popup';
         popup.innerHTML = `
             <div class="auto-save-popup-content">
-                <div class="auto-save-popup-header">
-                    <i class="material-icons">info</i>
-                    <strong>Auto-Save</strong>
-                </div>
+                <div class="auto-save-popup-header"><i class="material-icons">info</i><strong>Auto-Save</strong></div>
                 <div class="auto-save-popup-body">
                     <p>Your notes are <strong>automatically saved</strong> as you type.</p>
                     <div class="auto-save-status-list">
-                        <div class="auto-save-status-item">
-                            <i class="material-icons" style="color: #4CAF50;">check_circle</i>
-                            <span><strong>Saved</strong> - All changes saved</span>
-                        </div>
-                        <div class="auto-save-status-item">
-                            <i class="material-icons" style="color: #FFC107;">sync</i>
-                            <span><strong>Saving...</strong> - Currently saving</span>
-                        </div>
-                        <div class="auto-save-status-item">
-                            <i class="material-icons" style="color: #FF9800;">pending</i>
-                            <span><strong>Unsaved</strong> - Changes pending</span>
-                        </div>
+                        <div class="auto-save-status-item"><i class="material-icons" style="color: #4CAF50;">check_circle</i><span><strong>Saved</strong> - All changes saved</span></div>
+                        <div class="auto-save-status-item"><i class="material-icons" style="color: #FFC107;">sync</i><span><strong>Saving...</strong> - Currently saving</span></div>
+                        <div class="auto-save-status-item"><i class="material-icons" style="color: #FF9800;">pending</i><span><strong>Unsaved</strong> - Changes pending</span></div>
                     </div>
                     <p class="auto-save-footer">Simply close the editor when you're done!</p>
                 </div>
             </div>
         `;
-
         document.body.appendChild(popup);
-
-        // Position the popup near the save status
         const rect = saveStatus.getBoundingClientRect();
-        popup.style.position = 'fixed';
-        popup.style.bottom = `${window.innerHeight - rect.top + 10}px`;
-        popup.style.right = `${window.innerWidth - rect.right}px`;
-
-        // Close popup when clicking outside
-        const closePopup = (e) => {
-            if (!popup.contains(e.target) && e.target !== saveStatus) {
-                popup.remove();
-                document.removeEventListener('click', closePopup);
-            }
-        };
-
-        // Delay adding the listener to prevent immediate closure
-        setTimeout(() => {
-            document.addEventListener('click', closePopup);
-        }, 100);
-
-        // Auto-close after 8 seconds
-        setTimeout(() => {
-            if (popup.parentElement) {
-                popup.remove();
-                document.removeEventListener('click', closePopup);
-            }
-        }, 8000);
+        popup.style.position = 'fixed'; popup.style.bottom = `${window.innerHeight - rect.top + 10}px`; popup.style.right = `${window.innerWidth - rect.right}px`;
+        const closePopup = (e) => { if (!popup.contains(e.target) && e.target !== saveStatus) { popup.remove(); document.removeEventListener('click', closePopup); } };
+        setTimeout(() => { document.addEventListener('click', closePopup); }, 100);
+        setTimeout(() => { if (popup.parentElement) { popup.remove(); document.removeEventListener('click', closePopup); } }, 8000);
     }
-}
 
-// ============================================================================
-// GLOBAL FUNCTIONS (Backwards Compatibility)
-// ============================================================================
+    handleCheckboxChange(e) {
+        if (e.target.type === 'checkbox') {
+            const isChecked = e.target.checked, indexInList = Array.from(this.preview.querySelectorAll('input[type="checkbox"]')).indexOf(e.target);
+            let checkboxCount = 0;
+            this.textarea.value = this.textarea.value.split('\n').map(line => line.replace(/\[[ x]\]/g, (match) => (checkboxCount++ === indexInList) ? (isChecked ? '[x]' : '[ ]') : match)).join('\n');
+            this.autoSave.markDirty();
+        }
+    }
 
-// Global fullscreen image viewer
-window.openFullscreenImage = (src) => {
-    try {
-        let overlay = document.getElementById('image-fullscreen-overlay');
-        if (!overlay) {
-            overlay = document.createElement('dialog');
-            overlay.id = 'image-fullscreen-overlay';
-            overlay.className = 'image-overlay';
-            overlay.innerHTML = `
-                <div class="image-container">
-                    <img src="${src}" alt="Fullscreen image">
-                    <button class="close-btn" aria-label="Close image" onclick="this.closest('dialog').close()">×</button>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) overlay.close();
+    handlePreviewKeydown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            const block = e.target.closest('[data-line]'); if (!block) return;
+            e.preventDefault();
+            const selection = window.getSelection(); if (!selection.rangeCount) return;
+            const range = selection.getRangeAt(0), lineIdx = parseInt(block.getAttribute('data-line')), lines = this.textarea.value.split('\n'), oldLine = lines[lineIdx] || "";
+            const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/), prefix = prefixMatch ? prefixMatch[1] : "";
+            const beforeRange = range.cloneRange(); beforeRange.selectNodeContents(block); beforeRange.setEnd(range.startContainer, range.startOffset);
+            const afterRange = range.cloneRange(); afterRange.selectNodeContents(block); afterRange.setStart(range.endContainer, range.endOffset);
+            const divBefore = document.createElement('div'), divAfter = document.createElement('div');
+            divBefore.appendChild(beforeRange.cloneContents()); divAfter.appendChild(afterRange.cloneContents());
+            let beforeMd = this.htmlConverter.convert(divBefore.innerHTML, true, true), afterMd = this.htmlConverter.convert(divAfter.innerHTML, true, true);
+            if (beforeMd.trim() === "" && afterMd.trim() === "" && prefix.trim().length > 0) {
+                e.preventDefault();
+                lines[lineIdx] = "";
+                this.textarea.value = lines.join('\n');
+                this.updatePreview(true).then(() => {
+                    const block = this.preview.querySelector(`[data-line="${lineIdx}"]`);
+                    if (block) {
+                        block.focus();
+                        this.setCaretOffset(block, 0);
+                    }
+                });
+                return;
+            }
+            const isHeading = prefix.trim().startsWith('#');
+            let nextPrefix = isHeading ? "" : prefix;
+            let cleanAfterMd = afterMd;
+            if (isHeading) cleanAfterMd = afterMd.replace(/^#+\s*/, '');
+
+            lines[lineIdx] = (prefix && !beforeMd.startsWith(prefix) ? prefix : "") + beforeMd;
+            lines.splice(lineIdx + 1, 0, nextPrefix + cleanAfterMd);
+            this.textarea.value = lines.join('\n');
+            this.updatePreview(true).then(() => { 
+                const nextBlock = this.preview.querySelector(`[data-line="${lineIdx + 1}"]`); 
+                if (nextBlock) { 
+                    nextBlock.focus(); 
+                    this.setCaretOffset(nextBlock, 0); 
+                } 
             });
-        } else {
-            overlay.querySelector('img').src = src;
         }
-        overlay.showModal();
-    } catch (error) {
-        console.error('Failed to open fullscreen image:', error);
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            const block = e.target.closest('[data-line]'); if (!block) return;
+            const selection = window.getSelection(); if (!selection.rangeCount || !selection.isCollapsed) return;
+            const range = selection.getRangeAt(0), preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(block); preCaretRange.setEnd(range.startContainer, range.startOffset);
+            const atStart = preCaretRange.toString().length === 0, postCaretRange = range.cloneRange();
+            postCaretRange.selectNodeContents(block); postCaretRange.setStart(range.endContainer, range.endOffset);
+            const atEnd = postCaretRange.toString().length === 0, caretRect = range.getBoundingClientRect(), blockRect = block.getBoundingClientRect();
+            let isFirstLine = atStart, isLastLine = atEnd;
+            if (caretRect.height > 0) { isFirstLine = caretRect.top <= (blockRect.top + 30); isLastLine = caretRect.bottom >= (blockRect.bottom - 30); }
+            if ((e.key === 'ArrowLeft' && atStart) || (e.key === 'ArrowUp' && isFirstLine)) {
+                const allBlocks = Array.from(this.preview.querySelectorAll('[data-line]')), currentIndex = allBlocks.indexOf(block);
+                if (currentIndex > 0) { e.preventDefault(); const prevBlock = allBlocks[currentIndex - 1]; prevBlock.focus(); const newRange = document.createRange(); newRange.selectNodeContents(prevBlock); newRange.collapse(false); selection.removeAllRanges(); selection.addRange(newRange); }
+            } else if ((e.key === 'ArrowRight' && atEnd) || (e.key === 'ArrowDown' && isLastLine)) {
+                const allBlocks = Array.from(this.preview.querySelectorAll('[data-line]')), currentIndex = allBlocks.indexOf(block);
+                if (currentIndex !== -1 && currentIndex < allBlocks.length - 1) { e.preventDefault(); const nextBlock = allBlocks[currentIndex + 1]; nextBlock.focus(); const newRange = document.createRange(); newRange.selectNodeContents(nextBlock); newRange.collapse(true); selection.removeAllRanges(); selection.addRange(newRange); }
+            }
+        }
+        if (e.key === 'Backspace') {
+            const block = e.target.closest('[data-line]'); if (!block) return;
+            const selection = window.getSelection(); if (!selection.rangeCount || !selection.isCollapsed) return;
+            const range = selection.getRangeAt(0), preRange = range.cloneRange();
+            preRange.selectNodeContents(block); preRange.setEnd(range.startContainer, range.startOffset);
+            
+            if (preRange.toString().replace(/\u00A0/g, '').length === 0) {
+                const lineIdx = parseInt(block.getAttribute('data-line'));
+                if (isNaN(lineIdx)) return;
+                
+                const lines = this.textarea.value.split('\n');
+                const oldLine = lines[lineIdx] || "";
+                const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
+                const prefix = prefixMatch ? prefixMatch[1] : "";
+
+                // STEP 1: If it's a special block (LI, H1, etc.), revert to normal text but keep the trigger characters
+                if (prefix.length > 0 && block.tagName !== 'DIV' && block.tagName !== 'P') {
+                    e.preventDefault();
+                    document.execCommand('formatBlock', false, 'DIV');
+                    // Force a sync to ensure the markdown is clean but contains the prefix text
+                    this.syncEditorToMarkdown();
+                    return;
+                }
+
+                // STEP 2 is handled by the browser (deleting prefix characters one by one in the DIV)
+
+                // STEP 3: If the line is truly empty (no prefix, no text), merge with the previous line
+                if (oldLine.length === 0 && lineIdx > 0) {
+                    e.preventDefault();
+                    const prevLine = lines[lineIdx - 1], prevLength = prevLine.length;
+                    lines.splice(lineIdx, 1); 
+                    this.textarea.value = lines.join('\n');
+                    this.updatePreview().then(() => { 
+                        const prevBlock = this.preview.querySelector(`[data-line="${lineIdx - 1}"]`); 
+                        if (prevBlock) { prevBlock.focus(); this.setCaretOffset(prevBlock, prevLength); } 
+                    });
+                }
+            }
+        }
+        if (e.key === 'Delete') {
+            const block = e.target.closest('[data-line]'); if (!block) return;
+            const selection = window.getSelection(); if (!selection.rangeCount || !selection.isCollapsed) return;
+            const range = selection.getRangeAt(0), postRange = range.cloneRange();
+            postRange.selectNodeContents(block); postRange.setStart(range.endContainer, range.endOffset);
+            if (postRange.toString().replace(/\u00A0/g, '').length === 0) {
+                const lineIdx = parseInt(block.getAttribute('data-line')), lines = this.textarea.value.split('\n');
+                if (lineIdx < lines.length - 1) { e.preventDefault(); const offsetInBlock = this.getCaretOffset(block); lines[lineIdx] = lines[lineIdx] + lines[lineIdx + 1]; lines.splice(lineIdx + 1, 1); this.textarea.value = lines.join('\n'); this.updatePreview().then(() => { const currentBlock = this.preview.querySelector(`[data-line="${lineIdx}"]`); if (currentBlock) { currentBlock.focus(); this.setCaretOffset(currentBlock, offsetInBlock); } }); }
+            }
+        }
     }
+
+    getCaretOffset(element) { const selection = window.getSelection(); if (!selection.rangeCount) return 0; const range = selection.getRangeAt(0), preCaretRange = range.cloneRange(); preCaretRange.selectNodeContents(element); preCaretRange.setEnd(range.endContainer, range.endOffset); return preCaretRange.toString().length; }
+    setCaretOffset(element, offset) {
+        const selection = window.getSelection(), range = document.createRange(); let currentOffset = 0, nodeFound = false;
+        const traverse = (node) => {
+            if (nodeFound) return;
+            if (node.nodeType === 3) {
+                const nextOffset = currentOffset + node.textContent.length;
+                if (offset <= nextOffset) { range.setStart(node, offset - currentOffset); range.collapse(true); nodeFound = true; } else currentOffset = nextOffset;
+            } else { for (let i = 0; i < node.childNodes.length; i++) { traverse(node.childNodes[i]); if (nodeFound) break; } }
+        };
+        traverse(element);
+        if (!nodeFound) { range.selectNodeContents(element); range.collapse(false); }
+        selection.removeAllRanges(); selection.addRange(range);
+    }
+
+    handleKeyboardShortcuts(e) {
+        if (e.target.closest('.notes-toolbar')) {
+            const buttons = Array.from(this.dialog.querySelectorAll('.notes-toolbar [tabindex="0"]')), index = buttons.indexOf(e.target);
+            if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); buttons[e.key === 'ArrowRight' ? (index + 1) % buttons.length : (index - 1 + buttons.length) % buttons.length].focus(); return; }
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); return; }
+        }
+        if (!e.ctrlKey) return;
+        let handled = true; const key = e.key.toLowerCase();
+        if (key === 'b') this.handleToolbarAction('bold'); else if (key === 'i') this.handleToolbarAction('italic'); else if (key === 'u') this.handleToolbarAction('underline'); else if (key === 'z') this.handleToolbarAction('undo'); else if (key === 'y') this.handleToolbarAction('redo'); else if (key === 'f') this.handleToolbarAction('search'); else if (key === 'h') this.handleToolbarAction('help'); else if (key === 's') this.saveAndClose(); else if (e.key === 'Enter') this.saveAndClose(); else handled = false;
+        if (handled) { e.preventDefault(); e.stopPropagation(); }
+    }
+
+    async handleExport(type) {
+        const content = this.textarea.value, taskTitle = this.task.title.replace(/[^a-z0-9]/gi, '_');
+        try {
+            switch (type) {
+                case 'markdown-file': this.downloadFile(content, `${taskTitle}.md`, 'text/markdown'); break;
+                case 'text-file': this.downloadFile(this.convertToPlainText(content), `${taskTitle}.txt`, 'text/plain'); break;
+                case 'pdf-file': await this.updatePreview(true); await new Promise(r => setTimeout(r, 100)); const wasEditor = this.currentView === 'editor'; if (wasEditor) { this.paneEditor.classList.add('hidden'); this.panePreview.classList.remove('hidden'); } window.print(); if (wasEditor) { this.paneEditor.classList.remove('hidden'); this.panePreview.classList.add('hidden'); } break;
+                case 'copy-markdown': await navigator.clipboard.writeText(content); alert('Markdown copied to clipboard!'); break;
+                case 'copy-text': await navigator.clipboard.writeText(this.convertToPlainText(content)); alert('Text copied to clipboard!'); break;
+            }
+        } catch (error) { console.error('Export failed:', error); alert('Export failed: ' + error.message); }
+    }
+
+    convertToPlainText(markdown) { return markdown.replace(/!\[.*?\]\(.*?\)/g, '[Image]').replace(/\[(.*?)\]\(.*?\)/g, '$1').replace(/[*_~`#]/g, '').replace(/^[-*]\s/gm, '• ').replace(/^\d+\.\s/gm, '').replace(/^>\s/gm, '').replace(/^---$/gm, '─'.repeat(40)).replace(/<\/?u>/g, ''); }
+    downloadFile(content, filename, mimeType) { const blob = new Blob([content], { type: mimeType }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
+}
+
+window.openFullscreenImage = (src) => {
+    let overlay = document.getElementById('image-fullscreen-overlay');
+    if (!overlay) {
+        overlay = document.createElement('dialog'); overlay.id = 'image-fullscreen-overlay'; overlay.className = 'image-overlay';
+        overlay.innerHTML = `<div class="image-container"><img src="${src}" alt="Fullscreen image"><button class="close-btn" aria-label="Close image" onclick="this.closest('dialog').close()">×</button></div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.close(); });
+    } else overlay.querySelector('img').src = src;
+    overlay.showModal();
 };
 
-// Main entry point - creates new editor instance
 function clkOpenTaskNotes(index) {
-    const task = data[index];
-    if (!task) return;
-
+    const task = data[index]; if (!task) return;
     const editor = new MarkdownEditor(index, task);
-    editor.open().catch(error => {
-        console.error('Failed to open notes editor:', error);
-        if (typeof showToast === 'function') {
-            showToast('Failed to open notes editor', 'error');
-        }
-    });
+    editor.open().catch(error => { console.error('Failed to open notes editor:', error); });
 }
 
-// Global Note Tag Handler
 window.clkNoteTag = function (type) {
-    const messages = {
-        'action': 'Action function coming soon',
-        'finding': 'Finding/Insight details coming soon',
-        'documentation': 'Link to documentation coming soon',
-        'question': 'Question/Blocker details coming soon'
-    };
-    if (typeof showToast === 'function') {
-        showToast(messages[type] || "Tag clicked", "info");
-    }
+    const messages = { 'action': 'Action function coming soon', 'finding': 'Finding/Insight details coming soon', 'documentation': 'Link to documentation coming soon', 'question': 'Question/Blocker details coming soon' };
+    if (typeof showToast === 'function') showToast(messages[type] || "Tag clicked", "info");
 };
 
-// Legacy compatibility functions (can be removed later)
-function parseMarkdown(text) {
-    const parser = new MarkdownParser();
-    return parser.parse(text);
-}
-
-async function initImageDB() {
-    const storage = new ImageStorage();
-    await storage.init();
-    return storage;
-}
-
-async function saveImageToDB(id, blob) {
-    const storage = new ImageStorage();
-    await storage.saveImage(id, blob);
-}
-
-async function getImageFromDB(id) {
-    const storage = new ImageStorage();
-    return await storage.getImage(id);
-}
+function parseMarkdown(text) { const parser = new MarkdownParser(); return parser.parse(text); }
+async function initImageDB() { const storage = new ImageStorage(); await storage.init(); return storage; }
+async function saveImageToDB(id, blob) { const storage = new ImageStorage(); await storage.saveImage(id, blob); }
+async function getImageFromDB(id) { const storage = new ImageStorage(); return await storage.getImage(id); }
