@@ -286,7 +286,7 @@ class MarkdownParser {
     }
 
     parseMarkdown(text) {
-        if (!text) return "";
+        if (!text) text = "";
 
         const lines = text.split('\n');
         let htmlResult = [];
@@ -430,9 +430,9 @@ class MarkdownParser {
                 if (inList) { htmlResult.push('</ul>'); inList = false; }
                 htmlResult.push(`<h3 contenteditable="true" data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
             }
-            // Lists & Task Lists (Support indentation)
-            else if (line.match(/^(\s*)([-*])\s/)) {
-                const match = line.match(/^(\s*)([-*])\s/);
+            // Lists & Task Lists (Support indentation, allow no space but ignore custom tags)
+            else if (line.match(/^(\s*)([-*])(?!\s*(?:a|d|f|q)-)(?:\s*)/)) {
+                const match = line.match(/^(\s*)([-*])(?!\s*(?:a|d|f|q)-)(?:\s*)/);
                 const indent = match[1].length;
 
                 if (!inList) {
@@ -452,6 +452,8 @@ class MarkdownParser {
                 }
                 if (rawLine !== '') {
                     htmlResult.push(`<div contenteditable="true" data-line="${i}" class="markdown-paragraph">${parseInline(rawLine)}</div>`);
+                } else {
+                    htmlResult.push(`<div contenteditable="true" data-line="${i}" class="empty-line">&nbsp;</div>`);
                 }
             }
         }
@@ -1141,7 +1143,7 @@ class MarkdownEditor {
 
         // State
         this.lastActiveElement = null;
-        this.currentView = 'split';
+        this.currentView = 'preview';
         this.undoStack = [];
         this.redoStack = [];
         this.maxStackSize = 50;
@@ -1180,6 +1182,9 @@ class MarkdownEditor {
             // Initial render
             await this.updatePreview();
 
+            // Apply view state
+            this.setView(this.currentView);
+
             // Push initial state to undo stack
             this.saveToHistory();
 
@@ -1189,8 +1194,31 @@ class MarkdownEditor {
             // Check for high contrast
             this.applyAccessibilityPreferences();
 
-            // Focus textarea
-            this.textarea.focus();
+            // Focus appropriate element based on current view
+            if (this.currentView === 'editor' || this.currentView === 'split') {
+                this.textarea.focus();
+                this.textarea.setSelectionRange(0, 0);
+            } else if (this.currentView === 'preview') {
+                const firstBlock = this.preview.querySelector('[data-line]');
+                if (firstBlock) {
+                    firstBlock.focus();
+                    const sel = window.getSelection();
+                    const ran = document.createRange();
+                    if (firstBlock.firstChild) {
+                        // In case of text nodes or nested elements
+                        if (firstBlock.firstChild.nodeType === 3) {
+                            ran.setStart(firstBlock.firstChild, 0);
+                        } else {
+                            ran.setStart(firstBlock, 0);
+                        }
+                    } else {
+                        ran.setStart(firstBlock, 0);
+                    }
+                    ran.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(ran);
+                }
+            }
         } catch (error) {
             console.error('Failed to open editor:', error);
             throw error;
@@ -1263,15 +1291,15 @@ class MarkdownEditor {
 
           <div class="notes-editor-container">
             <div class="notes-editor-pane" id="paneEditor">
-              <label for="idNotesTextarea">Notes (Markdown)</label>
+              <label for="idNotesTextarea">Markdown</label>
               <div class="editor-wrapper">
                   <pre class="syntax-layer" id="idSyntaxLayer" aria-hidden="true"></pre>
                   <textarea id="idNotesTextarea" aria-label="Markdown editor" placeholder="Type your notes here... Use # for headings, ** for bold, etc.">${this.task.notes || ""}</textarea>
               </div>
             </div>
             <div class="notes-preview-pane" id="panePreview">
-              <label>Preview</label>
-              <div id="idNotesPreview" role="region" aria-live="polite" aria-label="Markdown preview"></div>
+              <label>Editor</label>
+              <div id="idNotesPreview" role="region" aria-live="polite" aria-label="Markdown editor"></div>
             </div>
           </div>
           
@@ -1285,9 +1313,9 @@ class MarkdownEditor {
             </div>
             
             <div class="notes-view-toggle" id="idFooterViewToggle">
-              <button class="notes-toggle-btn" id="btnViewEditor" aria-label="Editor only view">Editor</button>
-              <button class="notes-toggle-btn active" id="btnViewSplit" aria-label="Split view">Split</button>
-              <button class="notes-toggle-btn" id="btnViewPreview" aria-label="Preview only view">Preview</button>
+              <button class="notes-toggle-btn" id="btnViewEditor" aria-label="Markdown only view">Markdown</button>
+              <button class="notes-toggle-btn" id="btnViewSplit" aria-label="Split view">Split</button>
+              <button class="notes-toggle-btn active" id="btnViewPreview" aria-label="Editor only view">Editor</button>
             </div>
             <div class="notes-save-status" id="idSaveStatus" role="button" tabindex="0" aria-label="Auto-save information" title="Click for auto-save info">
               <i class="material-icons">check_circle</i>
@@ -2319,14 +2347,18 @@ class MarkdownEditor {
 
         // Robust structural prefix detection from source (indentation, bullets, quotes, headings)
         const oldLine = (lines[lineIdx] || "").replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
-        const prefixMatch = oldLine.match(/^([#>\s\*-]*(\[[ x]\])?\s*)/);
+        const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|[-*](?!\s*(?:a|d|f|q)-))\s*(?:\[[ x]\]\s*)?)/);
         let prefix = prefixMatch ? prefixMatch[1] : "";
 
-        // DEDUPLICATION: If the conversion already contains the prefix, don't add it again.
-        // This handles cases where the browser includes leading spaces in paragraphs
-        // or where formatting tags (like bold **) are at the start of a matched prefix.
-        if (prefix && htmlToMd.startsWith(prefix)) {
-            prefix = "";
+        // DEDUPLICATION: Smartly merge returned format mapping with user's pre-rendered spacing
+        if (prefix) {
+            const trimmedPrefix = prefix.trimStart();
+            const trimmedHtmlMd = htmlToMd.trimStart();
+
+            if (trimmedPrefix && trimmedHtmlMd.startsWith(trimmedPrefix)) {
+                htmlToMd = prefix + trimmedHtmlMd.substring(trimmedPrefix.length);
+                prefix = "";
+            }
         }
 
         const newLine = prefix + htmlToMd;
@@ -2395,6 +2427,73 @@ class MarkdownEditor {
                     sel.addRange(ran);
                 }
             });
+            return;
+        }
+
+        // Arrow Key Navigation between contenteditable blocks
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+            const block = e.target.closest('[data-line]');
+            if (!block) return;
+
+            const selection = window.getSelection();
+            if (!selection.rangeCount || !selection.isCollapsed) return;
+
+            const range = selection.getRangeAt(0);
+
+            // Check if at exact start or end of text content
+            const preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(block);
+            preCaretRange.setEnd(range.startContainer, range.startOffset);
+            const atStart = preCaretRange.toString().length === 0;
+
+            const postCaretRange = range.cloneRange();
+            postCaretRange.selectNodeContents(block);
+            postCaretRange.setStart(range.endContainer, range.endOffset);
+            const atEnd = postCaretRange.toString().length === 0;
+
+            const caretRect = range.getBoundingClientRect();
+            const blockRect = block.getBoundingClientRect();
+
+            // Allow ~30px for "first line" / "last line" detection (line height + padding)
+            let isFirstLine = atStart;
+            let isLastLine = atEnd;
+
+            if (caretRect.height > 0) {
+                isFirstLine = caretRect.top <= (blockRect.top + 30);
+                isLastLine = caretRect.bottom >= (blockRect.bottom - 30);
+            }
+
+            if ((e.key === 'ArrowLeft' && atStart) || (e.key === 'ArrowUp' && isFirstLine)) {
+                // Find previous block
+                const allBlocks = Array.from(this.preview.querySelectorAll('[data-line]'));
+                const currentIndex = allBlocks.indexOf(block);
+                if (currentIndex > 0) {
+                    e.preventDefault();
+                    const prevBlock = allBlocks[currentIndex - 1];
+                    prevBlock.focus();
+
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(prevBlock);
+                    newRange.collapse(false); // end
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
+            } else if ((e.key === 'ArrowRight' && atEnd) || (e.key === 'ArrowDown' && isLastLine)) {
+                // Find next block
+                const allBlocks = Array.from(this.preview.querySelectorAll('[data-line]'));
+                const currentIndex = allBlocks.indexOf(block);
+                if (currentIndex !== -1 && currentIndex < allBlocks.length - 1) {
+                    e.preventDefault();
+                    const nextBlock = allBlocks[currentIndex + 1];
+                    nextBlock.focus();
+
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(nextBlock);
+                    newRange.collapse(true); // start
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                }
+            }
         }
     }
 
@@ -2658,13 +2757,20 @@ class MarkdownEditor {
             { key: 'Ctrl + B', desc: 'Bold' },
             { key: 'Ctrl + I', desc: 'Italic' },
             { key: 'Ctrl + U', desc: 'Underline' },
-            { key: 'Ctrl + S', desc: 'Save & Close' },
-            { key: 'Ctrl + Enter', desc: 'Save & Close' },
+            { key: 'Ctrl + F', desc: 'Find / Replace' },
             { key: 'Ctrl + Z', desc: 'Undo' },
             { key: 'Ctrl + Y', desc: 'Redo' },
-            { key: 'Ctrl + F', desc: 'Find / Replace' },
+            { key: 'Ctrl + S', desc: 'Save & Close' },
+            { key: 'Ctrl + Enter', desc: 'Save & Close' },
             { key: 'Ctrl + H', desc: 'Show this Help' },
-            { key: 'Esc', desc: 'Close without saving (or saves if auto-save clicked)' }
+            { key: 'Esc', desc: 'Close without saving' }
+        ];
+
+        const specialTags = [
+            { key: '-a-', desc: 'Action Tag' },
+            { key: '-f-', desc: 'Finding Tag' },
+            { key: '-d-', desc: 'Documentation Tag' },
+            { key: '-q-', desc: 'Question/Blocker Tag' }
         ];
 
         let helpDialog = document.getElementById('idNotesHelpDialog');
@@ -2677,35 +2783,96 @@ class MarkdownEditor {
 
         helpDialog.innerHTML = `
             <div class="help-content">
-                <h3>Notes Editor Shortcuts</h3>
-                <div class="shortcut-list">
-                    ${shortcuts.map(s => `
-                        <div class="shortcut-item">
-                            <span class="shortcut-key">${s.key}</span>
-                            <span class="shortcut-desc">${s.desc}</span>
-                        </div>
-                    `).join('')}
+                <div class="help-header">
+                    <h3>Editor Guide</h3>
+                    <button onclick="this.closest('dialog').close()" class="help-close-x">&times;</button>
                 </div>
+                
+                <div class="help-section">
+                    <h4>Keyboard Shortcuts</h4>
+                    <div class="shortcut-list">
+                        ${shortcuts.map(s => `
+                            <div class="shortcut-item">
+                                <span class="shortcut-key">${s.key}</span>
+                                <span class="shortcut-desc">${s.desc}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h4>Special Tags</h4>
+                    <p class="section-hint">Type these in <strong>Markdown</strong> or <strong>Editor</strong> mode:</p>
+                    <div class="shortcut-list">
+                        ${specialTags.map(t => `
+                            <div class="shortcut-item">
+                                <span class="shortcut-key tag-key">${t.key}</span>
+                                <span class="shortcut-desc">${t.desc}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
                 <button onclick="this.closest('dialog').close()" class="help-close-btn">Got it</button>
             </div>
             <style>
                 .notes-help-dialog {
                     border: none;
-                    border-radius: 12px;
-                    padding: 20px;
+                    border-radius: 16px;
+                    padding: 0;
                     background: var(--color-bg-container);
                     color: var(--color-text-primary);
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-                    max-width: 350px;
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+                    max-width: 400px;
+                    width: 90%;
+                    overflow: hidden;
                 }
-                .help-content h3 { margin-top: 0; color: var(--color-accent); }
-                .shortcut-list { margin: 15px 0; }
-                .shortcut-item { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
-                .shortcut-key { font-weight: bold; background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+                .help-content {
+                    padding: 24px;
+                }
+                .help-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+                .help-header h3 { margin: 0; color: var(--color-accent); font-size: 1.4em; }
+                .help-close-x { 
+                    background: none; border: none; color: var(--color-text-secondary); 
+                    font-size: 24px; cursor: pointer; padding: 0; line-height: 1;
+                }
+                .help-section { margin-bottom: 24px; }
+                .help-section h4 { 
+                    margin: 0 0 12px 0; 
+                    font-size: 0.9em; 
+                    text-transform: uppercase; 
+                    letter-spacing: 1px;
+                    color: var(--color-text-secondary);
+                    border-bottom: 1px solid var(--color-border);
+                    padding-bottom: 4px;
+                }
+                .section-hint { font-size: 0.8em; color: var(--color-text-secondary); margin-bottom: 10px; }
+                .shortcut-list { display: flex; flex-direction: column; gap: 8px; }
+                .shortcut-item { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+                .shortcut-key { 
+                    font-weight: bold; 
+                    background: rgba(0,0,0,0.05); 
+                    padding: 4px 8px; 
+                    border-radius: 6px; 
+                    font-family: 'Outfit', sans-serif;
+                    border: 1px solid var(--color-border);
+                    min-width: 45px;
+                    text-align: center;
+                }
+                .tag-key { background: var(--color-accent); color: white; border: none; }
+                .shortcut-desc { color: var(--color-text-primary); flex: 1; margin-left: 15px; }
                 .help-close-btn { 
-                    width: 100%; padding: 10px; border: none; border-radius: 6px; 
-                    background: var(--color-accent); color: white; cursor: pointer; font-weight: bold;
+                    width: 100%; padding: 12px; border: none; border-radius: 8px; 
+                    background: var(--color-accent); color: white; cursor: pointer; 
+                    font-weight: bold; transition: all 0.2s;
                 }
+                .help-close-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+                [data-theme="dark"] .shortcut-key { background: rgba(255,255,255,0.05); }
             </style>
         `;
         helpDialog.showModal();
