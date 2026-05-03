@@ -430,9 +430,9 @@ class MarkdownParser {
                 if (inList) { htmlResult.push('</ul>'); inList = false; }
                 htmlResult.push(`<h3 contenteditable="true" data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
             }
-            // Lists & Task Lists (Support indentation, allow no space but ignore custom tags)
-            else if (line.match(/^(\s*)([-*])(?!\s*(?:a|d|f|q)-)(?:\s*)/)) {
-                const match = line.match(/^(\s*)([-*])(?!\s*(?:a|d|f|q)-)(?:\s*)/);
+            // Lists & Task Lists (Support indentation, allow no space but ignore bold/tags)
+            else if (line.match(/^(\s*)(?:-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))(?:\s*)/)) {
+                const match = line.match(/^(\s*)(?:-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))(?:\s*)/);
                 const indent = match[1].length;
 
                 if (!inList) {
@@ -2347,7 +2347,7 @@ class MarkdownEditor {
 
         // Robust structural prefix detection from source (indentation, bullets, quotes, headings)
         const oldLine = (lines[lineIdx] || "").replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
-        const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|[-*](?!\s*(?:a|d|f|q)-))\s*(?:\[[ x]\]\s*)?)/);
+        const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
         let prefix = prefixMatch ? prefixMatch[1] : "";
 
         // DEDUPLICATION: Smartly merge returned format mapping with user's pre-rendered spacing
@@ -2398,33 +2398,62 @@ class MarkdownEditor {
             this.highlightPreviewSearch();
         }
     }
-
     handlePreviewKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             const block = e.target.closest('[data-line]');
             if (!block) return;
 
             e.preventDefault();
+            const selection = window.getSelection();
+            if (!selection.rangeCount) return;
+
+            const range = selection.getRangeAt(0);
             const lineIdx = parseInt(block.getAttribute('data-line'));
             const lines = this.textarea.value.split('\n');
+            const oldLine = lines[lineIdx] || "";
 
-            lines.splice(lineIdx + 1, 0, "");
+            // Detect structural prefix (bullets, headings, quotes) - ignore bold **
+            const prefixMatch = oldLine.match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
+            const prefix = prefixMatch ? prefixMatch[1] : "";
+
+            // Split the block into two parts based on current caret position
+            const beforeRange = range.cloneRange();
+            beforeRange.selectNodeContents(block);
+            beforeRange.setEnd(range.startContainer, range.startOffset);
+
+            const afterRange = range.cloneRange();
+            afterRange.selectNodeContents(block);
+            afterRange.setStart(range.endContainer, range.endOffset);
+
+            const divBefore = document.createElement('div');
+            divBefore.appendChild(beforeRange.cloneContents());
+            const divAfter = document.createElement('div');
+            divAfter.appendChild(afterRange.cloneContents());
+
+            let beforeMd = this.htmlConverter.convert(divBefore.innerHTML, true, true);
+            let afterMd = this.htmlConverter.convert(divAfter.innerHTML, true, true);
+
+            // Special Case: If the line is empty (only contain the prefix) and we hit Enter, 
+            // break out of the list/block by clearing the line.
+            if (beforeMd.trim() === "" && afterMd.trim() === "" && prefix.trim().length > 0) {
+                lines[lineIdx] = "";
+                this.textarea.value = lines.join('\n');
+                this.updatePreview().then(() => {
+                    const currBlock = this.preview.querySelector(`[data-line="${lineIdx}"]`);
+                    if (currBlock) currBlock.focus();
+                });
+                return;
+            }
+
+            lines[lineIdx] = (prefix && !beforeMd.startsWith(prefix) ? prefix : "") + beforeMd;
+            lines.splice(lineIdx + 1, 0, prefix + afterMd);
             this.textarea.value = lines.join('\n');
 
             this.updatePreview().then(() => {
-                const newBlock = this.preview.querySelector(`[data-line="${lineIdx + 1}"]`);
-                if (newBlock) {
-                    newBlock.focus();
-                    const sel = window.getSelection();
-                    const ran = document.createRange();
-                    if (newBlock.firstChild) {
-                        ran.setStart(newBlock.firstChild, 0);
-                    } else {
-                        ran.setStart(newBlock, 0);
-                    }
-                    ran.collapse(true);
-                    sel.removeAllRanges();
-                    sel.addRange(ran);
+                const nextBlock = this.preview.querySelector(`[data-line="${lineIdx + 1}"]`);
+                if (nextBlock) {
+                    nextBlock.focus();
+                    this.setCaretOffset(nextBlock, 0);
                 }
             });
             return;
@@ -2495,6 +2524,132 @@ class MarkdownEditor {
                 }
             }
         }
+
+        // Backspace - Merge with previous block
+        if (e.key === 'Backspace') {
+            const block = e.target.closest('[data-line]');
+            if (!block) return;
+
+            const selection = window.getSelection();
+            if (!selection.rangeCount || !selection.isCollapsed) return;
+
+            const range = selection.getRangeAt(0);
+            const preRange = range.cloneRange();
+            preRange.selectNodeContents(block);
+            preRange.setEnd(range.startContainer, range.startOffset);
+
+            // atStart detection correctly ignoring zero-width chars if any
+            if (preRange.toString().replace(/\u00A0/g, '').length === 0) {
+                const lineIdx = parseInt(block.getAttribute('data-line'));
+                if (lineIdx > 0) {
+                    e.preventDefault();
+                    const lines = this.textarea.value.split('\n');
+                    const currentLine = lines[lineIdx];
+                    const prevLine = lines[lineIdx - 1];
+                    const prevLength = prevLine.length;
+
+                    lines[lineIdx - 1] = prevLine + currentLine;
+                    lines.splice(lineIdx, 1);
+                    this.textarea.value = lines.join('\n');
+
+                    this.updatePreview().then(() => {
+                        const prevBlock = this.preview.querySelector(`[data-line="${lineIdx - 1}"]`);
+                        if (prevBlock) {
+                            prevBlock.focus();
+                            this.setCaretOffset(prevBlock, prevLength);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Delete - Merge with next block
+        if (e.key === 'Delete') {
+            const block = e.target.closest('[data-line]');
+            if (!block) return;
+
+            const selection = window.getSelection();
+            if (!selection.rangeCount || !selection.isCollapsed) return;
+
+            const range = selection.getRangeAt(0);
+            const postRange = range.cloneRange();
+            postRange.selectNodeContents(block);
+            postRange.setStart(range.endContainer, range.endOffset);
+
+            if (postRange.toString().replace(/\u00A0/g, '').length === 0) {
+                const lineIdx = parseInt(block.getAttribute('data-line'));
+                const lines = this.textarea.value.split('\n');
+                if (lineIdx < lines.length - 1) {
+                    e.preventDefault();
+                    const currentOffset = range.startOffset;
+                    const container = range.startContainer;
+
+                    const nextLine = lines[lineIdx + 1];
+                    lines[lineIdx] = lines[lineIdx] + nextLine;
+                    lines.splice(lineIdx + 1, 1);
+                    this.textarea.value = lines.join('\n');
+
+                    const offsetInBlock = this.getCaretOffset(block);
+
+                    this.updatePreview().then(() => {
+                        const currentBlock = this.preview.querySelector(`[data-line="${lineIdx}"]`);
+                        if (currentBlock) {
+                            currentBlock.focus();
+                            this.setCaretOffset(currentBlock, offsetInBlock);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    // Helper to get raw character offset within a complex contenteditable block
+    getCaretOffset(element) {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return 0;
+        const range = selection.getRangeAt(0);
+        const preCaretRange = range.cloneRange();
+        preCaretRange.selectNodeContents(element);
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        return preCaretRange.toString().length;
+    }
+
+    // Helper to set raw character offset within a complex contenteditable block
+    setCaretOffset(element, offset) {
+        const selection = window.getSelection();
+        const range = document.createRange();
+        let currentOffset = 0;
+        let nodeFound = false;
+
+        const traverse = (node) => {
+            if (nodeFound) return;
+
+            if (node.nodeType === 3) { // Text node
+                const nextOffset = currentOffset + node.textContent.length;
+                if (offset <= nextOffset) {
+                    range.setStart(node, offset - currentOffset);
+                    range.collapse(true);
+                    nodeFound = true;
+                } else {
+                    currentOffset = nextOffset;
+                }
+            } else {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    traverse(node.childNodes[i]);
+                    if (nodeFound) break;
+                }
+            }
+        };
+
+        traverse(element);
+
+        if (!nodeFound) {
+            range.selectNodeContents(element);
+            range.collapse(false);
+        }
+
+        selection.removeAllRanges();
+        selection.addRange(range);
     }
 
     handleKeyboardShortcuts(e) {
