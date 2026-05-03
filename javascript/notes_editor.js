@@ -898,24 +898,16 @@ class SyntaxHighlighter {
         if (searchQuery && searchQuery.length > 0) {
             try {
                 const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-                // 1. Find active match index in raw text
+                const regexHTML = new RegExp(`(${escapedQuery})(?![^<]*>)`, 'gi');
+                
+                // Determine active match index based on caret position
                 let activeMatchIndex = -1;
                 if (activeStart !== -1) {
-                    const regexRaw = new RegExp(escapedQuery, 'gi');
-                    let match;
-                    let count = 0;
-                    while ((match = regexRaw.exec(text)) !== null) {
-                        if (activeStart >= match.index && activeStart <= match.index + match[0].length) {
-                            activeMatchIndex = count;
-                            break;
-                        }
-                        count++;
-                    }
+                    const beforeText = text.substring(0, activeStart + 1); // +1 to ensure we catch the current match if cursor is at the end
+                    const matchesBefore = beforeText.match(new RegExp(escapedQuery, 'gi'));
+                    activeMatchIndex = matchesBefore ? matchesBefore.length - 1 : -1;
                 }
 
-                // 2. Replace in HTML
-                const regexHTML = new RegExp(`(${escapedQuery})(?![^<]*>)`, 'gi');
                 let matchCount = 0;
                 html = html.replace(regexHTML, (match, p1) => {
                     const isGroup = matchCount === activeMatchIndex;
@@ -923,7 +915,6 @@ class SyntaxHighlighter {
                     const cls = isGroup ? 'find-highlight-active' : 'find-highlight';
                     return `<span class="${cls}">${p1}</span>`;
                 });
-
             } catch (e) {
                 console.warn('Invalid regex in search highlight', e);
             }
@@ -1171,6 +1162,7 @@ class MarkdownEditor {
         this.maxStackSize = 50;
         this.isActionInProgress = false;
         this.isSyncingFromPreview = false;
+        this.currentSearchIndex = -1;
     }
 
     async open() {
@@ -1378,8 +1370,15 @@ class MarkdownEditor {
             <button class="notes-search-btn" id="btnReplace" title="Replace"><i class="material-icons">find_replace</i></button>
             <button class="notes-search-btn" id="btnReplaceAll" title="Replace All"><i class="material-icons">done_all</i></button>
             <div class="divider"></div>
+            <span id="idSearchCounter" class="search-counter">0 of 0</span>
             <button class="notes-search-btn" id="btnCloseSearch" title="Close"><i class="material-icons">close</i></button>
           </div>
+          <style>
+            .search-counter { font-size: 11px; color: var(--color-text-secondary); margin: 0 8px; white-space: nowrap; min-width: 40px; text-align: center; font-family: 'Outfit', sans-serif; opacity: 0.8; }
+            .notes-search-panel .divider { width: 1px; height: 20px; background: var(--color-border); margin: 0 5px; opacity: 0.5; }
+            .find-highlight { background-color: rgba(255, 235, 59, 0.4); border-radius: 2px; }
+            .find-highlight-active { background-color: #ff9800 !important; color: white !important; border-radius: 2px; box-shadow: 0 0 0 2px #ff9800; }
+          </style>
         `;
     }
 
@@ -1399,6 +1398,7 @@ class MarkdownEditor {
         this.highlight();
 
         this.scrollSync = new ScrollSyncManager(this.textarea, this.preview);
+        this.updateStats();
         this.scrollSync.init(this.cleanupManager);
 
         this.cleanupManager.addEventListener(this.textarea, 'scroll', () => {
@@ -1493,13 +1493,9 @@ class MarkdownEditor {
         const btnHeaderClose = this.dialog.querySelector('#btnCloseNotes');
         if (btnHeaderClose) this.cleanupManager.addEventListener(btnHeaderClose, 'click', () => this.saveAndClose());
 
-        this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => {
-            if (e.key === 'Escape') { e.preventDefault(); this.saveAndClose(); }
-            this.handleKeyboardShortcuts(e);
-        });
+        this.cleanupManager.addEventListener(this.dialog, 'keydown', (e) => this.handleKeyboardShortcuts(e));
 
         this.cleanupManager.addEventListener(this.dialog, 'mousedown', () => this.bringToFront());
-        this.cleanupManager.addEventListener(this.dialog, 'click', (e) => { if (e.target === this.dialog) this.saveAndClose(); });
 
         this.setupExportMenu();
         this.setupDragAndDrop();
@@ -1553,27 +1549,133 @@ class MarkdownEditor {
         const find = (forward = true) => {
             const query = searchInput.value;
             if (!query) return;
-            const text = this.textarea.value;
-            const start = this.textarea.selectionStart;
-            const end = this.textarea.selectionEnd;
-            let index = forward ? text.indexOf(query, end) : text.lastIndexOf(query, start - 1);
-            if (index === -1) index = forward ? text.indexOf(query, 0) : text.lastIndexOf(query);
-            if (index !== -1) {
-                this.textarea.setSelectionRange(index, index + query.length);
-                const lineNo = text.substr(0, index).split('\n').length;
-                this.textarea.scrollTop = (lineNo - 5) * 21;
-                this.highlight();
-                this.highlightPreviewSearch();
-            } else {
-                searchInput.classList.add('error');
-                setTimeout(() => searchInput.classList.remove('error'), 500);
+
+            // 1. Get all visible matches from the DOM
+            const visibleMatches = [];
+            const walker = document.createTreeWalker(this.preview, NodeFilter.SHOW_TEXT, null, false);
+            let node;
+            const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(escapedQuery, 'gi');
+
+            while (node = walker.nextNode()) {
+                if (node.parentElement && (node.parentElement.classList.contains('md-syntax') || node.parentElement.closest('.md-syntax'))) continue;
+                
+                let m;
+                const text = node.textContent;
+                while ((m = regex.exec(text)) !== null) {
+                    visibleMatches.push({
+                        node: node,
+                        offset: m.index,
+                        text: m[0]
+                    });
+                }
             }
+
+            if (visibleMatches.length === 0) {
+                this.currentSearchIndex = -1;
+                const counter = this.dialog.querySelector('#idSearchCounter');
+                if (counter) counter.textContent = '0 of 0';
+                return;
+            }
+
+            // 2. Update current index
+            if (this.currentSearchIndex === -1) {
+                // First navigation attempt
+                this.currentSearchIndex = forward ? 0 : visibleMatches.length - 1;
+            } else {
+                if (forward) {
+                    this.currentSearchIndex++;
+                } else {
+                    this.currentSearchIndex--;
+                }
+            }
+
+            // Looping
+            if (this.currentSearchIndex >= visibleMatches.length) this.currentSearchIndex = 0;
+            if (this.currentSearchIndex < 0) this.currentSearchIndex = visibleMatches.length - 1;
+
+            const targetMatch = visibleMatches[this.currentSearchIndex];
+            const wasSearchFocused = document.activeElement === searchInput;
+            
+            // 4. Sync to Textarea
+            const parentBlock = targetMatch.node.parentElement.closest('[data-line]');
+            if (parentBlock) {
+                const lineIdx = parseInt(parentBlock.getAttribute('data-line'), 10);
+                const lines = this.textarea.value.split('\n');
+                const lineText = lines[lineIdx];
+                
+                // Find start of line in textarea
+                let textareaOffset = 0;
+                for (let i = 0; i < lineIdx; i++) textareaOffset += lines[i].length + 1;
+                
+                // Find occurrence in line (this is a heuristic, but usually accurate)
+                // We find which occurrence this is in the DOM node and match it in the line
+                let occurrenceInNode = 0;
+                let tempRegex = new RegExp(escapedQuery, 'gi');
+                let tempM;
+                while ((tempM = tempRegex.exec(targetMatch.node.textContent)) !== null) {
+                    if (tempM.index === targetMatch.offset) break;
+                    occurrenceInNode++;
+                }
+
+                let occurrenceInLine = 0;
+                let lineRegex = new RegExp(escapedQuery, 'gi');
+                let lineM;
+                let foundIndexInLine = -1;
+                while ((lineM = lineRegex.exec(lineText)) !== null) {
+                    // Skip if it looks like markdown syntax (heuristic)
+                    const beforeMatch = lineText.substring(0, lineM.index);
+                    const openBrackets = (beforeMatch.match(/\[/g) || []).length;
+                    const closeBrackets = (beforeMatch.match(/\]/g) || []).length;
+                    const isInsideUrl = openBrackets > closeBrackets && beforeMatch.lastIndexOf('](') < beforeMatch.lastIndexOf('[');
+                    
+                    if (isInsideUrl) continue;
+
+                    if (occurrenceInLine === occurrenceInNode) {
+                        foundIndexInLine = lineM.index;
+                        break;
+                    }
+                    occurrenceInLine++;
+                }
+
+                if (foundIndexInLine !== -1) {
+                    this.textarea.setSelectionRange(textareaOffset + foundIndexInLine, textareaOffset + foundIndexInLine + query.length);
+                    const lineHeight = 21;
+                    this.textarea.scrollTop = (lineIdx - 5) * lineHeight;
+                }
+            }
+
+            // 5. Update Preview and restore focus
+            this.highlight();
+            this.highlightPreviewSearch(this.currentSearchIndex);
+
+            // Restore focus to search box if needed
+            if (searchInput) {
+                searchInput.focus();
+            }
+
+            // Ensure scrolling happens
+            setTimeout(() => {
+                const activeSpan = this.preview.querySelector('.find-highlight-active');
+                if (activeSpan) {
+                    activeSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 10);
         };
 
         this.cleanupManager.addEventListener(btnFindNext, 'click', () => find(true));
         this.cleanupManager.addEventListener(btnFindPrev, 'click', () => find(false));
-        this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); find(true); } });
-        this.cleanupManager.addEventListener(searchInput, 'input', debounce(() => { this.highlight(); this.highlightPreviewSearch(); }, 150));
+        this.cleanupManager.addEventListener(searchInput, 'keydown', (e) => { 
+            if (e.key === 'Enter') { 
+                e.preventDefault(); 
+                find(!e.shiftKey); 
+            } 
+        });
+        this.cleanupManager.addEventListener(searchInput, 'input', debounce(() => { 
+            this.currentSearchIndex = -1; // Reset on new search
+            this.highlight(); 
+            this.highlightPreviewSearch(); 
+        }, 150));
 
         this.cleanupManager.addEventListener(btnReplace, 'click', () => {
             const query = searchInput.value;
@@ -1634,6 +1736,21 @@ class MarkdownEditor {
         if (!this.isSyncingFromPreview) this.updatePreview();
     }
 
+    updateStats() {
+        const text = this.textarea.value || "";
+        const charCount = text.length;
+        const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const readTime = Math.ceil(wordCount / 200);
+
+        const wordEl = this.dialog.querySelector('#idWordCount');
+        const charEl = this.dialog.querySelector('#idCharCount');
+        const readEl = this.dialog.querySelector('#idReadTime');
+
+        if (wordEl) wordEl.textContent = `${wordCount} word${wordCount === 1 ? '' : 's'}`;
+        if (charEl) charEl.textContent = `${charCount} character${charCount === 1 ? '' : 's'}`;
+        if (readEl) readEl.textContent = `${readTime} min read`;
+    }
+
     handleEditorInput(e) {
         if (this.isActionInProgress) return;
         this.isSyncingFromPreview = true;
@@ -1646,6 +1763,29 @@ class MarkdownEditor {
         } finally {
             this.isSyncingFromPreview = false;
         }
+    }
+
+    toggleSearchPanel() {
+        const panel = this.dialog.querySelector('#idSearchPanel');
+        const input = this.dialog.querySelector('#idSearchInput');
+        if (!panel || !input) return;
+
+        const isHidden = panel.style.display === 'none' || !panel.style.display;
+        if (isHidden) {
+            panel.style.display = 'flex';
+            this.currentSearchIndex = -1; // Reset
+            // Clear any active selection state in preview to ensure search starts fresh
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            input.focus();
+            input.select();
+        } else {
+            panel.style.display = 'none';
+            if (this.currentView === 'editor' || this.currentView === 'split') this.textarea.focus();
+            else this.preview.focus();
+        }
+        this.highlight();
+        this.highlightPreviewSearch();
     }
 
     scanAndReplaceLivePatterns() {
@@ -2062,42 +2202,107 @@ class MarkdownEditor {
         }
     }
 
-    highlightPreviewSearch() {
+    highlightPreviewSearch(forcedIndex = null) {
         const searchInput = this.dialog.querySelector('#idSearchInput'), searchPanel = this.dialog.querySelector('#idSearchPanel');
-        if (!this.preview || !searchInput || !searchPanel || searchPanel.style.display === 'none') return;
-        const query = searchInput.value; if (!query) return;
-        let activeMatchIndex = -1;
-        const textareaText = this.textarea.value, selectionStart = this.textarea.selectionStart;
-        if (selectionStart !== -1) {
-            const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-            let match, count = 0;
-            while ((match = regex.exec(textareaText)) !== null) {
-                if (selectionStart >= match.index && selectionStart <= match.index + match[0].length) { activeMatchIndex = count; break; }
-                count++;
+        if (!this.preview || !searchInput || !searchPanel) return;
+
+        // 1. Clear ALL existing highlights first to avoid nesting and stale markers
+        this.preview.querySelectorAll('.find-highlight, .find-highlight-active').forEach(el => {
+            const parent = el.parentNode;
+            if (parent) {
+                parent.replaceChild(document.createTextNode(el.textContent), el);
+                parent.normalize();
+            }
+        });
+
+        const query = searchInput.value; 
+        if (!query || searchPanel.style.display === 'none') return;
+
+        // 2. Calculate active match index in the visible DOM text
+        let activeMatchIndex = forcedIndex;
+        
+        if (activeMatchIndex === null) {
+            // Only try to find active match from selection if the search panel is NOT what just triggered this
+            // Otherwise, we want to stay at -1 until navigation starts
+            const visibleText = this.preview.innerText; 
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount > 0 && !selection.isCollapsed) {
+                const range = selection.getRangeAt(0);
+                const preRange = document.createRange();
+                preRange.selectNodeContents(this.preview);
+                preRange.setEnd(range.startContainer, range.startOffset);
+                const caretOffset = preRange.toString().length;
+                
+                const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const beforeText = visibleText.substring(0, caretOffset + 1);
+                const matchesBefore = beforeText.match(new RegExp(escapedQuery, 'gi'));
+                activeMatchIndex = matchesBefore ? matchesBefore.length - 1 : -1;
+            } else {
+                activeMatchIndex = -1;
             }
         }
+
+        // 3. Walk text nodes and apply new highlights
         const walker = document.createTreeWalker(this.preview, NodeFilter.SHOW_TEXT, null, false);
-        const nodes = []; let node; while (node = walker.nextNode()) nodes.push(node);
+        const nodes = []; 
+        let node; 
+        while (node = walker.nextNode()) {
+            if (node.parentElement && node.parentElement.classList.contains('md-syntax')) continue;
+            nodes.push(node);
+        }
+        
+        let totalMatches = 0;
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedQuery})`, 'gi');
+
+        // First pass: count total matches in text nodes
+        const countWalker = document.createTreeWalker(this.preview, NodeFilter.SHOW_TEXT, null, false);
+        let countNode;
+        while (countNode = countWalker.nextNode()) {
+            if (countNode.parentElement && countNode.parentElement.classList.contains('md-syntax')) continue;
+            const m = countNode.textContent.match(regex);
+            if (m) totalMatches += m.length;
+        }
+
         let globalMatchCount = 0;
         nodes.forEach(textNode => {
-            const text = textNode.textContent, regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            const text = textNode.textContent;
             if (regex.test(text)) {
                 const fragment = document.createDocumentFragment();
                 let lastIndex = 0;
+                
                 text.replace(regex, (match, p1, offset) => {
                     fragment.appendChild(document.createTextNode(text.substring(lastIndex, offset)));
                     const span = document.createElement('span');
-                    span.className = globalMatchCount === activeMatchIndex ? 'find-highlight-active' : 'find-highlight';
+                    const isActive = globalMatchCount === activeMatchIndex;
+                    span.className = isActive ? 'find-highlight-active' : 'find-highlight';
                     span.textContent = match;
                     fragment.appendChild(span);
                     globalMatchCount++;
                     lastIndex = offset + match.length;
                 });
+                
                 fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
                 textNode.parentNode.replaceChild(fragment, textNode);
             }
         });
-        if (activeMatchIndex !== -1) { const activeHighlight = this.preview.querySelector('.find-highlight-active'); if (activeHighlight) activeHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+
+        // Update counter UI
+        const counter = this.dialog.querySelector('#idSearchCounter');
+        if (counter) {
+            if (totalMatches > 0) {
+                const current = activeMatchIndex !== -1 ? activeMatchIndex + 1 : 0;
+                counter.textContent = `${current} of ${totalMatches}`;
+            } else {
+                counter.textContent = '0 of 0';
+            }
+        }
+
+        if (activeMatchIndex !== -1) { 
+            const activeHighlight = this.preview.querySelector('.find-highlight-active'); 
+            if (activeHighlight) activeHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' }); 
+        }
     }
 
     async save() {
@@ -2342,15 +2547,49 @@ class MarkdownEditor {
     }
 
     handleKeyboardShortcuts(e) {
+        // 1. Toolbar Navigation
         if (e.target.closest('.notes-toolbar')) {
             const buttons = Array.from(this.dialog.querySelectorAll('.notes-toolbar [tabindex="0"]')), index = buttons.indexOf(e.target);
             if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); buttons[e.key === 'ArrowRight' ? (index + 1) % buttons.length : (index - 1 + buttons.length) % buttons.length].focus(); return; }
             if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.target.click(); return; }
         }
-        if (!e.ctrlKey) return;
-        let handled = true; const key = e.key.toLowerCase();
-        if (key === 'b') this.handleToolbarAction('bold'); else if (key === 'i') this.handleToolbarAction('italic'); else if (key === 'u') this.handleToolbarAction('underline'); else if (key === 'z') this.handleToolbarAction('undo'); else if (key === 'y') this.handleToolbarAction('redo'); else if (key === 'f') this.handleToolbarAction('search'); else if (key === 'h') this.handleToolbarAction('help'); else if (key === 's') this.saveAndClose(); else if (e.key === 'Enter') this.saveAndClose(); else handled = false;
-        if (handled) { e.preventDefault(); e.stopPropagation(); }
+
+        // 2. Escape Handling
+        if (e.key === 'Escape') {
+            const searchPanel = this.dialog.querySelector('#idSearchPanel');
+            if (searchPanel && searchPanel.style.display !== 'none') {
+                e.preventDefault();
+                this.toggleSearchPanel();
+            } else {
+                e.preventDefault();
+                this.saveAndClose();
+            }
+            return;
+        }
+
+        // 3. Ctrl/Cmd Shortcuts
+        if (e.ctrlKey || e.metaKey) {
+            let handled = true; 
+            const key = e.key.toLowerCase();
+            
+            switch (key) {
+                case 'b': this.handleToolbarAction('bold'); break;
+                case 'i': this.handleToolbarAction('italic'); break;
+                case 'u': this.handleToolbarAction('underline'); break;
+                case 'z': this.handleUndoRedo(true); break;
+                case 'y': this.handleUndoRedo(false); break;
+                case 'f': this.toggleSearchPanel(); break;
+                case 'h': this.handleToolbarAction('help'); break;
+                case 's': this.saveAndClose(); break;
+                case 'enter': this.saveAndClose(); break;
+                default: handled = false; break;
+            }
+
+            if (handled) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
     }
 
     async handleExport(type) {
