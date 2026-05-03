@@ -326,6 +326,7 @@ class MarkdownParser {
             const tableLines = [];
             let i = startIndex;
 
+            // Collect all lines that look like table rows
             while (i < lines.length && lines[i].trim().includes('|')) {
                 tableLines.push(lines[i]);
                 i++;
@@ -333,19 +334,50 @@ class MarkdownParser {
 
             if (tableLines.length < 2) return { html: '', nextIndex: i };
 
-            let tableHTML = '<table class="markdown-table" role="table"><thead><tr>';
-            const headerCells = tableLines[0].split('|').map(cell => cell.trim()).filter(cell => cell);
-            headerCells.forEach(cell => {
-                tableHTML += `<th>${parseInline(cell)}</th>`;
+            // Check for separator row (line 2)
+            const separatorMatch = tableLines[1].match(/^[\s|:-]+$/);
+            if (!separatorMatch) return { html: '', nextIndex: startIndex + 1 };
+
+            // Parse alignments from separator row
+            const alignments = tableLines[1].split('|')
+                .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1 || arr.length === 1)
+                .map(cell => {
+                    const trimmed = cell.trim();
+                    if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+                    if (trimmed.endsWith(':')) return 'right';
+                    return 'left';
+                });
+
+            const getCells = (line) => {
+                const cells = line.split('|');
+                // Remove first and last empty cells if the line started/ended with |
+                if (cells[0].trim() === "") cells.shift();
+                if (cells.length > 0 && cells[cells.length - 1].trim() === "") cells.pop();
+                return cells.map(c => c.trim());
+            };
+
+            let tableHTML = '<table class="markdown-table" role="table">';
+            
+            // Header
+            tableHTML += '<thead><tr data-line="' + startIndex + '">';
+            const headerCells = getCells(tableLines[0]);
+            headerCells.forEach((cell, idx) => {
+                const align = alignments[idx] || 'left';
+                tableHTML += `<th style="text-align: ${align}">${parseInline(cell)}</th>`;
             });
             tableHTML += '</tr></thead><tbody>';
 
+            // Rows (skipping header and separator)
             for (let j = 2; j < tableLines.length; j++) {
-                tableHTML += '<tr>';
-                const cells = tableLines[j].split('|').map(cell => cell.trim()).filter(cell => cell);
-                cells.forEach(cell => {
-                    tableHTML += `<td>${parseInline(cell)}</td>`;
-                });
+                const rowLineIdx = startIndex + j;
+                tableHTML += `<tr data-line="${rowLineIdx}">`;
+                const cells = getCells(tableLines[j]);
+                // Fill missing cells or truncate extra cells to match header count
+                for (let k = 0; k < headerCells.length; k++) {
+                    const cell = cells[k] || '';
+                    const align = alignments[k] || 'left';
+                    tableHTML += `<td style="text-align: ${align}">${parseInline(cell)}</td>`;
+                }
                 tableHTML += '</tr>';
             }
 
@@ -384,11 +416,13 @@ class MarkdownParser {
             }
 
             // Tables
-            if (rawLine.includes('|') && !inList) {
+            if (rawLine.includes('|') && !inList && i + 1 < lines.length && lines[i+1].trim().match(/^[\s|:-]+$/)) {
                 const tableResult = parseTable(lines, i);
-                htmlResult.push(tableResult.html);
-                i = tableResult.nextIndex - 1;
-                continue;
+                if (tableResult.html) {
+                    htmlResult.push(tableResult.html);
+                    i = tableResult.nextIndex - 1;
+                    continue;
+                }
             }
 
             // Blockquotes
@@ -701,6 +735,38 @@ class HtmlToMarkdownConverter {
             case 'hr':
                 return '---';
 
+            case 'table':
+                const tableRows = Array.from(node.querySelectorAll('tr'));
+                if (tableRows.length === 0) return '';
+                
+                let tableMd = "";
+                const headerRow = tableRows[0];
+                const headerCells = Array.from(headerRow.querySelectorAll('th, td'));
+                
+                // Header Row
+                tableMd += '| ' + headerCells.map(cell => this.convert(cell.innerHTML, true, true)).join(' | ') + ' |\n';
+                
+                // Separator Row with Alignment
+                tableMd += '| ' + headerCells.map(cell => {
+                    const align = cell.style.textAlign || 'left';
+                    if (align === 'center') return ':---:';
+                    if (align === 'right') return '---:';
+                    return '---';
+                }).join(' | ') + ' |\n';
+                
+                // Data Rows
+                for (let i = 1; i < tableRows.length; i++) {
+                    const cells = Array.from(tableRows[i].querySelectorAll('td'));
+                    tableMd += '| ' + cells.map(cell => this.convert(cell.innerHTML, true, true)).join(' | ') + ' |\n';
+                }
+                return `\n${tableMd}\n`;
+
+            case 'thead': return content;
+            case 'tbody': return content;
+            case 'tr': return content; // Handled by table case
+            case 'th':
+            case 'td': return content; // Handled by table case
+
             default:
                 return content;
         }
@@ -721,8 +787,8 @@ class HtmlSanitizer {
     }
 
     static walk(node) {
-        const allowedTags = ['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'code', 'pre', 'a', 'img', 'ul', 'ol', 'li', 'input', 'blockquote', 'hr', 'span', 'sub', 'sup'];
-        const allowedAttrs = ['href', 'src', 'alt', 'title', 'class', 'id', 'type', 'checked', 'data-img-id', 'data-line', 'target', 'rel', 'onclick', 'contenteditable', 'role', 'tabindex', 'aria-label'];
+        const allowedTags = ['p', 'div', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'del', 'code', 'pre', 'a', 'img', 'ul', 'ol', 'li', 'input', 'blockquote', 'hr', 'span', 'sub', 'sup', 'table', 'thead', 'tbody', 'tr', 'th', 'td'];
+        const allowedAttrs = ['href', 'src', 'alt', 'title', 'class', 'id', 'type', 'checked', 'data-img-id', 'data-line', 'target', 'rel', 'onclick', 'contenteditable', 'role', 'tabindex', 'aria-label', 'style'];
 
         const elNodes = node.querySelectorAll('*');
         for (const el of elNodes) {
@@ -1680,7 +1746,8 @@ class MarkdownEditor {
             { regex: /-d-/gi, html: '<span class="note-tag documentation" contenteditable="false" onclick="clkNoteTag(\'documentation\')">documentation</span>&nbsp;' },
             { regex: /-q-/gi, html: '<span class="note-tag question" contenteditable="false" onclick="clkNoteTag(\'question\')">question</span>&nbsp;' },
             { regex: /\[ \] /g, html: '<input type="checkbox" aria-label="Task item">&nbsp;' },
-            { regex: /\[x\] /g, html: '<input type="checkbox" checked aria-label="Completed task">&nbsp;' }
+            { regex: /\[x\] /g, html: '<input type="checkbox" checked aria-label="Completed task">&nbsp;' },
+            { regex: /!\[(.*?)\]\(tf-img:\/\/(.*?)\)/g, html: '<img class="pasted-image" alt="$1" data-img-id="$2" onclick="openFullscreenImage(this.src)" loading="lazy">' }
         ];
 
         for (const p of patterns) {
@@ -1744,7 +1811,7 @@ class MarkdownEditor {
         children.forEach(child => {
             if (child.nodeType === 1) { // Element
                 const tag = child.tagName;
-                if (tag === 'UL' || tag === 'OL' || tag === 'BLOCKQUOTE') {
+                if (tag === 'UL' || tag === 'OL' || tag === 'BLOCKQUOTE' || tag === 'TABLE' || tag === 'THEAD' || tag === 'TBODY') {
                     Array.from(child.children).forEach(inner => processBlock(inner));
                 } else if (tag === 'DIV' || tag === 'P' || tag.startsWith('H')) {
                     processBlock(child);
@@ -1911,25 +1978,39 @@ class MarkdownEditor {
 
     handlePaste(e) {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (const item of items) { if (item.type.indexOf("image") !== -1) { const blob = item.getAsFile(); this.uploadImage(blob); } }
+        let imageDetected = false;
+        for (const item of items) {
+            if (item.type.indexOf("image") !== -1) {
+                imageDetected = true;
+                const blob = item.getAsFile();
+                this.uploadImage(blob);
+            }
+        }
+        if (imageDetected) e.preventDefault();
     }
 
     async uploadImage(blob) {
+        this.isActionInProgress = true;
         try {
             const compressedBlob = await this.imageStorage.compressImage(blob);
-            const id = await this.imageStorage.saveImage(compressedBlob, { altText: "pasted_image", taskIndex: this.taskIndex });
+            const id = 'img_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            await this.imageStorage.saveImage(id, compressedBlob, { altText: "pasted_image", taskIndex: this.taskIndex });
             const mdRef = `![pasted_image](tf-img://${id})`;
-            if (this.lastActiveElement === this.textarea) this.insertMarkdown(mdRef, "");
-            else {
-                const selection = window.getSelection();
-                if (selection.rangeCount) {
-                    const range = selection.getRangeAt(0), img = document.createElement('img');
-                    img.src = URL.createObjectURL(compressedBlob); img.setAttribute('data-img-id', id); img.className = 'pasted-image';
-                    range.insertNode(img); range.insertNode(document.createTextNode(' '));
-                    this.handleEditorInput();
-                }
+            
+            if (this.currentView === 'editor') {
+                // Insert the markdown reference
+                document.execCommand('insertText', false, mdRef);
+                // Immediately sync and re-render to turn the markdown into an image tag
+                this.syncEditorToMarkdown();
+                await this.updatePreview(true);
+            } else {
+                this.insertMarkdown(mdRef, "");
             }
-        } catch (error) { console.error('Image upload failed:', error); }
+        } catch (error) { 
+            console.error('Image upload failed:', error); 
+        } finally {
+            this.isActionInProgress = false;
+        }
     }
 
     saveToHistory() {
