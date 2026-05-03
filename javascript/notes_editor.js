@@ -1346,6 +1346,10 @@ class MarkdownEditor {
             <i class="material-icons" style="font-size: 20px; margin-right: 8px;">description</i>
             Export as Text (.txt)
           </button>
+          <button data-export="word-file">
+            <i class="material-icons" style="font-size: 20px; margin-right: 8px;">description</i>
+            Export as MS-Word (.docx)
+          </button>
           <button data-export="pdf-file">
             <i class="material-icons" style="font-size: 20px; margin-right: 8px;">picture_as_pdf</i>
             Export as PDF
@@ -1728,6 +1732,14 @@ class MarkdownEditor {
 
             if (isActive) this.setGlobalCaretOffset(this.preview, savedOffset);
         } catch (error) { console.error('Error updating preview:', error); }
+    }
+
+    focusEditor() {
+        if (this.currentView === 'editor' || this.currentView === 'split') {
+            this.textarea.focus();
+        } else {
+            this.preview.focus();
+        }
     }
 
     handleMarkdownInput() {
@@ -2344,12 +2356,51 @@ class MarkdownEditor {
         minimized.forEach((dialog, index) => { dialog.style.left = `${startLeft + (index * (width + gap))}px`; dialog.style.right = 'auto'; dialog.style.transform = 'none'; });
     }
 
-    toggleMaximize() { const isMaximized = this.dialog.classList.toggle('maximized'); if (isMaximized) { this.dialog.classList.remove('minimized'); const titleEl = this.dialog.querySelector('.notes-task-title'), detailEl = this.dialog.querySelector('.notes-task-detail'); titleEl.textContent = this.task.title; if (detailEl) detailEl.style.display = 'block'; } }
+    toggleMaximize() { 
+        const isMaximized = this.dialog.classList.toggle('maximized'); 
+        if (isMaximized) { 
+            this.dialog.classList.remove('minimized'); 
+            const titleEl = this.dialog.querySelector('.notes-task-title'), detailEl = this.dialog.querySelector('.notes-task-detail'); 
+            titleEl.textContent = this.task.title; 
+            if (detailEl) detailEl.style.display = 'block'; 
+        } 
+    }
 
     bringToFront() { const others = document.querySelectorAll('.clsNotesModal'); let maxZ = 9000; others.forEach(d => { const z = parseInt(window.getComputedStyle(d).zIndex); if (!isNaN(z) && z > maxZ) maxZ = z; }); this.dialog.style.zIndex = maxZ + 1; }
+    
+    cycleWindowState() {
+        const isMax = this.dialog.classList.contains('maximized');
+        const isMin = this.dialog.classList.contains('minimized');
+
+        if (isMax) {
+            // Maximize -> Minimize
+            this.dialog.classList.remove('maximized');
+            this.toggleMinimize();
+        } else if (isMin) {
+            // Minimize -> Original (Normal)
+            this.toggleMinimize();
+            this.focusEditor();
+        } else {
+            // Original -> Maximize
+            this.toggleMaximize();
+            this.focusEditor();
+        }
+    }
 
     showHelpModal() {
-        const shortcuts = [{ key: 'Ctrl + B', desc: 'Bold' }, { key: 'Ctrl + I', desc: 'Italic' }, { key: 'Ctrl + U', desc: 'Underline' }, { key: 'Ctrl + F', desc: 'Find / Replace' }, { key: 'Ctrl + Z', desc: 'Undo' }, { key: 'Ctrl + Y', desc: 'Redo' }, { key: 'Ctrl + S', desc: 'Save & Close' }, { key: 'Ctrl + Enter', desc: 'Save & Close' }, { key: 'Ctrl + H', desc: 'Show this Help' }, { key: 'Esc', desc: 'Close without saving' }];
+        const shortcuts = [
+            { key: 'Ctrl + B', desc: 'Bold' }, 
+            { key: 'Ctrl + I', desc: 'Italic' }, 
+            { key: 'Ctrl + U', desc: 'Underline' }, 
+            { key: 'Ctrl + F', desc: 'Find / Replace' }, 
+            { key: 'Ctrl + M', desc: 'Toggle Maximize / Minimize' },
+            { key: 'Ctrl + Z', desc: 'Undo' }, 
+            { key: 'Ctrl + Y', desc: 'Redo' }, 
+            { key: 'Ctrl + S', desc: 'Save & Close' }, 
+            { key: 'Ctrl + Enter', desc: 'Save & Close' }, 
+            { key: 'Ctrl + H', desc: 'Show this Help' }, 
+            { key: 'Esc', desc: 'Close without saving' }
+        ];
         const specialTags = [{ key: '-a-', desc: 'Action Tag' }, { key: '-f-', desc: 'Finding Tag' }, { key: '-d-', desc: 'Documentation Tag' }, { key: '-q-', desc: 'Question/Blocker Tag' }];
         let helpDialog = document.getElementById('idNotesHelpDialog');
         if (!helpDialog) { helpDialog = document.createElement('dialog'); helpDialog.id = 'idNotesHelpDialog'; helpDialog.className = 'notes-help-dialog'; document.body.appendChild(helpDialog); }
@@ -2579,6 +2630,7 @@ class MarkdownEditor {
                 case 'z': this.handleUndoRedo(true); break;
                 case 'y': this.handleUndoRedo(false); break;
                 case 'f': this.toggleSearchPanel(); break;
+                case 'm': this.cycleWindowState(); break;
                 case 'h': this.handleToolbarAction('help'); break;
                 case 's': this.saveAndClose(); break;
                 case 'enter': this.saveAndClose(); break;
@@ -2598,6 +2650,7 @@ class MarkdownEditor {
             switch (type) {
                 case 'markdown-file': this.downloadFile(content, `${taskTitle}.md`, 'text/markdown'); break;
                 case 'text-file': this.downloadFile(this.convertToPlainText(content), `${taskTitle}.txt`, 'text/plain'); break;
+                case 'word-file': await this.exportToWord(); break;
                 case 'pdf-file': await this.updatePreview(true); await new Promise(r => setTimeout(r, 100)); const wasEditor = this.currentView === 'editor'; if (wasEditor) { this.paneEditor.classList.add('hidden'); this.panePreview.classList.remove('hidden'); } window.print(); if (wasEditor) { this.paneEditor.classList.remove('hidden'); this.panePreview.classList.add('hidden'); } break;
                 case 'copy-markdown': await navigator.clipboard.writeText(content); alert('Markdown copied to clipboard!'); break;
                 case 'copy-text': await navigator.clipboard.writeText(this.convertToPlainText(content)); alert('Text copied to clipboard!'); break;
@@ -2606,6 +2659,90 @@ class MarkdownEditor {
     }
 
     convertToPlainText(markdown) { return markdown.replace(/!\[.*?\]\(.*?\)/g, '[Image]').replace(/\[(.*?)\]\(.*?\)/g, '$1').replace(/[*_~`#]/g, '').replace(/^[-*]\s/gm, '• ').replace(/^\d+\.\s/gm, '').replace(/^>\s/gm, '').replace(/^---$/gm, '─'.repeat(40)).replace(/<\/?u>/g, ''); }
+    
+    async exportToWord() {
+        // 1. Generate Timestamped Filename
+        const now = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+        const taskTitle = this.task.title.replace(/[^a-z0-9]/gi, '_');
+        const filename = `${timestamp} ${taskTitle}.doc`;
+
+        // 2. Process Content and Embed Images
+        let htmlContent = this.parser.parse(this.textarea.value);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = htmlContent;
+        const imgs = Array.from(tempDiv.querySelectorAll('img'));
+        
+        for (const img of imgs) {
+            const src = img.getAttribute('src');
+            const imgId = img.getAttribute('data-img-id');
+            const id = imgId || (src && src.startsWith('tf-img://') ? src.replace('tf-img://', '') : null);
+            
+            if (id) {
+                try {
+                    const blob = await this.imageStorage.getImage(id);
+                    if (blob) {
+                        const base64 = await this.blobToBase64(blob);
+                        img.setAttribute('src', base64);
+                        // Ensure image has reasonable dimensions for Word
+                        img.style.maxWidth = '100%';
+                        img.style.height = 'auto';
+                    }
+                } catch (e) {
+                    console.error('Failed to embed image for export:', id, e);
+                }
+            }
+        }
+        
+        const finalHtml = tempDiv.innerHTML;
+        
+        // 3. Generate Word-Compatible Document
+        const header = `
+            <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                  xmlns:w='urn:schemas-microsoft-com:office:word' 
+                  xmlns='http://www.w3.org/TR/REC-html40'>
+            <head><meta charset='utf-8'><title>${this.task.title}</title>
+            <style>
+                body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; line-height: 1.6; color: #333; }
+                h1 { color: #2E74B5; font-size: 24pt; border-bottom: 1px solid #EEE; padding-bottom: 5pt; }
+                h2 { color: #2E74B5; font-size: 18pt; margin-top: 20pt; }
+                h3 { color: #1F4E78; font-size: 14pt; }
+                p, li { font-size: 11pt; }
+                code { font-family: 'Consolas', monospace; background: #F4F4F4; padding: 2pt; }
+                pre { background: #F4F4F4; padding: 10pt; border: 1px solid #DDD; font-family: 'Consolas', monospace; }
+                table { border-collapse: collapse; width: 100%; margin: 10pt 0; }
+                th { background: #F2F2F2; font-weight: bold; }
+                th, td { border: 1px solid #BFBFBF; padding: 8pt; text-align: left; }
+                blockquote { border-left: 5pt solid #CFD8DC; padding-left: 15pt; color: #546E7A; font-style: italic; }
+                img { max-width: 100%; height: auto; display: block; margin: 10pt 0; }
+            </style>
+            </head><body>
+        `;
+        const footer = "</body></html>";
+        const source = header + finalHtml + footer;
+        
+        const blob = new Blob(['\ufeff', source], {
+            type: 'application/msword'
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
     downloadFile(content, filename, mimeType) { const blob = new Blob([content], { type: mimeType }), url = URL.createObjectURL(blob), a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
 }
 
