@@ -25,7 +25,7 @@
         }
 
         body {
-            height: 79vh;
+            height: 76vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -40,21 +40,25 @@
             position: fixed;
             inset: 0;
             pointer-events: none;
-            background:
-                radial-gradient(circle at 10% 0%, rgba(79, 140, 255, 0.18), transparent 60%),
-                radial-gradient(circle at 90% 100%, rgba(155, 255, 214, 0.18), transparent 60%);
-            opacity: 0.7;
+            /* opacity: 0.7; */
+            background: rgba(255, 230, 53, 1);
+            border-radius-top-left: 26px;
+            border-radius-top-right: 26px;
         }
 
         .container {
             position: relative;
-            width: 100%;
-            max-width: 420px;
+            width: 98%;
+            /* max-width: 420px; */
             padding: 24px 22px 26px;
             border-radius: 26px;
-            background: linear-gradient(135deg,
+            /* background: linear-gradient(135deg,
                     rgba(255, 255, 255, 0.18),
-                    rgba(255, 255, 255, 0.02));
+                    rgba(255, 255, 255, 0.02)); */
+            background:
+                radial-gradient(circle at 10% 0%, rgba(79, 140, 255, 0.18), transparent 60%),
+                radial-gradient(circle at 90% 100%, rgba(155, 255, 214, 0.18), transparent 60%);
+
             box-shadow:
                 0 18px 40px rgba(0, 0, 0, 0.85),
                 0 0 0 1px rgba(255, 255, 255, 0.18);
