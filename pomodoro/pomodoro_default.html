@@ -118,18 +118,41 @@
                         isBreak = false;
                         timeLeft = sessionLengthInput.value * 60;
                         alert("Session Time!");
+                        var audio = new Audio('pomodoro_end.wav');
+                        audio.play();
                           
 
                     } else {
                         isBreak = true;
                         timeLeft = breakLengthInput.value * 60;
                         alert("Break Time!");
-                          
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        var audio = new Audio('pomodoro_end.wav');
+                        audio.play();
                     }
-                    updateTimerDisplay();
-                }
+            updateTimerDisplay();
+        }
+
+
+
+
             }, 1000);
         }
+
+
+
 
 
         function resetTimer() {
@@ -137,8 +160,8 @@
             isRunning = false;
             isBreak = false;
             timeLeft = sessionLengthInput.value * 60;
-            updateTimerDisplay();
-        }
+                updateTimerDisplay();
+            }
 
         if (!isRunning) {
             timeLeft = sessionLengthInput.value * 60;
@@ -156,6 +179,9 @@
         resetButton.addEventListener('click', resetTimer);
 
     </script>
+</body>
+
+</html>
 </body>
 
 </html>
