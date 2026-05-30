@@ -1,4 +1,4 @@
-﻿/*==================================*/
+/*==================================*/
 /* CSS Variables - Theme System */
 /*==================================*/
 
@@ -29,6 +29,7 @@
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
+  color: black;
   /* Preferred icon size */
   display: inline-block;
   line-height: 1;
@@ -1248,6 +1249,104 @@ body.view-dashboard {
   margin-left: auto;
   margin-right: auto;
 
+}
+
+.clsTimerControlsRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 90%;
+  margin: 15px auto 5px auto;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.clsTimerSwitcherContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 6px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 30px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.clsTimerSwitcherContainer:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+  max-width: 320px;
+  gap: 8px;
+  padding: 4px 12px;
+  justify-content: flex-start;
+}
+
+.clsTimerSwitcherTrigger {
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-text-muted, rgba(255, 255, 255, 0.6));
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+}
+
+.clsTimerSelector {
+  background: transparent;
+  color: inherit;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  max-width: 150px;
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.clsTimerSwitcherContainer:hover .clsTimerSelector {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.clsTimerSelector option {
+  background: var(--color-bg-dropdown, #222);
+  color: var(--color-text-dropdown, #fff);
+}
+
+#idAddTimerIcon,
+#idRemoveTimerIcon {
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--color-text-muted, rgba(255, 255, 255, 0.6));
+  transition: color 0.2s ease, opacity 0.25s ease;
+  user-select: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.clsTimerSwitcherContainer:hover #idAddTimerIcon,
+.clsTimerSwitcherContainer:hover #idRemoveTimerIcon {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#idAddTimerIcon:hover {
+  color: var(--color-accent, #4caf50);
+}
+
+#idRemoveTimerIcon:hover {
+  color: #ff5252;
 }
 
 
@@ -3768,6 +3867,7 @@ hr {
 .notes-footer {
   position: relative;
 }
+
 /* Auto-Save Info Popup */
 .auto-save-popup {
   position: fixed;
@@ -3781,6 +3881,7 @@ hr {
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -3857,4 +3958,3 @@ hr {
   color: var(--color-text-secondary) !important;
   font-style: italic;
 }
-

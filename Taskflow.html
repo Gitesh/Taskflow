@@ -171,36 +171,48 @@
 
                 <!-- START POMODORO -->
                 <div class="clsPomodoroContainer">
-                    <object type="text/html" data="pomodoro/pomodoro_scratch.html" width="100%" height="100%"></object>
-                    <!-- <object type="text/html" data="pomodoro/pomodoro2.html" width="100%" height="100%"></object> -->
+                    <iframe id="idPomodoroFrame" src="about:blank" style="border:none; width:100%; height:100%;"></iframe>
                 </div>
                 <!-- END POMODORO -->
 
+                <!-- START POMODORO TIMER SWITCHER ICON AND BAR -->
+                <div class="clsTimerControlsRow">
+                    <div class="clsTimerSwitcherContainer">
+                        <span class="material-icons clsTimerSwitcherTrigger" title="Timer Settings">tune</span>
+                        <select id="idTimerSelector" class="clsTimerSelector" onchange="clkChangeTimer(this.value)"></select>
+                        <span class="material-icons" id="idRemoveTimerIcon" title="Remove Current Timer" onclick="clkRemoveCurrentTimer()">delete</span>
+                        <span class="material-icons" id="idAddTimerIcon" title="Add Custom Timer" onclick="clkRegisterCustomTimer()">add_box</span>
+                    </div>
+                </div>               
+                <!-- END POMODORO TIMER SWITCHER ICON AND BAR -->
 
                 <!-- START ICONS TO PLAY AUDIO LOOPS -->
-                <span class="clsAudioIconsBar">
-                    <audio id="forest" src="audio_loops/forest.mp3" preload="true" type="audio/mpeg" loop></audio>
-                    <span class="material-icons" title="Outdoors - creative space"
-                        onclick="clkPlayAudio('forest')">forest</span>
+                <div class="clsAudioIconsRow">
+                    
+                    <span class="clsAudioIconsBar">
+                        <audio id="forest" src="audio_loops/forest.mp3" preload="true" type="audio/mpeg" loop></audio>
+                        <span class="material-icons" title="Outdoors - creative space"
+                            onclick="clkPlayAudio('forest')">forest</span>
 
-                    <audio id="water" src="audio_loops/water.mp3" preload="true" type="audio/mpeg" loop></audio>
-                    <span class="material-icons" title="Waves - breathe" onclick="clkPlayAudio('water')">water</span>
+                        <audio id="water" src="audio_loops/water.mp3" preload="true" type="audio/mpeg" loop></audio>
+                        <span class="material-icons" title="Waves - breathe" onclick="clkPlayAudio('water')">water</span>
 
-                    <audio id="thunderstorm" src="audio_loops/thunderstorm.mp3" preload="true" type="audio/mpeg"
-                        loop></audio>
-                    <span class="material-icons" title="Rain - focus thoughts"
-                        onclick="clkPlayAudio('thunderstorm');">thunderstorm</span>
+                        <audio id="thunderstorm" src="audio_loops/thunderstorm.mp3" preload="true" type="audio/mpeg"
+                            loop></audio>
+                        <span class="material-icons" title="Rain - focus thoughts"
+                            onclick="clkPlayAudio('thunderstorm');">thunderstorm</span>
 
-                    <audio id="self_improvement" src="audio_loops/self_improvement.mp3" preload="true" type="audio/mpeg"
-                        loop></audio>
-                    <span class="material-icons" title="Piano Chords - slow down"
-                        onclick="clkPlayAudio('self_improvement')">self_improvement</span>
+                        <audio id="self_improvement" src="audio_loops/self_improvement.mp3" preload="true" type="audio/mpeg"
+                            loop></audio>
+                        <span class="material-icons" title="Piano Chords - slow down"
+                            onclick="clkPlayAudio('self_improvement')">self_improvement</span>
 
-                    <audio id="local_cafe" src="audio_loops/local_cafe.mp3" preload="true" type="audio/mpeg"
-                        loop></audio>
-                    <span class="material-icons" title="Café - drown out voices"
-                        onclick="clkPlayAudio('local_cafe')">local_cafe</span>
-                </span>
+                        <audio id="local_cafe" src="audio_loops/local_cafe.mp3" preload="true" type="audio/mpeg"
+                            loop></audio>
+                        <span class="material-icons" title="Café - drown out voices"
+                            onclick="clkPlayAudio('local_cafe')">local_cafe</span>
+                    </span>
+                </div>
                 <!-- END ICONS TO PLAY AUDIO LOOPS -->
                 <p></p>
                 <span class="material-icons" onclick="clkFlipToCountDownTimer()"

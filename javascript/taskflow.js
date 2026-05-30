@@ -1,4 +1,4 @@
-﻿
+
 //load elements into variables
 let form = document.getElementById("form");
 let input = document.getElementById("input");
@@ -2372,3 +2372,133 @@ function addGlintOnClick() {
 addGlintOnClick();
 document.getElementById('idTaskflowAppTitle').click();
 document.getElementById('idTaskflowTodaySubTitle').click();
+
+//-------------------------------------------------------------------------
+// MODULAR POMODORO TIMER SYSTEM
+//-------------------------------------------------------------------------
+
+const DEFAULT_TIMERS = [
+  { name: "Theme Switcher", file: "pomodoro_theme_switcher.html" },
+  { name: "Mindfulness", file: "pomodoro_mindfulness.html" },
+  { name: "Glassmorphic", file: "pomodoro_glassmorphic.html" },
+  { name: "Retro Futuristic", file: "pomodoro_retro_futuristic.html" },
+  { name: "Glass Pomodoro", file: "pomodoro_glass.html" },
+  { name: "Glass Sunset 1", file: "pomodoro_glass_sunset.html" },
+  { name: "Glass Sunset 2", file: "pomodoro_glass_sunset2.html" },
+  { name: "No-Tilt Dark/Light", file: "pomodoro_dark-light-no-tilt.html" },
+  { name: "Default", file: "pomodoro_default.html" }
+];
+
+function initPomodoroTimerSystem() {
+  // Load registered timers from localStorage or use defaults
+  let registered = JSON.parse(localStorage.getItem("taskflow_timers"));
+  if (!registered || !Array.isArray(registered)) {
+    registered = DEFAULT_TIMERS;
+    localStorage.setItem("taskflow_timers", JSON.stringify(registered));
+  }
+
+  // Load selected timer
+  let activeTimer = localStorage.getItem("taskflow_active_timer") || "pomodoro_theme_switcher.html";
+
+  // Populate dropdown
+  renderTimerSelector(registered, activeTimer);
+
+  // Set initial iframe src
+  const frame = document.getElementById("idPomodoroFrame");
+  if (frame) {
+    frame.src = "pomodoro/" + activeTimer;
+  }
+}
+
+function renderTimerSelector(timers, activeFile) {
+  const selector = document.getElementById("idTimerSelector");
+  if (!selector) return;
+  selector.innerHTML = "";
+  timers.forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t.file;
+    opt.textContent = t.name;
+    if (t.file === activeFile) {
+      opt.selected = true;
+    }
+    selector.appendChild(opt);
+  });
+}
+
+function clkChangeTimer(filename) {
+  const frame = document.getElementById("idPomodoroFrame");
+  if (frame) {
+    frame.src = "pomodoro/" + filename;
+  }
+  localStorage.setItem("taskflow_active_timer", filename);
+}
+
+function clkRegisterCustomTimer() {
+  const filename = prompt("Enter the HTML filename of your custom timer (placed in the pomodoro folder, e.g., my_timer.html):");
+  if (!filename) return;
+
+  const trimmedFile = filename.trim();
+  if (trimmedFile === "") return;
+
+  // Derive a nice name
+  let defaultName = trimmedFile.replace(".html", "").replace(/_/g, " ").replace(/-/g, " ");
+  // Capitalize words
+  defaultName = defaultName.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+  const name = prompt("Enter a display name for this timer:", defaultName);
+  if (!name) return;
+
+  const trimmedName = name.trim();
+  if (trimmedName === "") return;
+
+  let registered = JSON.parse(localStorage.getItem("taskflow_timers")) || DEFAULT_TIMERS;
+
+  // Check if already exists
+  const exists = registered.some(t => t.file.toLowerCase() === trimmedFile.toLowerCase());
+  if (exists) {
+    alert("A timer file with that name is already registered.");
+    return;
+  }
+
+  registered.push({ name: trimmedName, file: trimmedFile });
+  localStorage.setItem("taskflow_timers", JSON.stringify(registered));
+
+  // Re-render and switch to it
+  renderTimerSelector(registered, trimmedFile);
+  clkChangeTimer(trimmedFile);
+}
+
+function clkRemoveCurrentTimer() {
+  let registered = JSON.parse(localStorage.getItem("taskflow_timers"));
+  if (!registered || !Array.isArray(registered)) {
+    registered = DEFAULT_TIMERS;
+  }
+
+  if (registered.length <= 1) {
+    alert("You must keep at least one registered timer.");
+    return;
+  }
+
+  let activeTimer = localStorage.getItem("taskflow_active_timer") || "pomodoro_theme_switcher.html";
+  const timerToRemove = registered.find(t => t.file === activeTimer);
+  if (!timerToRemove) return;
+
+  const confirmRemove = confirm(`Are you sure you want to remove the timer "${timerToRemove.name}" (${timerToRemove.file}) from the list?`);
+  if (!confirmRemove) return;
+
+  // Filter out
+  registered = registered.filter(t => t.file !== activeTimer);
+  localStorage.setItem("taskflow_timers", JSON.stringify(registered));
+
+  // Switch to the first remaining one
+  const newActive = registered[0].file;
+  renderTimerSelector(registered, newActive);
+  clkChangeTimer(newActive);
+}
+
+// Call on DOMContentLoaded or directly if script is at the bottom
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPomodoroTimerSystem);
+} else {
+  initPomodoroTimerSystem();
+}

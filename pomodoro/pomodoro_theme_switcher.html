@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Taskflow Timer – Dual Theme</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 79vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            transition: background 0.4s ease, color 0.4s ease, transform 0.3s linear;
+        }
+
+        /* THEME: ORIGINAL */
+        body.theme-original {
+            background: radial-gradient(circle at top, #222 0, #000 55%, #000 100%);
+            color: #FFE365;
+        }
+
+        /* THEME: CYBERPUNK NEON */
+        body.theme-cyberpunk {
+            /* background:
+                radial-gradient(circle at 10% 0%, rgba(255, 0, 128, 0.35), transparent 60%),
+                radial-gradient(circle at 90% 100%, rgba(0, 255, 255, 0.35), transparent 60%),
+                radial-gradient(circle at top, #050014 0, #000 55%, #000 100%); */
+            color: #fdfcff;
+        }
+
+
+        /* THEME: TERMINAL HACKER */
+        body.theme-terminal {
+            background: #000;
+            color: #00ff66;
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        /* CRT scanlines */
+        body.theme-terminal::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(to bottom,
+                    rgba(0, 255, 102, 0.05) 0px,
+                    rgba(0, 255, 102, 0.05) 2px,
+                    transparent 2px,
+                    transparent 4px);
+            opacity: 0.25;
+            mix-blend-mode: screen;
+        }
+
+        /* Terminal subtitle */
+        body.theme-terminal #subtitle {
+            color: #00ff66;
+            text-shadow: 0 0 6px rgba(0, 255, 102, 0.6);
+        }
+
+        /* Terminal mode label */
+        body.theme-terminal .mode-label span {
+            border-color: #00ff66;
+            background: rgba(0, 255, 102, 0.1);
+        }
+
+        /* Terminal ring */
+        .ring-terminal-bg {
+            stroke: rgba(0, 255, 102, 0.15);
+        }
+
+        .ring-terminal-fg {
+            stroke: #00ff66;
+            filter: drop-shadow(0 0 8px rgba(0, 255, 102, 0.9));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show only in terminal theme */
+        .ring-terminal-bg,
+        .ring-terminal-fg {
+            opacity: 0;
+        }
+
+        body.theme-terminal .ring-terminal-bg,
+        body.theme-terminal .ring-terminal-fg {
+            opacity: 1;
+        }
+
+        /* Flicker animation */
+        body.theme-terminal #timer {
+            animation: crtFlicker 2.5s infinite steps(2);
+        }
+
+        @keyframes crtFlicker {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.92;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* THEME: FOREST */
+        body.theme-forest {
+            /* background: */
+            /* radial-gradient(circle at 20% 0%, rgba(0, 80, 40, 0.4), transparent 60%), */
+            /* radial-gradient(circle at 80% 100%, rgba(40, 120, 60, 0.4), transparent 60%), */
+            /* linear-gradient(180deg, #0b1f12, #0a140d); */
+            color: #d8f5d0;
+            font-family: "Inter", sans-serif;
+        }
+
+        /* Subtitle */
+        body.theme-forest #subtitle {
+            color: #a8e6a1;
+        }
+
+        /* Mode label */
+        body.theme-forest .mode-label span {
+            border-color: #a8e6a1;
+            background: rgba(168, 230, 161, 0.1);
+        }
+
+        /* Forest ring */
+        .ring-forest-bg {
+            stroke: rgba(168, 230, 161, 0.15);
+        }
+
+        .ring-forest-fg {
+            stroke: #a8e6a1;
+            filter: drop-shadow(0 0 10px rgba(168, 230, 161, 0.6));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show only in forest theme */
+        .ring-forest-bg,
+        .ring-forest-fg {
+            opacity: 0;
+        }
+
+        body.theme-forest .ring-forest-bg,
+        body.theme-forest .ring-forest-fg {
+            opacity: 1;
+        }
+
+        /* Breathing animation */
+        body.theme-forest .ring-forest-fg {
+            animation: forestBreath 6s ease-in-out infinite;
+        }
+
+        @keyframes forestBreath {
+            0% {
+                stroke-width: 9;
+                opacity: 0.8;
+            }
+
+            50% {
+                stroke-width: 12;
+                opacity: 1;
+            }
+
+            100% {
+                stroke-width: 9;
+                opacity: 0.8;
+            }
+        }
+
+
+
+        /* THEME: VISIONOS */
+        body.theme-visionos {
+            background:
+                radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.35), transparent 70%),
+                linear-gradient(180deg, #e8ecf3, #cfd6e3);
+            color: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        }
+
+        /* Floating glass effect */
+        body.theme-visionos .timer-core {
+            background: rgba(255, 255, 255, 0.35);
+            backdrop-filter: blur(18px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow:
+                0 8px 20px rgba(0, 0, 0, 0.15),
+                inset 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        /* Subtitle */
+        body.theme-visionos #subtitle {
+            color: #4a4f57;
+        }
+
+        /* Mode label */
+        body.theme-visionos .mode-label span {
+            border-color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* VisionOS ring */
+        .ring-visionos-bg {
+            stroke: rgba(255, 255, 255, 0.4);
+        }
+
+        .ring-visionos-fg {
+            stroke: rgba(255, 255, 255, 0.9);
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show only in VisionOS */
+        .ring-visionos-bg,
+        .ring-visionos-fg {
+            opacity: 0;
+        }
+
+        body.theme-visionos .ring-visionos-bg,
+        body.theme-visionos .ring-visionos-fg {
+            opacity: 1;
+        }
+
+        /* Floating halo animation */
+        body.theme-visionos .ring-visionos-fg {
+            animation: visionFloat 5s ease-in-out infinite;
+        }
+
+        @keyframes visionFloat {
+            0% {
+                stroke-width: 10;
+                opacity: 0.9;
+            }
+
+            50% {
+                stroke-width: 12;
+                opacity: 1;
+            }
+
+            100% {
+                stroke-width: 10;
+                opacity: 0.9;
+            }
+        }
+
+
+
+        /* THEME: GHIBLI */
+        body.theme-ghibli {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(255, 220, 200, 0.6), transparent 60%),
+                radial-gradient(circle at 80% 100%, rgba(180, 220, 255, 0.6), transparent 60%),
+                linear-gradient(180deg, #ffe9d6, #d8eaff);
+            color: #5a4a42;
+            font-family: "Nunito", "Inter", sans-serif;
+        }
+
+        /* Paper grain texture */
+        body.theme-ghibli::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' > <filter id='grain' > <feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' /> <feColorMatrix type='saturate' values='0' /> </filter> <rect width='100%' height='100%' filter='url(%23grain)' opacity='0.12' /> </svg>");
+            opacity: 0.25;
+        }
+
+        /* Subtitle */
+        body.theme-ghibli #subtitle {
+            color: #7a6a5a;
+        }
+
+        /* Mode label */
+        body.theme-ghibli .mode-label span {
+            border-color: #7a6a5a;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Ghibli ring */
+        .ring-ghibli-bg {
+            stroke: rgba(255, 255, 255, 0.25);
+        }
+
+        .ring-ghibli-fg {
+            stroke: #7a6a5a;
+            filter: drop-shadow(0 0 6px rgba(122, 106, 90, 0.5));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show only in Ghibli */
+        .ring-ghibli-bg,
+        .ring-ghibli-fg {
+            opacity: 0;
+        }
+
+        body.theme-ghibli .ring-ghibli-bg,
+        body.theme-ghibli .ring-ghibli-fg {
+            opacity: 1;
+        }
+
+        /* Soft breathing animation */
+        body.theme-ghibli .ring-ghibli-fg {
+            animation: ghibliBreath 7s ease-in-out infinite;
+        }
+
+        @keyframes ghibliBreath {
+            0% {
+                stroke-width: 9;
+                opacity: 0.7;
+            }
+
+            50% {
+                stroke-width: 13;
+                opacity: 1;
+            }
+
+            100% {
+                stroke-width: 9;
+                opacity: 0.7;
+            }
+        }
+
+
+        /* THEME: DASHBOARD PRO */
+        body.theme-dashboard {
+            background:
+                linear-gradient(180deg, #f7f8fa, #eef0f3);
+            color: #1a1a1a;
+            font-family: "Inter", "SF Pro Display", sans-serif;
+        }
+
+        /* Subtle grid */
+        body.theme-dashboard::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.25;
+        }
+
+        /* Subtitle */
+        body.theme-dashboard #subtitle {
+            color: #6a6f78;
+        }
+
+        /* Mode label */
+        body.theme-dashboard .mode-label span {
+            border-color: #6a6f78;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Dashboard ring */
+        .ring-dashboard-bg {
+            stroke: rgba(0, 0, 0, 0.1);
+        }
+
+        .ring-dashboard-fg {
+            stroke: #1a1a1a;
+            stroke-dasharray: 6 6;
+            stroke-linecap: butt;
+            filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.2));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show only in dashboard theme */
+        .ring-dashboard-bg,
+        .ring-dashboard-fg {
+            opacity: 0;
+        }
+
+        body.theme-dashboard .ring-dashboard-bg,
+        body.theme-dashboard .ring-dashboard-fg {
+            opacity: 1;
+        }
+
+        /* Subtle pulse */
+        body.theme-dashboard .ring-dashboard-fg {
+            animation: dashPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes dashPulse {
+            0% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+
+        /* THEME: NEWSPAPER */
+        body.theme-newspaper {
+            background:
+                linear-gradient(180deg, #f5f5f5, #e8e8e8);
+            color: #111;
+            font-family: "Georgia", serif;
+        }
+
+        /* Halftone texture */
+        body.theme-newspaper::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image: radial-gradient(#000 1px, transparent 1px);
+            background-size: 4px 4px;
+            opacity: 0.15;
+        }
+
+        /* Subtitle */
+        body.theme-newspaper #subtitle {
+            color: #444;
+        }
+
+        /* Mode label */
+        body.theme-newspaper .mode-label span {
+            border-color: #444;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Newspaper ring */
+        .ring-newspaper-bg {
+            stroke: rgba(0, 0, 0, 0.15);
+        }
+
+        .ring-newspaper-fg {
+            stroke: #111;
+            stroke-dasharray: 2 4;
+            filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show only in newspaper theme */
+        .ring-newspaper-bg,
+        .ring-newspaper-fg {
+            opacity: 0;
+        }
+
+        body.theme-newspaper .ring-newspaper-bg,
+        body.theme-newspaper .ring-newspaper-fg {
+            opacity: 1;
+        }
+
+        /* Slight jitter */
+        body.theme-newspaper .ring-newspaper-fg {
+            animation: newsJitter 0.4s infinite steps(2);
+        }
+
+        @keyframes newsJitter {
+            0% {
+                transform: translate(0, 0);
+            }
+
+            100% {
+                transform: translate(0.5px, -0.5px);
+            }
+        }
+
+
+        /* THEME: GAMEBOY */
+        body.theme-gameboy {
+            background: #9bbc0f;
+            color: #0f380f;
+            font-family: "Press Start 2P", monospace;
+        }
+
+        /* LCD scanlines */
+        body.theme-gameboy::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(to bottom,
+                    rgba(0, 0, 0, 0.1) 0px,
+                    rgba(0, 0, 0, 0.1) 2px,
+                    transparent 2px,
+                    transparent 4px);
+            opacity: 0.3;
+        }
+
+        /* Subtitle */
+        body.theme-gameboy #subtitle {
+            color: #0f380f;
+        }
+
+        /* Mode label */
+        body.theme-gameboy .mode-label span {
+            border-color: #0f380f;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Pixel ring */
+        .ring-gameboy-bg {
+            stroke: rgba(0, 0, 0, 0.2);
+        }
+
+        .ring-gameboy-fg {
+            stroke: #0f380f;
+            stroke-dasharray: 4 4;
+            stroke-linecap: butt;
+            filter: none;
+            transition: stroke-dashoffset 0.4s steps(4);
+        }
+
+        /* Show only in Gameboy theme */
+        .ring-gameboy-bg,
+        .ring-gameboy-fg {
+            opacity: 0;
+        }
+
+        body.theme-gameboy .ring-gameboy-bg,
+        body.theme-gameboy .ring-gameboy-fg {
+            opacity: 1;
+        }
+
+        /* Pixel blink */
+        body.theme-gameboy .ring-gameboy-fg {
+            animation: pixelBlink 1s steps(2) infinite;
+        }
+
+        @keyframes pixelBlink {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /*END THEME*/
+        /*END THEME*/
+        /*END THEME*/
+        /*END THEME*/
+        /*END THEME*/
+
+
+
+        #app {
+            position: relative;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            opacity: 0.9;
+        }
+
+        #subtitle {
+            font-size: 0.8rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        body.theme-original #subtitle {
+            color: #c9b46a;
+        }
+
+        body.theme-cyberpunk #subtitle {
+            color: #ff9be9;
+        }
+
+        .mode-label {
+            margin-top: 14px;
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .mode-label span {
+            padding: 2px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        body.theme-original .mode-label span {
+            border-color: rgba(255, 227, 101, 0.7);
+        }
+
+        body.theme-cyberpunk .mode-label span {
+            border-color: rgba(0, 255, 255, 0.7);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.5);
+        }
+
+        .timer-shell {
+            margin: 20px auto 12px;
+            width: 220px;
+            height: 220px;
+            position: relative;
+        }
+
+        .timer-ring {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .timer-ring circle {
+            fill: none;
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+
+        /* ORIGINAL RING */
+        .ring-original-bg {
+            stroke: rgba(255, 227, 101, 0.18);
+        }
+
+        .ring-original-fg {
+            stroke: #FFE365;
+            filter: drop-shadow(0 0 10px rgba(255, 227, 101, 0.7));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* CYBERPUNK RING */
+        .ring-cyber-bg {
+            stroke: rgba(255, 255, 255, 0.12);
+        }
+
+        .ring-cyber-fg {
+            stroke: url(#cyberGradient);
+            filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.9)) drop-shadow(0 0 18px rgba(255, 0, 128, 0.9));
+            transition: stroke-dashoffset 0.4s ease-out;
+        }
+
+        /* Show/hide per theme */
+        .ring-original-bg,
+        .ring-original-fg {
+            opacity: 0;
+        }
+
+        .ring-cyber-bg,
+        .ring-cyber-fg {
+            opacity: 0;
+        }
+
+        body.theme-original .ring-original-bg,
+        body.theme-original .ring-original-fg {
+            opacity: 1;
+        }
+
+        body.theme-cyberpunk .ring-cyber-bg,
+        body.theme-cyberpunk .ring-cyber-fg {
+            opacity: 1;
+        }
+
+        /* Cyberpunk breathing animation */
+        body.theme-cyberpunk .ring-cyber-fg {
+            animation: neonPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes neonPulse {
+            0% {
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6)) drop-shadow(0 0 10px rgba(255, 0, 128, 0.6));
+            }
+
+            50% {
+                filter: drop-shadow(0 0 16px rgba(0, 255, 255, 1)) drop-shadow(0 0 26px rgba(255, 0, 128, 1));
+            }
+
+            100% {
+                filter: drop-shadow(0 0 6px rgba(0, 255, 255, 0.6)) drop-shadow(0 0 10px rgba(255, 0, 128, 0.6));
+            }
+        }
+
+        .timer-core {
+            position: absolute;
+            inset: 18%;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 1));
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9),
+                0 0 30px rgba(0, 0, 0, 0.9);
+        }
+
+        body.theme-original .timer-core {
+            box-shadow: inset 0 0 12px rgba(255, 227, 101, 0.25),
+                0 0 30px rgba(0, 0, 0, 0.9);
+        }
+
+        body.theme-cyberpunk .timer-core {
+            background: radial-gradient(circle at 30% 0%, rgba(255, 0, 128, 0.35), transparent 60%),
+                radial-gradient(circle at 70% 100%, rgba(0, 255, 255, 0.25), transparent 60%),
+                radial-gradient(circle, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 1));
+        }
+
+        #timer {
+            font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 2.7rem;
+            letter-spacing: 0.12em;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+        }
+
+        body.theme-original #timer {
+            color: #FFE365;
+        }
+
+        body.theme-cyberpunk #timer {
+            color: #fdfcff;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.9),
+                0 0 18px rgba(255, 0, 128, 0.7);
+        }
+
+        #phaseLabel {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.8;
+        }
+
+        .controls {
+            margin-top: 18px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            position: relative;
+            padding: 9px 18px;
+            font-size: 0.8rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(0, 0, 0, 0.7);
+            color: inherit;
+            cursor: pointer;
+            overflow: hidden;
+            transition: transform 0.12s ease-out,
+                box-shadow 0.12s ease-out,
+                border-color 0.12s ease-out,
+                background 0.12s ease-out;
+        }
+
+        button::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.1));
+            opacity: 0;
+            transition: opacity 0.18s ease-out;
+        }
+
+        button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.7);
+        }
+
+        button:hover::before {
+            opacity: 0.7;
+        }
+
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+        }
+
+        .settings-toggle {
+            margin-top: 16px;
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.8;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .settings-toggle-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+        }
+
+        .settings-panel {
+            margin-top: 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 12px 12px;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transform: translateY(-4px);
+            transition: max-height 0.28s ease,
+                opacity 0.28s ease,
+                transform 0.28s ease;
+            font-size: 0.8rem;
+        }
+
+        .settings-panel.open {
+            max-height: 220px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .settings-row label {
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            opacity: 0.9;
+        }
+
+        .settings-row input[type="number"] {
+            width: 64px;
+            padding: 4px 6px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(0, 0, 0, 0.85);
+            color: inherit;
+            text-align: center;
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .settings-row input[type="number"]::-webkit-inner-spin-button,
+        .settings-row input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .settings-row input[type="checkbox"] {
+            accent-color: #FFE365;
+        }
+
+        body.theme-cyberpunk .settings-row input[type="checkbox"] {
+            accent-color: #00ffff;
+        }
+
+        .settings-row span.hint {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%) translateY(120%);
+            background: rgba(0, 0, 0, 0.96);
+            color: inherit;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+            transition: transform 0.25s ease-out,
+                opacity 0.25s ease-out;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #FFE365;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+        }
+
+        body.theme-cyberpunk .toast-dot {
+            background: #00ffff;
+        }
+
+        /* THEME SWITCHER BUTTON + DRAWER (2 themes, grid) */
+        .theme-toggle-btn {
+            position: fixed;
+            right: 16px;
+            bottom: 18px;
+            width: 40px;
+            height: 40px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(0, 0, 0, 0.7);
+            color: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 30;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            transition: transform 0.15s ease-out,
+                box-shadow 0.15s ease-out,
+                background 0.15s ease-out;
+        }
+
+        .theme-toggle-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .theme-drawer {
+            position: fixed;
+            right: 16px;
+            bottom: 70px;
+            width: 230px;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.9);
+            padding: 10px 10px 8px;
+            z-index: 25;
+            transform: translateY(120%);
+            opacity: 0;
+            pointer-events: none;
+            backdrop-filter: blur(12px);
+            transition: transform 0.25s ease-out,
+                opacity 0.25s ease-out;
+        }
+
+        .theme-drawer.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .theme-drawer-title {
+            font-size: 0.7rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .theme-card {
+            border-radius: 10px;
+            padding: 6px 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            transition: background 0.15s ease-out,
+                transform 0.12s ease-out;
+        }
+
+        .theme-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .theme-card.active {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .theme-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .theme-dot.original {
+            background: radial-gradient(circle, #000000, #333000);
+        }
+
+        .theme-dot.cyberpunk {
+            background: radial-gradient(circle, #ff0080, #00ffff);
+        }
+
+        .theme-name {
+            font-size: 0.78rem;
+        }
+
+        .theme-sub {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+
+        @media (max-width: 480px) {
+            .timer-shell {
+                width: 190px;
+                height: 190px;
+            }
+
+            #timer {
+                font-size: 2.4rem;
+            }
+        }
+    </style>
+</head>
+
+<body class="theme-original">
+    <div id="app">
+        <h1>Taskflow Timer</h1>
+        <div id="subtitle">Original • Classic • Focus</div>
+
+        <div class="mode-label">
+            <span id="modeLabel">Session</span>
+        </div>
+
+        <div class="timer-shell">
+            <svg class="timer-ring" viewBox="0 0 120 120">
+                <!-- ORIGINAL RING -->
+                <circle class="ring-original-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-original-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- CYBERPUNK RING -->
+                <defs>
+                    <linearGradient id="cyberGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00ffff" />
+                        <stop offset="50%" stop-color="#ff00ff" />
+                        <stop offset="100%" stop-color="#ff0080" />
+                    </linearGradient>
+                </defs>
+                <circle class="ring-cyber-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-cyber-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- TERMINAL RING -->
+                <circle class="ring-terminal-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-terminal-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- FOREST RING -->
+                <circle class="ring-forest-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-forest-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- VISIONOS RING -->
+                <circle class="ring-visionos-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-visionos-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- GHIBLI RING -->
+                <circle class="ring-ghibli-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-ghibli-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- DASHBOARD PRO RING -->
+                <circle class="ring-dashboard-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-dashboard-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- NEWSPAPER RING -->
+                <circle class="ring-newspaper-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-newspaper-fg" cx="60" cy="60" r="52"></circle>
+
+                <!-- GAMEBOY RING -->
+                <circle class="ring-gameboy-bg" cx="60" cy="60" r="52"></circle>
+                <circle class="ring-gameboy-fg" cx="60" cy="60" r="52"></circle>
+
+
+                <!-- END SVG -->
+                <!-- END SVG -->
+                <!-- END SVG -->
+                <!-- END SVG -->
+
+
+            </svg>
+            <div class="timer-core">
+                <div id="timer">00:00</div>
+                <div id="phaseLabel">Ready</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="start"><span>Start</span></button>
+            <button id="reset"><span>Reset</span></button>
+        </div>
+
+        <div class="settings-toggle" id="settingsToggle">
+            <div class="settings-toggle-icon">⚙</div>
+            <span>Timer Settings</span>
+        </div>
+
+        <div class="settings-panel" id="settingsPanel">
+            <div class="settings-row">
+                <label for="session-length">Session (min)</label>
+                <input type="number" id="session-length" value="25" min="1" max="180">
+            </div>
+            <div class="settings-row">
+                <label for="break-length">Break (min)</label>
+                <input type="number" id="break-length" value="5" min="1" max="60">
+            </div>
+            <div class="settings-row">
+                <label for="enable-sound">Sound</label>
+                <input type="checkbox" id="enable-sound" checked>
+                <span class="hint">Chime on phase change</span>
+            </div>
+            <div class="settings-row">
+                <label for="enable-notify">Notify</label>
+                <input type="checkbox" id="enable-notify">
+                <span class="hint">Desktop notification</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <div class="toast-dot"></div>
+        <span id="toastText">Session complete</span>
+    </div>
+
+    <div class="theme-toggle-btn" id="themeToggleBtn" title="Switch theme">
+        <span>🎨</span>
+    </div>
+
+    <div class="theme-drawer" id="themeDrawer">
+        <div class="theme-drawer-title">Themes</div>
+        <div class="theme-grid">
+            <div class="theme-card active" data-theme="original">
+                <div class="theme-dot original"></div>
+                <div>
+                    <div class="theme-name">Original</div>
+                    <div class="theme-sub">Black &amp; Gold</div>
+                </div>
+            </div>
+            <div class="theme-card" data-theme="cyberpunk">
+                <div class="theme-dot cyberpunk"></div>
+                <div>
+                    <div class="theme-name">Cyberpunk Neon</div>
+                    <div class="theme-sub">Night City Focus</div>
+                </div>
+            </div>
+            <div class="theme-card" data-theme="terminal">
+                <div class="theme-dot" style="background:#00ff66;"></div>
+                <div>
+                    <div class="theme-name">Terminal</div>
+                    <div class="theme-sub">Hacker Mode</div>
+                </div>
+            </div>
+            <div class="theme-card" data-theme="forest">
+                <div class="theme-dot" style="background:#2f6f3a;"></div>
+                <div>
+                    <div class="theme-name">Forest</div>
+                    <div class="theme-sub">Nature Focus</div>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="visionos">
+                <div class="theme-dot" style="background:#ffffff;"></div>
+                <div>
+                    <div class="theme-name">VisionOS</div>
+                    <div class="theme-sub">Floating UI</div>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="ghibli">
+                <div class="theme-dot" style="background:#ffd6c8;"></div>
+                <div>
+                    <div class="theme-name">Ghibli</div>
+                    <div class="theme-sub">Pastel Calm</div>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="dashboard">
+                <div class="theme-dot" style="background:#1a1a1a;"></div>
+                <div>
+                    <div class="theme-name">Dashboard Pro</div>
+                    <div class="theme-sub">Clean & Data Driven</div>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="newspaper">
+                <div class="theme-dot" style="background:#111;"></div>
+                <div>
+                    <div class="theme-name">Newspaper</div>
+                    <div class="theme-sub">Monochrome Print</div>
+                </div>
+            </div>
+
+            <div class="theme-card" data-theme="gameboy">
+                <div class="theme-dot" style="background:#9bbc0f;"></div>
+                <div>
+                    <div class="theme-name">Gameboy</div>
+                    <div class="theme-sub">Pixel Retro</div>
+                </div>
+            </div>
+
+
+            <!-- END THEME CARD -->
+            <!-- END THEME CARD -->
+            <!-- END THEME CARD -->
+
+
+
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const timerDisplay = document.getElementById('timer');
+            const phaseLabel = document.getElementById('phaseLabel');
+            const modeLabel = document.getElementById('modeLabel');
+            const subtitle = document.getElementById('subtitle');
+            const startButton = document.getElementById('start');
+            const resetButton = document.getElementById('reset');
+            const sessionLengthInput = document.getElementById('session-length');
+            const breakLengthInput = document.getElementById('break-length');
+            const settingsToggle = document.getElementById('settingsToggle');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const enableSound = document.getElementById('enable-sound');
+            const enableNotify = document.getElementById('enable-notify');
+            const toast = document.getElementById('toast');
+            const toastText = document.getElementById('toastText');
+
+            const themeToggleBtn = document.getElementById('themeToggleBtn');
+            const themeDrawer = document.getElementById('themeDrawer');
+            const themeCards = Array.from(document.querySelectorAll('.theme-card'));
+
+            const ringOriginalFg = document.querySelector('.ring-original-fg');
+            const ringCyberFg = document.querySelector('.ring-cyber-fg');
+            const RADIUS = 52;
+            const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+            [ringOriginalFg, ringCyberFg].forEach(r => {
+                r.style.strokeDasharray = `${CIRCUMFERENCE} ${CIRCUMFERENCE}`;
+                r.style.strokeDashoffset = `${CIRCUMFERENCE}`;
+            });
+
+            let timerInterval = null;
+            let isRunning = false;
+            let isBreak = false;
+            let timeLeft = 0;
+            let totalTime = 0;
+
+            function initFromSession() {
+                isBreak = false;
+                const mins = parseInt(sessionLengthInput.value, 10) || 25;
+                totalTime = mins * 60;
+                timeLeft = totalTime;
+                updateTimerDisplay();
+                updatePhaseLabels();
+                updateRing();
+            }
+
+            function updateTimerDisplay() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent =
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function updatePhaseLabels() {
+                if (isBreak) {
+                    phaseLabel.textContent = 'Break';
+                    modeLabel.textContent = 'Break';
+                } else {
+                    phaseLabel.textContent = 'Session';
+                    modeLabel.textContent = 'Session';
+                }
+            }
+
+            function activeRing() {
+                return document.body.classList.contains('theme-cyberpunk')
+                    ? ringCyberFg
+                    : ringOriginalFg;
+            }
+
+            function updateRing() {
+                const ring = activeRing();
+                if (!ring || totalTime <= 0) {
+                    if (ring) ring.style.strokeDashoffset = `${CIRCUMFERENCE}`;
+                    return;
+                }
+                const progress = 1 - (timeLeft / totalTime);
+                const offset = CIRCUMFERENCE * progress;
+                ring.style.strokeDashoffset = `${offset}`;
+            }
+
+            function showToast(message) {
+                toastText.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2600);
+            }
+
+            function playChime() {
+                if (!enableSound.checked) return;
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const o = ctx.createOscillator();
+                    const g = ctx.createGain();
+                    o.type = 'sine';
+                    o.frequency.setValueAtTime(880, ctx.currentTime);
+                    o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
+                    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.03);
+                    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.6);
+                    o.connect(g);
+                    g.connect(ctx.destination);
+                    o.start();
+                    o.stop(ctx.currentTime + 0.65);
+                } catch (e) { }
+            }
+
+            function requestNotificationPermissionIfNeeded() {
+                if (!enableNotify.checked) return;
+                if (!('Notification' in window)) return;
+                if (Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            }
+
+            function sendNotification(message) {
+                if (!enableNotify.checked) return;
+                if (!('Notification' in window)) return;
+                if (Notification.permission === 'granted') {
+                    new Notification('Taskflow Timer', { body: message });
+                }
+            }
+
+            function tick() {
+                timeLeft--;
+                updateTimerDisplay();
+                updateRing();
+
+                if (timeLeft < 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    isRunning = false;
+
+                    if (isBreak) {
+                        isBreak = false;
+                        const mins = parseInt(sessionLengthInput.value, 10) || 25;
+                        totalTime = mins * 60;
+                        timeLeft = totalTime;
+                        updatePhaseLabels();
+                        updateTimerDisplay();
+                        updateRing();
+                        playChime();
+                        showToast('Break complete – Session');
+                        sendNotification('Break complete. Time to focus.');
+                    } else {
+                        isBreak = true;
+                        const mins = parseInt(breakLengthInput.value, 10) || 5;
+                        totalTime = mins * 60;
+                        timeLeft = totalTime;
+                        updatePhaseLabels();
+                        updateTimerDisplay();
+                        updateRing();
+                        playChime();
+                        showToast('Session complete – Break');
+                        sendNotification('Session complete. Take a break.');
+                    }
+
+                    startTimer();
+                }
+            }
+
+            function startTimer() {
+                if (isRunning) return;
+                isRunning = true;
+                startButton.querySelector('span').textContent = 'Pause';
+                phaseLabel.textContent = isBreak ? 'Break' : 'Session';
+                requestNotificationPermissionIfNeeded();
+                timerInterval = setInterval(tick, 1000);
+            }
+
+            function pauseTimer() {
+                if (!isRunning) return;
+                isRunning = false;
+                startButton.querySelector('span').textContent = 'Resume';
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            function resetTimer() {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isRunning = false;
+                startButton.querySelector('span').textContent = 'Start';
+                initFromSession();
+                phaseLabel.textContent = 'Ready';
+            }
+
+            startButton.addEventListener('click', () => {
+                if (!isRunning && timeLeft === 0) {
+                    initFromSession();
+                }
+                if (isRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            });
+
+            resetButton.addEventListener('click', resetTimer);
+
+            settingsToggle.addEventListener('click', () => {
+                settingsPanel.classList.toggle('open');
+            });
+
+            sessionLengthInput.addEventListener('change', () => {
+                if (!isRunning && !isBreak) {
+                    initFromSession();
+                }
+            });
+
+            breakLengthInput.addEventListener('change', () => {
+                if (!isRunning && isBreak) {
+                    const mins = parseInt(breakLengthInput.value, 10) || 5;
+                    totalTime = mins * 60;
+                    timeLeft = totalTime;
+                    updateTimerDisplay();
+                    updateRing();
+                }
+            });
+
+            function applyTheme(theme) {
+                document.body.classList.remove('theme-original', 'theme-cyberpunk', 'theme-terminal', 'theme-forest');
+                if (theme === 'cyberpunk') {
+                    document.body.classList.add('theme-cyberpunk');
+                    subtitle.textContent = 'Cyberpunk • Neon • Focus';
+                } else if (theme === 'terminal') {
+                    document.body.classList.add('theme-terminal');
+                    subtitle.textContent = 'Terminal • Hacker • Focus';
+                } else if (theme === 'forest') {
+                    document.body.classList.add('theme-forest');
+                    subtitle.textContent = 'Forest • Calm • Focus';
+                } else if (theme === 'dashboard') {
+                    document.body.classList.add('theme-dashboard');
+                    subtitle.textContent = 'Dashboard • Pro • Focus';
+                } else {
+                    document.body.classList.add('theme-original');
+                    subtitle.textContent = 'Original • Classic • Focus';
+                }
+
+                themeCards.forEach(card => {
+                    card.classList.toggle('active', card.getAttribute('data-theme') === theme);
+                });
+
+                updateRing();
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                themeDrawer.classList.toggle('open');
+            });
+
+            themeCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const theme = card.getAttribute('data-theme');
+                    applyTheme(theme);
+                    themeDrawer.classList.remove('open');
+                });
+            });
+
+            // init
+            initFromSession();
+        })();
+    </script>
+</body>
+
+</html>
