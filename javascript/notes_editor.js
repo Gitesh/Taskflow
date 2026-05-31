@@ -291,6 +291,7 @@ class MarkdownParser {
         const lines = text.split('\n');
         let htmlResult = [];
         let inList = false;
+        let inOrderedList = false;
         let inBlockquote = false;
         let inCodeBlock = false;
         let codeBlockLang = '';
@@ -443,29 +444,50 @@ class MarkdownParser {
             // Horizontal Rule
             if (rawLine === '---' || rawLine === '***' || rawLine === '___') {
                 if (inList) { htmlResult.push('</ul>'); inList = false; }
+                if (inOrderedList) { htmlResult.push('</ol>'); inOrderedList = false; }
                 htmlResult.push('<hr class="markdown-hr">');
                 continue;
             }
 
-            // Empty lines
-            if (rawLine === '' && !inList) {
+            // Empty lines (outside lists — lists handle their own empty lines via the else branch)
+            if (rawLine === '' && !inList && !inOrderedList) {
                 htmlResult.push(`<div data-line="${i}" class="empty-line">&nbsp;</div>`);
                 continue;
             }
 
             // Headings
             if (rawLine.startsWith('# ')) {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                if (inOrderedList) { htmlResult.push('</ol>'); inOrderedList = false; }
                 htmlResult.push(`<h1 data-line="${i}" class="markdown-h1">${parseInline(rawLine.substring(2))}</h1>`);
             } else if (rawLine.startsWith('## ')) {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                if (inOrderedList) { htmlResult.push('</ol>'); inOrderedList = false; }
                 htmlResult.push(`<h2 data-line="${i}" class="markdown-h2">${parseInline(rawLine.substring(3))}</h2>`);
             } else if (rawLine.startsWith('### ')) {
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                if (inOrderedList) { htmlResult.push('</ol>'); inOrderedList = false; }
                 htmlResult.push(`<h3 data-line="${i}" class="markdown-h3">${parseInline(rawLine.substring(4))}</h3>`);
             }
-            // Lists & Task Lists (Support indentation, allow no space but ignore bold/tags)
+            // Ordered Lists (1. 2. 10. etc.)
+            else if (/^(\s*)\d+\.\s/.test(line)) {
+                const olMatch = line.match(/^(\s*)(\d+)\.\s+([\s\S]*)/);
+                const indent = olMatch ? olMatch[1].length : 0;
+                const content = parseInline(olMatch ? olMatch[3] : rawLine);
+                const style = indent > 0 ? `style="margin-left: ${indent * 10}px"` : '';
+                if (inList) { htmlResult.push('</ul>'); inList = false; }
+                if (!inOrderedList) {
+                    htmlResult.push('<ol class="markdown-list">');
+                    inOrderedList = true;
+                }
+                htmlResult.push(`<li data-line="${i}" ${style}>${content}</li>`);
+            }
+            // Unordered Lists & Task Lists (Support indentation, allow no space but ignore bold/tags)
             else if (line.match(/^(\s*)(?:-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))(?:\s*)/)) {
                 const match = line.match(/^(\s*)(?:-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))(?:\s*)/);
                 const indent = match[1].length;
 
+                if (inOrderedList) { htmlResult.push('</ol>'); inOrderedList = false; }
                 if (!inList) {
                     htmlResult.push('<ul class="markdown-list">');
                     inList = true;
@@ -481,6 +503,10 @@ class MarkdownParser {
                     htmlResult.push('</ul>');
                     inList = false;
                 }
+                if (inOrderedList) {
+                    htmlResult.push('</ol>');
+                    inOrderedList = false;
+                }
                 if (rawLine !== '') {
                     htmlResult.push(`<div data-line="${i}" class="markdown-paragraph">${parseInline(rawLine)}</div>`);
                 } else {
@@ -491,6 +517,7 @@ class MarkdownParser {
 
         // Close any open blocks
         if (inList) htmlResult.push('</ul>');
+        if (inOrderedList) htmlResult.push('</ol>');
         if (inBlockquote) htmlResult.push('</blockquote>');
         if (inCodeBlock) htmlResult.push('</code></pre>');
 
@@ -677,6 +704,19 @@ class HtmlToMarkdownConverter {
                 if (node.classList.contains('md-hash')) {
                     return node.textContent;
                 }
+                // Handle browser-generated inline styles from contenteditable formatting
+                {
+                    const spanStyle = node.getAttribute('style') || '';
+                    if (/font-weight\s*:\s*(bold|[6-9]\d{2})/.test(spanStyle) && content.trim()) {
+                        return `**${content}**`;
+                    }
+                    if (/font-style\s*:\s*italic/.test(spanStyle) && content.trim()) {
+                        return `*${content}*`;
+                    }
+                    if (/text-decoration[^;]*:\s*[^;]*underline/.test(spanStyle) && content.trim()) {
+                        return `<u>${content}</u>`;
+                    }
+                }
                 return content;
 
             case 'pre':
@@ -709,6 +749,9 @@ class HtmlToMarkdownConverter {
                 }
                 return '';
 
+            case 'blockquote':
+                return `\n> ${content.replace(/\n/g, '\n> ')}\n`;
+
             case 'ul':
             case 'ol':
                 // Lists are tricky with recursion since we need to know we are in a list for LI items
@@ -719,16 +762,17 @@ class HtmlToMarkdownConverter {
                 // Check if it's a footnote item
                 if (node.closest('.markdown-footnotes')) {
                     const id = node.id.replace('fn-', '');
-                    // Remove backref link from content if possible, or just return basic
                     const cleanContent = content.replace(' ↩', '');
                     return `\n[^${id}]: ${cleanContent.trim()}\n`;
                 }
-                // Ideally check parent for OL/UL but simple dash works for now
-                // Improvement: could pass context 'listType'
-                const parent = node.parentElement;
-                if (parent && parent.tagName === 'OL') {
-                    // Start index not tracked easily in recursion without context, fallback to 1.
-                    return `1. ${content}\n`;
+                // Track real position within OL parent for correct numbering
+                {
+                    const liParent = node.parentElement;
+                    if (liParent && liParent.tagName === 'OL') {
+                        const liSiblings = Array.from(liParent.children).filter(c => c.tagName === 'LI');
+                        const liIndex = liSiblings.indexOf(node) + 1;
+                        return `${liIndex}. ${content}\n`;
+                    }
                 }
                 return `- ${content}\n`;
 
@@ -1377,11 +1421,25 @@ class MarkdownEditor {
             <span id="idSearchCounter" class="search-counter">0 of 0</span>
             <button class="notes-search-btn" id="btnCloseSearch" title="Close"><i class="material-icons">close</i></button>
           </div>
+          
+          <div class="notes-link-popover" id="idLinkPopover" style="display: none;">
+            <input type="text" id="idLinkUrlInput" placeholder="https://example.com" aria-label="Link URL">
+            <button class="notes-link-popover-btn" id="btnApplyLink" title="Apply"><i class="material-icons">check</i></button>
+            <button class="notes-link-popover-btn" id="btnCancelLink" title="Cancel"><i class="material-icons">close</i></button>
+          </div>
+
           <style>
             .search-counter { font-size: 11px; color: var(--color-text-secondary); margin: 0 8px; white-space: nowrap; min-width: 40px; text-align: center; font-family: 'Outfit', sans-serif; opacity: 0.8; }
             .notes-search-panel .divider { width: 1px; height: 20px; background: var(--color-border); margin: 0 5px; opacity: 0.5; }
             .find-highlight { background-color: rgba(255, 235, 59, 0.4); border-radius: 2px; }
             .find-highlight-active { background-color: #ff9800 !important; color: white !important; border-radius: 2px; box-shadow: 0 0 0 2px #ff9800; }
+            
+            .notes-link-popover { position: absolute; display: flex; align-items: center; background: var(--color-bg, #fff); border: 1px solid var(--color-border); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 6px; z-index: 1000; gap: 4px; }
+            .notes-link-popover input { border: 1px solid var(--color-border); border-radius: 3px; padding: 4px 8px; font-size: 13px; font-family: inherit; width: 180px; background: inherit; color: inherit; }
+            .notes-link-popover input:focus { outline: none; border-color: var(--color-primary); }
+            .notes-link-popover-btn { background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 3px; color: var(--color-text); }
+            .notes-link-popover-btn:hover { background: var(--color-hover); }
+            .notes-link-popover-btn i { font-size: 18px; }
           </style>
         `;
     }
@@ -1411,6 +1469,17 @@ class MarkdownEditor {
                 this.syntaxLayer.scrollLeft = this.textarea.scrollLeft;
             }
         });
+
+        this._debouncedSyncToMarkdown = debounce(() => {
+            this.isSyncingFromPreview = true;
+            try {
+                this.syncEditorToMarkdown();
+            } finally {
+                this.isSyncingFromPreview = false;
+            }
+        }, 400);
+
+        this.setupLinkPopover();
     }
 
     highlight() {
@@ -1765,15 +1834,15 @@ class MarkdownEditor {
 
     handleEditorInput(e) {
         if (this.isActionInProgress) return;
-        this.isSyncingFromPreview = true;
-        try {
-            this.scanAndReplaceLivePatterns();
+        this.scanAndReplaceLivePatterns();
+        this.updateStats();
+        this.autoSave.markDirty();
+        this.highlight();
+        
+        if (this._debouncedSyncToMarkdown) {
+            this._debouncedSyncToMarkdown();
+        } else {
             this.syncEditorToMarkdown();
-            this.updateStats();
-            this.autoSave.markDirty();
-            this.highlight();
-        } finally {
-            this.isSyncingFromPreview = false;
         }
     }
 
@@ -1939,43 +2008,105 @@ class MarkdownEditor {
 
     syncEditorToMarkdown() {
         const mdLines = [];
-        const lines = this.textarea.value.split('\n');
-
-        const processBlock = (block) => {
-            const lineIdx = parseInt(block.getAttribute('data-line'), 10);
-            let prefix = "";
-            if (!isNaN(lineIdx) && lines[lineIdx]) {
-                const prefixMatch = lines[lineIdx].match(/^(\s*(?:#{1,6}|>|-(?!(?:-)|(?:\s*[adfq]-))|\*(?!\*))\s*(?:\[[ x]\]\s*)?)/);
-                prefix = prefixMatch ? prefixMatch[1] : "";
+        
+        const convertBlock = (node) => {
+            if (node.nodeType === 3) {
+                const text = node.textContent.trim();
+                if (text) mdLines.push(text);
+                return;
             }
-
-            let content = this.htmlConverter.convert(block.innerHTML, true, true).replace(/\u00A0/g, ' ').replace(/&nbsp;/g, ' ');
-
-            // If we have a prefix and content doesn't already include it (common for lists), prepend it
-            if (prefix && !content.trimStart().startsWith(prefix.trim())) {
-                mdLines.push(prefix + content);
-            } else {
+            if (node.nodeType !== 1) return;
+            
+            const tag = node.tagName.toUpperCase();
+            
+            if (tag === 'HR') {
+                mdLines.push('---');
+                return;
+            }
+            
+            if (tag === 'PRE') {
+                const codeChild = node.querySelector('code');
+                const rawCode = codeChild ? codeChild.textContent : node.textContent;
+                const lang = node.getAttribute('data-lang') || '';
+                mdLines.push(`\`\`\`${lang}\n${rawCode.replace(/\n$/, '')}\n\`\`\``);
+                return;
+            }
+            
+            if (tag === 'BLOCKQUOTE') {
+                const innerHtml = node.innerHTML;
+                const innerMd = this.htmlConverter.convert(innerHtml, false, true);
+                const lines = innerMd.split('\n');
+                lines.forEach(line => {
+                    mdLines.push(`> ${line}`);
+                });
+                return;
+            }
+            
+            if (tag === 'UL' || tag === 'OL') {
+                const isOrdered = tag === 'OL';
+                const items = Array.from(node.children).filter(c => c.tagName.toUpperCase() === 'LI');
+                items.forEach((li, idx) => {
+                    const marginLeft = li.style.marginLeft || '';
+                    const match = marginLeft.match(/(\d+)px/);
+                    const indentPx = match ? parseInt(match[1], 10) : 0;
+                    const indentSpaces = ' '.repeat(Math.max(0, Math.floor(indentPx / 10) * 2));
+                    
+                    const checkbox = li.querySelector('input[type="checkbox"]');
+                    let checkboxStr = '';
+                    if (checkbox) {
+                        checkboxStr = checkbox.checked ? '[x] ' : '[ ] ';
+                    }
+                    
+                    let liHtml = li.innerHTML;
+                    if (checkbox) {
+                        const temp = document.createElement('div');
+                        temp.innerHTML = liHtml;
+                        const cbEl = temp.querySelector('input[type="checkbox"]');
+                        if (cbEl) cbEl.remove();
+                        liHtml = temp.innerHTML;
+                    }
+                    
+                    const liContent = this.htmlConverter.convert(liHtml, true, true)
+                        .trim()
+                        .replace(/\u00A0/g, ' ')
+                        .replace(/&nbsp;/g, ' ');
+                    
+                    const listMarker = isOrdered ? `${idx + 1}. ` : '- ';
+                    mdLines.push(`${indentSpaces}${listMarker}${checkboxStr}${liContent}`);
+                });
+                return;
+            }
+            
+            if (tag === 'DIV' && node.classList.contains('empty-line')) {
+                mdLines.push('');
+                return;
+            }
+            
+            if (tag.startsWith('H') && tag.length === 2) {
+                const level = parseInt(tag[1], 10);
+                if (level >= 1 && level <= 6) {
+                    const content = this.htmlConverter.convert(node.innerHTML, true, true)
+                        .trim()
+                        .replace(/\u00A0/g, ' ')
+                        .replace(/&nbsp;/g, ' ');
+                    mdLines.push('#'.repeat(level) + ' ' + content);
+                    return;
+                }
+            }
+            
+            if (tag === 'DIV' || tag === 'P') {
+                const content = this.htmlConverter.convert(node.innerHTML, true, true)
+                    .trim()
+                    .replace(/\u00A0/g, ' ')
+                    .replace(/&nbsp;/g, ' ');
                 mdLines.push(content);
             }
         };
-
-        const children = Array.from(this.preview.childNodes);
-        children.forEach(child => {
-            if (child.nodeType === 1) { // Element
-                const tag = child.tagName;
-                if (tag === 'UL' || tag === 'OL' || tag === 'BLOCKQUOTE' || tag === 'TABLE' || tag === 'THEAD' || tag === 'TBODY') {
-                    Array.from(child.children).forEach(inner => processBlock(inner));
-                } else if (tag === 'DIV' || tag === 'P' || tag.startsWith('H')) {
-                    processBlock(child);
-                } else if (tag === 'HR') {
-                    mdLines.push('---');
-                }
-            } else if (child.nodeType === 3 && child.textContent.trim()) {
-                // Handle stray text nodes at root level if any
-                mdLines.push(child.textContent);
-            }
+        
+        Array.from(this.preview.childNodes).forEach(child => {
+            convertBlock(child);
         });
-
+        
         const newMarkdown = mdLines.join('\n');
         if (this.textarea.value !== newMarkdown) {
             this.textarea.value = newMarkdown;
@@ -2085,6 +2216,7 @@ class MarkdownEditor {
         if (action === 'help') { this.showHelpModal(); return; }
         if (action === 'undo') { this.handleUndoRedo(true); return; }
         if (action === 'redo') { this.handleUndoRedo(false); return; }
+        if (action === 'link') { this.handleLinkAction(); return; }
         this.saveToHistory();
         if (isPreviewActive) this.applyFormatModern(action);
         else {
@@ -2120,16 +2252,92 @@ class MarkdownEditor {
             case 'header3': document.execCommand('formatBlock', false, '<h3>'); break;
             case 'list': document.execCommand('insertUnorderedList', false, val); break;
             case 'task': document.execCommand('insertHTML', false, '<li>[ ] &nbsp;</li>'); break;
-            case 'link': const url = prompt("Enter URL:", "https://"); if (url) document.execCommand('createLink', false, url); break;
+            case 'link': this.handleLinkAction(); break;
         }
         this.handleEditorInput();
     }
 
     insertMarkdown(before, after) { this.textSelection.wrapSelection(before, after); this.updatePreview(); }
-    handleLinkAction() { const url = prompt("Enter URL:", "https://"); if (url) this.insertMarkdown("[", `](${url})`); }
+    
+    handleLinkAction() {
+        const popover = this.dialog.querySelector('#idLinkPopover');
+        const input = this.dialog.querySelector('#idLinkUrlInput');
+        const linkBtn = this.dialog.querySelector('.notes-toolbar [data-action="link"]');
+        if (!popover || !input || !linkBtn) return;
+
+        // Toggle visibility
+        if (popover.style.display === 'flex') {
+            popover.style.display = 'none';
+            return;
+        }
+
+        // Position it below the link button
+        const rect = linkBtn.getBoundingClientRect();
+        const dialogRect = this.dialog.getBoundingClientRect();
+        
+        popover.style.left = `${rect.left - dialogRect.left}px`;
+        popover.style.top = `${rect.bottom - dialogRect.top + 5}px`;
+        popover.style.display = 'flex';
+        
+        input.value = 'https://';
+        input.focus();
+        input.select();
+    }
+
+    setupLinkPopover() {
+        const popover = this.dialog.querySelector('#idLinkPopover');
+        const input = this.dialog.querySelector('#idLinkUrlInput');
+        const btnApply = this.dialog.querySelector('#btnApplyLink');
+        const btnCancel = this.dialog.querySelector('#btnCancelLink');
+        if (!popover || !input || !btnApply || !btnCancel) return;
+
+        const applyLink = () => {
+            const url = input.value.trim();
+            if (url && url !== 'https://') {
+                if (this.currentView === 'editor') {
+                    this.insertMarkdown("[", `](${url})`);
+                } else if (this.currentView === 'preview') {
+                    // WYSIWYG mode link insertion
+                    document.execCommand('createLink', false, url);
+                    this.syncEditorToMarkdown();
+                } else {
+                    // Split view: insert in textarea
+                    this.insertMarkdown("[", `](${url})`);
+                }
+            }
+            popover.style.display = 'none';
+        };
+
+        this.cleanupManager.addEventListener(btnApply, 'click', (e) => {
+            e.preventDefault();
+            applyLink();
+        });
+
+        this.cleanupManager.addEventListener(btnCancel, 'click', (e) => {
+            e.preventDefault();
+            popover.style.display = 'none';
+        });
+
+        this.cleanupManager.addEventListener(input, 'keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                applyLink();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                popover.style.display = 'none';
+            }
+        });
+    }
 
     handlePaste(e) {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        const clipboardData = e.clipboardData || e.originalEvent.clipboardData;
+        const items = clipboardData.items;
+        const types = clipboardData.types || [];
+        
+        // If RTF data is present, ignore image paste to avoid duplicating Office content as image uploads
+        const hasRtf = Array.from(items).some(item => item.type === 'text/rtf') || types.includes('text/rtf');
+        if (hasRtf) return;
+
         let imageDetected = false;
         for (const item of items) {
             if (item.type.indexOf("image") !== -1) {
@@ -2189,13 +2397,7 @@ class MarkdownEditor {
         } finally { this.isActionInProgress = false; }
     }
 
-    updateStats() {
-        const text = this.textarea.value, words = text.trim() ? text.trim().split(/\s+/).length : 0, chars = text.length, readTime = Math.ceil(words / 200);
-        const wordCountEl = this.dialog.querySelector('#idWordCount'), charCountEl = this.dialog.querySelector('#idCharCount'), readTimeEl = this.dialog.querySelector('#idReadTime');
-        if (wordCountEl) wordCountEl.textContent = `${words} words`;
-        if (charCountEl) charCountEl.textContent = `${chars} characters`;
-        if (readTimeEl) readTimeEl.textContent = `${readTime} min read`;
-    }
+    // updateStats() is defined above (line ~1751) — duplicate removed
 
     async resolveImages(forceLoad = false) {
         const images = this.preview.querySelectorAll('img[data-img-id]');
