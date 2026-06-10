@@ -212,7 +212,7 @@ class ImageStorage {
             const referencedIds = new Set();
             taskData.forEach(task => {
                 if (task.notes) {
-                    const matches = task.notes.match(/tf-img:\/\/(img_\d+)/g);
+                    const matches = task.notes.match(/tf-img:\/\/(img_[\w]+)/g);
                     if (matches) {
                         matches.forEach(match => {
                             const id = match.replace('tf-img://', '');
@@ -1244,6 +1244,9 @@ class MarkdownEditor {
             // Apply view state
             this.setView(this.currentView);
 
+            // Update toolbar active states for current position
+            this.updateToolbarActiveStates();
+
             // Push initial state to undo stack
             this.saveToHistory();
 
@@ -1537,14 +1540,23 @@ class MarkdownEditor {
         this.cleanupManager.addEventListener(this.textarea, 'click', () => {
             this.highlight();
             this.highlightPreviewSearch();
+            this.updateToolbarActiveStates();
         });
         this.cleanupManager.addEventListener(this.textarea, 'keyup', () => {
             this.highlight();
             this.highlightPreviewSearch();
+            this.updateToolbarActiveStates();
         });
         this.cleanupManager.addEventListener(this.preview, 'focusin', (e) => {
             this.lastActiveElement = e.target;
             this.bringToFront();
+            this.updateToolbarActiveStates();
+        });
+
+        this.cleanupManager.addEventListener(document, 'selectionchange', () => {
+            if (this.lastActiveElement === this.preview) {
+                this.updateToolbarActiveStates();
+            }
         });
 
         this.cleanupManager.addEventListener(window, 'resize', () => {
@@ -1781,6 +1793,7 @@ class MarkdownEditor {
         this.paneEditor.classList.toggle('hidden', view === 'preview');
         this.panePreview.classList.toggle('hidden', view === 'editor');
         this.dialog.querySelectorAll('.notes-toggle-btn').forEach(b => b.classList.toggle('active', b.id === `btnView${view.charAt(0).toUpperCase() + view.slice(1)}`));
+        this.updateToolbarActiveStates();
     }
 
     async updatePreview(isFullRefresh = false) {
@@ -2239,6 +2252,7 @@ class MarkdownEditor {
         }
         this.updateStats();
         this.autoSave.markDirty();
+        this.updateToolbarActiveStates();
     }
 
     applyFormatModern(action, val = null) {
@@ -2255,10 +2269,69 @@ class MarkdownEditor {
             case 'link': this.handleLinkAction(); break;
         }
         this.handleEditorInput();
+        this.updateToolbarActiveStates();
     }
 
     insertMarkdown(before, after) { this.textSelection.wrapSelection(before, after); this.updatePreview(); }
-    
+
+    detectActiveFormats() {
+        const formats = { bold: false, italic: false, underline: false, strikethrough: false, code: false };
+
+        if (this.lastActiveElement === this.textarea) {
+            const text = this.textarea.value;
+            const cursor = this.textarea.selectionStart;
+
+            const isInside = (open, close) => {
+                let opens = 0, closes = 0;
+                let i = 0;
+                while (i < cursor) {
+                    if (text.substring(i, i + open.length) === open) {
+                        opens++;
+                        i += open.length;
+                    } else if (text.substring(i, i + close.length) === close) {
+                        closes++;
+                        i += close.length;
+                    } else {
+                        i++;
+                    }
+                }
+                return opens > closes;
+            };
+
+            formats.bold = isInside('**', '**');
+            formats.italic = isInside('*', '*');
+            formats.underline = isInside('<u>', '</u>');
+            formats.strikethrough = isInside('~~', '~~');
+            formats.code = isInside('`', '`');
+        } else if (this.lastActiveElement === this.preview) {
+            formats.bold = document.queryCommandState('bold');
+            formats.italic = document.queryCommandState('italic');
+            formats.underline = document.queryCommandState('underline');
+            formats.strikethrough = document.queryCommandState('strikeThrough');
+            formats.code = false;
+        }
+
+        return formats;
+    }
+
+    updateToolbarActiveStates() {
+        const formats = this.detectActiveFormats();
+        const formatActionMap = {
+            bold: 'bold',
+            italic: 'italic',
+            underline: 'underline',
+            strikethrough: 'strikethrough',
+            code: 'code'
+        };
+
+        Object.entries(formatActionMap).forEach(([format, action]) => {
+            const btn = this.dialog.querySelector(`.notes-toolbar [data-action="${action}"]`);
+            if (btn) {
+                btn.classList.toggle('active', formats[format]);
+            }
+        });
+    }
+
     handleLinkAction() {
         const popover = this.dialog.querySelector('#idLinkPopover');
         const input = this.dialog.querySelector('#idLinkUrlInput');
@@ -2269,6 +2342,20 @@ class MarkdownEditor {
         if (popover.style.display === 'flex') {
             popover.style.display = 'none';
             return;
+        }
+
+        // Cache selection
+        this.savedSelectionRange = null;
+        this.savedTextareaSelection = null;
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            this.savedSelectionRange = sel.getRangeAt(0).cloneRange();
+        }
+        if (this.textarea) {
+            this.savedTextareaSelection = {
+                start: this.textarea.selectionStart,
+                end: this.textarea.selectionEnd
+            };
         }
 
         // Position it below the link button
@@ -2294,15 +2381,29 @@ class MarkdownEditor {
         const applyLink = () => {
             const url = input.value.trim();
             if (url && url !== 'https://') {
-                if (this.currentView === 'editor') {
+                if (this.currentView === 'editor' || (this.currentView === 'split' && this.lastActiveElement !== this.preview)) {
+                    if (this.savedTextareaSelection) {
+                        this.textarea.setSelectionRange(this.savedTextareaSelection.start, this.savedTextareaSelection.end);
+                    }
+                    this.textarea.focus();
                     this.insertMarkdown("[", `](${url})`);
-                } else if (this.currentView === 'preview') {
-                    // WYSIWYG mode link insertion
-                    document.execCommand('createLink', false, url);
+                } else if (this.currentView === 'preview' || (this.currentView === 'split' && this.lastActiveElement === this.preview)) {
+                    // Restore selection first
+                    if (this.savedSelectionRange) {
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(this.savedSelectionRange);
+                    }
+                    this.preview.focus();
+                    
+                    // Fallback if no text selected
+                    const sel = window.getSelection();
+                    if (sel.isCollapsed) {
+                        document.execCommand('insertHTML', false, `<a href="${url}">${url}</a>`);
+                    } else {
+                        document.execCommand('createLink', false, url);
+                    }
                     this.syncEditorToMarkdown();
-                } else {
-                    // Split view: insert in textarea
-                    this.insertMarkdown("[", `](${url})`);
                 }
             }
             popover.style.display = 'none';
@@ -2316,6 +2417,18 @@ class MarkdownEditor {
         this.cleanupManager.addEventListener(btnCancel, 'click', (e) => {
             e.preventDefault();
             popover.style.display = 'none';
+            // Restore focus
+            if (this.lastActiveElement === this.textarea) {
+                this.textarea.focus();
+                if (this.savedTextareaSelection) this.textarea.setSelectionRange(this.savedTextareaSelection.start, this.savedTextareaSelection.end);
+            } else if (this.lastActiveElement === this.preview) {
+                this.preview.focus();
+                if (this.savedSelectionRange) {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(this.savedSelectionRange);
+                }
+            }
         });
 
         this.cleanupManager.addEventListener(input, 'keydown', (e) => {
@@ -2394,6 +2507,7 @@ class MarkdownEditor {
             this.textarea.setSelectionRange(state.selectionStart, state.selectionEnd);
             await this.updatePreview();
             if (state.previewOffset !== -1) { this.preview.focus(); this.setGlobalCaretOffset(this.preview, state.previewOffset); }
+            this.updateToolbarActiveStates();
         } finally { this.isActionInProgress = false; }
     }
 
@@ -2403,7 +2517,7 @@ class MarkdownEditor {
         const images = this.preview.querySelectorAll('img[data-img-id]');
         for (const img of images) {
             const id = img.getAttribute('data-img-id');
-            if (id && (!img.src || img.src.startsWith('blob:') || forceLoad)) {
+            if (id && (!img.getAttribute('src') || forceLoad)) {
                 try {
                     const blob = await this.imageStorage.getImage(id);
                     if (blob) {

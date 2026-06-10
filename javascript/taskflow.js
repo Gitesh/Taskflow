@@ -2391,7 +2391,13 @@ const DEFAULT_TIMERS = [
 
 function initPomodoroTimerSystem() {
   // Load registered timers from localStorage or use defaults
-  let registered = JSON.parse(localStorage.getItem("taskflow_timers"));
+  let registered;
+  try {
+    registered = JSON.parse(localStorage.getItem("taskflow_timers"));
+  } catch (e) {
+    console.error("Failed to parse taskflow_timers", e);
+  }
+  
   if (!registered || !Array.isArray(registered)) {
     registered = DEFAULT_TIMERS;
     localStorage.setItem("taskflow_timers", JSON.stringify(registered));

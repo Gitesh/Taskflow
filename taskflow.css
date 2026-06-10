@@ -2816,6 +2816,11 @@ body.hide-tags .clsFrontTags {
   transform: scale(1.1);
 }
 
+.notes-toolbar i.material-icons.active {
+  background: var(--color-accent);
+  color: white;
+}
+
 .notes-toolbar-divider {
   width: 1px;
   height: 20px;

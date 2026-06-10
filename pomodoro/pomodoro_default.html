@@ -7,8 +7,9 @@
     <title>Pomodoro Timer</title>
     <style>
         body {
+            /* display: flex; */
             flex-flow: row wrap;
-            padding: 1 px;
+            padding: 1px;
             font-family: 'Arial', sans-serif;
             color: #FFE365;
             justify-content: center;
@@ -120,7 +121,7 @@
                         alert("Session Time!");
                         var audio = new Audio('pomodoro_end.wav');
                         audio.play();
-                          
+
 
                     } else {
                         isBreak = true;
@@ -142,8 +143,8 @@
                         var audio = new Audio('pomodoro_end.wav');
                         audio.play();
                     }
-            updateTimerDisplay();
-        }
+                    updateTimerDisplay();
+                }
 
 
 
@@ -160,8 +161,8 @@
             isRunning = false;
             isBreak = false;
             timeLeft = sessionLengthInput.value * 60;
-                updateTimerDisplay();
-            }
+            updateTimerDisplay();
+        }
 
         if (!isRunning) {
             timeLeft = sessionLengthInput.value * 60;
